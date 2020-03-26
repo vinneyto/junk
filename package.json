@@ -23,7 +23,6 @@
     "@types/friendly-errors-webpack-plugin": "0.1.2",
     "@types/html-minifier-terser": "5.0.0",
     "@types/html-webpack-plugin": "3.2.2",
-    "@types/three": "^0.103.2",
     "clean-webpack-plugin": "3.0.0",
     "compression-webpack-plugin": "3.1.0",
     "cross-env": "7.0.2",
