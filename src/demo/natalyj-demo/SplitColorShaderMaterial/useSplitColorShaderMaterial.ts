@@ -7,6 +7,8 @@ import {
   ShaderMaterial,
   Color,
   Vector3,
+  Matrix4,
+  MathUtils,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import { createRenderer, resizeRenderer } from '../../../util';
@@ -38,12 +40,18 @@ export function useSplitColorShaderMaterial(): Demo {
 
 class SplitColorShaderMaterial extends ShaderMaterial {
   constructor(color1: Color, color2: Color) {
+    const matrix = new Matrix4().makeRotationAxis(
+      new Vector3(1, 0, 0),
+      MathUtils.degToRad(45)
+    );
+
     super({
       vertexShader: vertShader,
       fragmentShader: fragShader,
       uniforms: {
         u_color1: { value: new Vector3(color1.r, color1.g, color1.b) },
         u_color2: { value: new Vector3(color2.r, color2.g, color2.b) },
+        u_matrix: { value: matrix },
       },
     });
   }
