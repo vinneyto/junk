@@ -8,7 +8,7 @@ import {
   Color,
   Vector3,
   Matrix4,
-  MathUtils,
+  AxesHelper,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import { createRenderer, resizeRenderer } from '../../../util';
@@ -29,6 +29,13 @@ export function useSplitColorShaderMaterial(): Demo {
   const box = new Mesh(geometry, material);
   scene.add(box);
 
+  const axesHelper = new AxesHelper();
+  scene.add(axesHelper);
+
+  // const plane = new Plane(new Vector3(1, 1, 0));
+  // const planeHelper1 = new PlaneHelper(plane, 0.5, 0xf900ff);
+  // scene.add(planeHelper1);
+
   const render = () => {
     resizeRenderer(renderer, camera);
     cameraController.update(camera);
@@ -40,10 +47,19 @@ export function useSplitColorShaderMaterial(): Demo {
 
 class SplitColorShaderMaterial extends ShaderMaterial {
   constructor(color1: Color, color2: Color) {
-    const matrix = new Matrix4().makeRotationAxis(
-      new Vector3(1, 0, 0),
-      MathUtils.degToRad(45)
+    const up: Vector3 = new Vector3(0, 1, 0);
+    const normal: Vector3 = new Vector3(1, 1, 0);
+    const cross = new Vector3().crossVectors(up, normal);
+    const crossCross = new Vector3().crossVectors(cross, normal);
+    // console.log("normal = ", normal, " up * normal = ", cross, " cross * normal = ", crossCross);
+
+    const basis = new Matrix4().makeBasis(
+      normal.normalize(),
+      crossCross.normalize(),
+      cross.normalize()
     );
+
+    // console.log("normal = ", normal, " up * normal = ", cross, " cross * normal = ", crossCross);
 
     super({
       vertexShader: vertShader,
@@ -51,7 +67,7 @@ class SplitColorShaderMaterial extends ShaderMaterial {
       uniforms: {
         u_color1: { value: new Vector3(color1.r, color1.g, color1.b) },
         u_color2: { value: new Vector3(color2.r, color2.g, color2.b) },
-        u_matrix: { value: matrix },
+        u_basis: { value: basis },
       },
     });
   }
