@@ -9,7 +9,11 @@ import {
   Vector3,
   Matrix4,
   AxesHelper,
+  Plane,
+  PlaneHelper,
 } from 'three';
+import { GUI } from 'dat.gui';
+
 import { CameraController } from '../../../CameraController';
 import { createRenderer, resizeRenderer } from '../../../util';
 import vertShader from './shaders/vert.glsl';
@@ -21,10 +25,13 @@ export function useSplitColorShaderMaterial(): Demo {
   const cameraController = new CameraController(0.2, 0.01);
   const scene = new Scene();
 
+  let normal: Vector3 = new Vector3(1, 0.3, 1);
+
   const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new SplitColorShaderMaterial(
     new Color('green'),
-    new Color('red')
+    new Color('red'),
+    normal
   );
   const box = new Mesh(geometry, material);
   scene.add(box);
@@ -32,9 +39,11 @@ export function useSplitColorShaderMaterial(): Demo {
   const axesHelper = new AxesHelper();
   scene.add(axesHelper);
 
-  // const plane = new Plane(new Vector3(1, 1, 0));
-  // const planeHelper1 = new PlaneHelper(plane, 0.5, 0xf900ff);
-  // scene.add(planeHelper1);
+  const plane = new Plane(normal);
+  const planeHelper1 = new PlaneHelper(plane, 0.5, 0xf900ff);
+  scene.add(planeHelper1);
+
+  createGUI(planeHelper1, material, normal);
 
   const render = () => {
     resizeRenderer(renderer, camera);
@@ -46,29 +55,46 @@ export function useSplitColorShaderMaterial(): Demo {
 }
 
 class SplitColorShaderMaterial extends ShaderMaterial {
-  constructor(color1: Color, color2: Color) {
-    const up: Vector3 = new Vector3(0, 1, 0);
-    const normal: Vector3 = new Vector3(1, 1, 0);
-    const cross = new Vector3().crossVectors(up, normal);
-    const crossCross = new Vector3().crossVectors(cross, normal);
-    // console.log("normal = ", normal, " up * normal = ", cross, " cross * normal = ", crossCross);
-
-    const basis = new Matrix4().makeBasis(
-      normal.normalize(),
-      crossCross.normalize(),
-      cross.normalize()
-    );
-
-    // console.log("normal = ", normal, " up * normal = ", cross, " cross * normal = ", crossCross);
-
+  constructor(color1: Color, color2: Color, private normal: Vector3) {
     super({
       vertexShader: vertShader,
       fragmentShader: fragShader,
       uniforms: {
         u_color1: { value: new Vector3(color1.r, color1.g, color1.b) },
         u_color2: { value: new Vector3(color2.r, color2.g, color2.b) },
-        u_basis: { value: basis },
+        u_basis: { value: new Matrix4() },
       },
     });
+
+    this.uniforms.u_basis = { value: this.calculateBasis() };
   }
+
+  public calculateBasis = () => {
+    const up: Vector3 = new Vector3(0, 1, 0);
+    const cross = new Vector3().crossVectors(this.normal, up);
+    const crossCross = new Vector3().crossVectors(this.normal, cross);
+
+    return new Matrix4().makeBasis(cross, crossCross, this.normal);
+  };
 }
+
+const createGUI = (
+  planeHelper1: PlaneHelper,
+  material: SplitColorShaderMaterial,
+  normal: Vector3
+) => {
+  const gui = new GUI();
+
+  // do not move objects on scene when moving sliders
+  gui.domElement.addEventListener('mousedown', (e) => e.stopPropagation());
+
+  gui.add(planeHelper1, 'visible');
+
+  const onNormalChange = () => {
+    material.uniforms.u_basis = { value: material.calculateBasis() };
+  };
+
+  gui.add(normal, 'x', -1, 1).onChange(onNormalChange);
+  gui.add(normal, 'y', -1, 1).onChange(onNormalChange);
+  gui.add(normal, 'z', -1, 1).onChange(onNormalChange);
+};
