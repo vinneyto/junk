@@ -25,7 +25,7 @@ export function useSplitColorShaderMaterial(): Demo {
   const cameraController = new CameraController(0.2, 0.01);
   const scene = new Scene();
 
-  let normal: Vector3 = new Vector3(1, 0.3, 1);
+  let normal: Vector3 = new Vector3(0.7, 0.3, 0.1);
 
   const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new SplitColorShaderMaterial(
@@ -70,11 +70,21 @@ class SplitColorShaderMaterial extends ShaderMaterial {
   }
 
   public calculateBasis = () => {
-    const up: Vector3 = new Vector3(0, 1, 0);
-    const cross = new Vector3().crossVectors(this.normal, up);
-    const crossCross = new Vector3().crossVectors(this.normal, cross);
+    let up: Vector3 = new Vector3(0, 1, 0);
+    let xAxis: Vector3 = new Vector3();
+    let yAxis: Vector3 = new Vector3();
 
-    return new Matrix4().makeBasis(cross, crossCross, this.normal);
+    if (new Vector3().crossVectors(this.normal, up).equals(new Vector3())) {
+      yAxis = new Vector3(0, 0, this.normal.y);
+      xAxis = new Vector3().crossVectors(this.normal, yAxis);
+    } else {
+      xAxis = new Vector3().crossVectors(this.normal, up);
+      // kostyl' ?
+      xAxis.x = -1;
+      yAxis = new Vector3().crossVectors(this.normal, xAxis);
+    }
+
+    return new Matrix4().makeBasis(xAxis, yAxis, this.normal);
   };
 }
 
