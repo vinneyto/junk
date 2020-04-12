@@ -55,6 +55,10 @@ export function useSplitColorShaderMaterial(): Demo {
 }
 
 class SplitColorShaderMaterial extends ShaderMaterial {
+  private defaultX = new Vector3(1, 0, 0);
+  private defaultY = new Vector3(0, 1, 0);
+  private defaultZ = new Vector3(0, 0, 1);
+
   constructor(color1: Color, color2: Color, private normal: Vector3) {
     super({
       vertexShader: vertShader,
@@ -70,23 +74,33 @@ class SplitColorShaderMaterial extends ShaderMaterial {
   }
 
   public calculateBasis = () => {
-    let up: Vector3 = new Vector3(0, 1, 0);
-    let xAxis: Vector3 = new Vector3();
-    let yAxis: Vector3 = new Vector3();
+    const crosses = [this.defaultX, this.defaultY, this.defaultZ].map((axis) =>
+      cross(this.normal, axis)
+    );
+    const maxCrossIndex = getMaxIndex(crosses.map((cross) => cross.length()));
+    const up = crosses[maxCrossIndex];
 
-    if (new Vector3().crossVectors(this.normal, up).equals(new Vector3())) {
-      yAxis = new Vector3(0, 0, this.normal.y);
-      xAxis = new Vector3().crossVectors(this.normal, yAxis);
-    } else {
-      xAxis = new Vector3().crossVectors(this.normal, up);
-      // kostyl' ?
-      xAxis.x = -1;
-      yAxis = new Vector3().crossVectors(this.normal, xAxis);
-    }
+    const xAxis = cross(this.normal, up);
+    const yAxis = cross(this.normal, xAxis);
 
-    return new Matrix4().makeBasis(xAxis, yAxis, this.normal);
+    return inverse(basis(xAxis, yAxis, this.normal));
   };
 }
+
+const cross = (v1: Vector3, v2: Vector3) => new Vector3().crossVectors(v1, v2);
+const basis = (xAxis: Vector3, yAxis: Vector3, zAxis: Vector3) =>
+  new Matrix4().makeBasis(xAxis, yAxis, zAxis);
+const inverse = (m: Matrix4) => new Matrix4().getInverse(m);
+
+const getMaxIndex = (arr: number[]) => {
+  let maxLengthIndex = 0;
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] > arr[maxLengthIndex]) {
+      maxLengthIndex = i;
+    }
+  }
+  return maxLengthIndex;
+};
 
 const createGUI = (
   planeHelper1: PlaneHelper,
