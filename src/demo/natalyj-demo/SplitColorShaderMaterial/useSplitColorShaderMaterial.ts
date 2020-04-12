@@ -11,6 +11,7 @@ import {
   AxesHelper,
   Plane,
   PlaneHelper,
+  MathUtils,
 } from 'three';
 import { GUI } from 'dat.gui';
 
@@ -55,9 +56,7 @@ export function useSplitColorShaderMaterial(): Demo {
 }
 
 class SplitColorShaderMaterial extends ShaderMaterial {
-  private defaultX = new Vector3(1, 0, 0);
-  private defaultY = new Vector3(0, 1, 0);
-  private defaultZ = new Vector3(0, 0, 1);
+  private dotThreshold = Math.cos(MathUtils.degToRad(45));
 
   constructor(color1: Color, color2: Color, private normal: Vector3) {
     super({
@@ -74,11 +73,10 @@ class SplitColorShaderMaterial extends ShaderMaterial {
   }
 
   public calculateBasis = () => {
-    const crosses = [this.defaultX, this.defaultY, this.defaultZ].map((axis) =>
-      cross(this.normal, axis)
-    );
-    const maxCrossIndex = getMaxIndex(crosses.map((cross) => cross.length()));
-    const up = crosses[maxCrossIndex];
+    let up = new Vector3(0, 1, 0);
+    if (getUnsignedDot(this.normal, up) > this.dotThreshold) {
+      up = new Vector3(1, 0, 0);
+    }
 
     const xAxis = cross(this.normal, up);
     const yAxis = cross(this.normal, xAxis);
@@ -92,14 +90,10 @@ const basis = (xAxis: Vector3, yAxis: Vector3, zAxis: Vector3) =>
   new Matrix4().makeBasis(xAxis, yAxis, zAxis);
 const inverse = (m: Matrix4) => new Matrix4().getInverse(m);
 
-const getMaxIndex = (arr: number[]) => {
-  let maxLengthIndex = 0;
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] > arr[maxLengthIndex]) {
-      maxLengthIndex = i;
-    }
-  }
-  return maxLengthIndex;
+const getUnsignedDot = (v1: Vector3, v2: Vector3) => {
+  const v1n = v1.clone().normalize();
+  const v2n = v2.clone().normalize();
+  return Math.abs(v1n.dot(v2n));
 };
 
 const createGUI = (
