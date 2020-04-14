@@ -28,7 +28,7 @@ export function useSplitColorShaderMaterial(): Demo {
 
   const colorConfig: ColorConfig = {
     planeNormal: new Vector3(0.7, 0.3, 0.1),
-    distanceFromOrigin: 0.01,
+    distanceFromOrigin: -0.025,
   };
 
   const geometry = new BoxGeometry(0.1, 0.1, 0.1);
@@ -45,7 +45,7 @@ export function useSplitColorShaderMaterial(): Demo {
 
   const { planeNormal, distanceFromOrigin } = colorConfig;
   const plane = new Plane(planeNormal, distanceFromOrigin);
-  const planeHelper1 = new PlaneHelper(plane, 0.5, 0xf900ff);
+  const planeHelper1 = new PlaneHelper(plane, 0.5, 0x0000ff);
   scene.add(planeHelper1);
 
   createCustomGUI(plane, planeHelper1, material, colorConfig);

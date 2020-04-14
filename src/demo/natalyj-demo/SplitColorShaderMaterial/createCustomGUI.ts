@@ -19,7 +19,7 @@ export const createCustomGUI = (
 
   gui.add(planeHelper1, 'visible').name('normal plane visible');
   addNormalControls(gui, colorConfig, material);
-  addConstantControls(gui, colorConfig, plane);
+  addConstantControls(gui, colorConfig, plane, material);
 };
 
 const addNormalControls = (
@@ -40,10 +40,12 @@ const addNormalControls = (
 const addConstantControls = (
   gui: GUI,
   colorConfig: ColorConfig,
-  plane: Plane
+  plane: Plane,
+  material: SplitColorShaderMaterial
 ) => {
   const onConstantChange = () => {
     colorConfig.distanceFromOrigin = plane.constant;
+    material.uniforms.u_basis = { value: material.calculateBasis() };
   };
 
   gui
