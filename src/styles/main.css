@@ -1,4 +1,8 @@
-body {
+* {
+  user-select: none;
+}
+
+.demo-list {
   margin: 16px auto;
   width: 640px;
 }

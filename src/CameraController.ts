@@ -11,15 +11,30 @@ export class CameraController {
   ) {
     let lastCoords = new Vector2();
 
-    const onMouseDown = (e: MouseEvent) => {
-      lastCoords = new Vector2(e.clientX, e.clientY);
+    const onMouseDown = (e: MouseEvent | TouchEvent) => {
+      lastCoords = new Vector2();
+      if (e instanceof TouchEvent) {
+        lastCoords.set(
+          e.changedTouches[0].clientX,
+          e.changedTouches[0].clientY
+        );
+      } else {
+        lastCoords.set(e.clientX, e.clientY);
+      }
 
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('touchmove', onMouseMove);
+      document.addEventListener('touchend', onMouseUp);
     };
 
-    const onMouseMove = (e: MouseEvent) => {
-      const coords = new Vector2(e.clientX, e.clientY);
+    const onMouseMove = (e: MouseEvent | TouchEvent) => {
+      const coords = new Vector2();
+      if (e instanceof TouchEvent) {
+        coords.set(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      } else {
+        coords.set(e.clientX, e.clientY);
+      }
       const delta = coords.clone().sub(lastCoords);
 
       this.rotateDelta(delta);
@@ -30,9 +45,12 @@ export class CameraController {
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('touchmove', onMouseMove);
+      document.removeEventListener('touchend', onMouseUp);
     };
 
     document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('touchstart', onMouseDown);
   }
 
   update(camera: Camera) {

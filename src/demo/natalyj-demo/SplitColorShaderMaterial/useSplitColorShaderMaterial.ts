@@ -105,6 +105,7 @@ const createGUI = (
 
   // do not move objects on scene when moving sliders
   gui.domElement.addEventListener('mousedown', (e) => e.stopPropagation());
+  gui.domElement.addEventListener('touchstart', (e) => e.stopPropagation());
 
   gui.add(planeHelper1, 'visible');
 
