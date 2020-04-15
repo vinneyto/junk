@@ -10,7 +10,6 @@ export class CameraController {
     private readonly center = new Vector3(0, 0, 0)
   ) {
     let lastCoords = new Vector2();
-    let moving = false;
 
     const onMouseDown = (e: MouseEvent | TouchEvent) => {
       lastCoords = new Vector2();
@@ -22,36 +21,36 @@ export class CameraController {
       } else {
         lastCoords.set(e.clientX, e.clientY);
       }
-      moving = true;
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('touchmove', onMouseMove);
+      document.addEventListener('touchend', onMouseUp);
     };
 
     const onMouseMove = (e: MouseEvent | TouchEvent) => {
-      if (moving) {
-        const coords = new Vector2();
-        if (e instanceof TouchEvent) {
-          coords.set(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-        } else {
-          coords.set(e.clientX, e.clientY);
-        }
-        const delta = coords.clone().sub(lastCoords);
-
-        this.rotateDelta(delta);
-
-        lastCoords = coords;
+      const coords = new Vector2();
+      if (e instanceof TouchEvent) {
+        coords.set(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      } else {
+        coords.set(e.clientX, e.clientY);
       }
+      const delta = coords.clone().sub(lastCoords);
+
+      this.rotateDelta(delta);
+
+      lastCoords = coords;
     };
 
     const onMouseUp = () => {
-      moving = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('touchmove', onMouseMove);
+      document.removeEventListener('touchend', onMouseUp);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mouseup', onMouseUp);
-
     document.addEventListener('touchstart', onMouseDown);
-    document.addEventListener('touchmove', onMouseMove);
-    document.addEventListener('touchend', onMouseUp);
   }
 
   update(camera: Camera) {
