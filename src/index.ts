@@ -1,6 +1,8 @@
-import { createRenderer, resizeRendererToDisplaySize } from './util';
 import { routes } from './routes';
 import { Demo } from './demo/Demo';
+import { injectStyles } from './styles';
+
+injectStyles();
 
 const demoName = new URLSearchParams(window.location.search).get('demo');
 

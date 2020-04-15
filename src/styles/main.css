@@ -1,0 +1,20 @@
+body {
+  margin: 16px auto;
+  width: 640px;
+}
+
+a {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
+    'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  display: inline-block;
+  padding: 8px;
+  margin-bottom: 16px;
+  background-color: rgb(238, 238, 238);
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+a:hover {
+  background-color: rgb(211, 211, 255);
+}
