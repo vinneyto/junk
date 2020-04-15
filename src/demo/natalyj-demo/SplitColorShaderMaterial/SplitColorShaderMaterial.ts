@@ -2,13 +2,7 @@ import { ShaderMaterial, Color, Vector3, Matrix4, MathUtils } from 'three';
 
 import vertShader from './shaders/vert.glsl';
 import fragShader from './shaders/frag.glsl';
-import {
-  getUnsignedDot,
-  cross,
-  inverse,
-  basis,
-  matrix4ToString,
-} from '../3jsWrappers';
+import { getUnsignedDot, cross, inverse, basis } from '../3jsWrappers';
 
 export interface ColorConfig {
   planeNormal: Vector3;
@@ -47,11 +41,7 @@ export class SplitColorShaderMaterial extends ShaderMaterial {
     const xAxis = cross(zAxis, up);
     const yAxis = cross(zAxis, xAxis);
 
-    const position = normal
-      .clone()
-      .setLength(Math.abs(distance))
-      .normalize()
-      .multiplyScalar(-distance);
+    const position = normal.clone().normalize().multiplyScalar(-distance);
 
     return inverse(basis(xAxis, yAxis, zAxis).setPosition(position));
   };
