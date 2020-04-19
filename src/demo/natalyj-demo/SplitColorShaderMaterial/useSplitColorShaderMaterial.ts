@@ -10,6 +10,9 @@ import {
   Plane,
   PlaneHelper,
 } from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
+import Fox from '../models/Fox/Fox.gltf';
 
 import { CameraController } from '../../../CameraController';
 import { createRenderer, resizeRenderer } from '../../../util';
@@ -31,14 +34,25 @@ export function useSplitColorShaderMaterial(): Demo {
     distanceFromOrigin: -0.025,
   };
 
-  const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new SplitColorShaderMaterial(
     new Color('green'),
     new Color('red'),
     colorConfig
   );
-  const box = new Mesh(geometry, material);
-  scene.add(box);
+
+  const loader = new GLTFLoader();
+  loader.load(
+    Fox,
+    (gltf) => {
+      scene.add(gltf.scene);
+    },
+    () => {},
+    () => {
+      const geometry = new BoxGeometry(0.1, 0.1, 0.1);
+      const box = new Mesh(geometry, material);
+      scene.add(box);
+    }
+  );
 
   const axesHelper = new AxesHelper();
   scene.add(axesHelper);
