@@ -44,6 +44,12 @@ export function useSplitColorShaderMaterial(): Demo {
   loader.load(
     Fox,
     (gltf) => {
+      gltf.scene.traverse((obj) => {
+        if (obj instanceof Mesh) {
+          obj.material = material;
+          obj.geometry.scale(0.001, 0.001, 0.001);
+        }
+      });
       scene.add(gltf.scene);
     },
     () => {},
