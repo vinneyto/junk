@@ -12,7 +12,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged && wotan --fix"
+      "pre-commit": "wotan --fix && pretty-quick --staged"
     }
   },
   "prettier": {
