@@ -3,7 +3,7 @@ import { WebGLRenderer, Color, PerspectiveCamera } from 'three';
 export function createRenderer() {
   const renderer = new WebGLRenderer({ antialias: true });
   document.body.appendChild(renderer.domElement);
-  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setClearColor(new Color('white'));
 
   renderer.domElement.style.position = 'fixed';
@@ -20,8 +20,8 @@ export function resizeRendererToDisplaySize(renderer: WebGLRenderer) {
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
   const needResize =
-    canvas.width !== width * devicePixelRatio ||
-    canvas.height !== height * devicePixelRatio;
+    canvas.width !== width * window.devicePixelRatio ||
+    canvas.height !== height * window.devicePixelRatio;
   if (needResize) {
     renderer.setSize(width, height, false);
   }

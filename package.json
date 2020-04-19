@@ -12,7 +12,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged && tsc --noEmit"
+      "pre-commit": "pretty-quick --staged && wotan --fix"
     }
   },
   "prettier": {
@@ -20,6 +20,7 @@
     "printWidth": 80
   },
   "dependencies": {
+    "@fimbul/wotan": "0.21.1",
     "@types/compression-webpack-plugin": "2.0.1",
     "@types/dat.gui": "^0.7.5",
     "@types/friendly-errors-webpack-plugin": "0.1.2",

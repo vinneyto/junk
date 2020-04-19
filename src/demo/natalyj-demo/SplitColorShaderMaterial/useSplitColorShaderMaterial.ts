@@ -26,7 +26,7 @@ export function useSplitColorShaderMaterial(): Demo {
   const cameraController = new CameraController(0.2, 0.01);
   const scene = new Scene();
 
-  let normal: Vector3 = new Vector3(0.7, 0.3, 0.1);
+  const normal: Vector3 = new Vector3(0.7, 0.3, 0.1);
 
   const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new SplitColorShaderMaterial(
