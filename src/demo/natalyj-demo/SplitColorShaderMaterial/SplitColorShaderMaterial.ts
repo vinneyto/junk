@@ -32,6 +32,8 @@ export class SplitColorShaderMaterial extends ShaderMaterial {
       distanceFromOrigin: distance,
     } = this.colorConfig;
 
+    normal.normalize();
+
     let up = new Vector3(0, 1, 0);
     if (getUnsignedDot(normal, up) > this.dotThreshold) {
       up = new Vector3(1, 0, 0);
