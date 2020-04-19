@@ -31,7 +31,7 @@ const addNormalControls = (
     material.uniforms.u_basis = { value: material.calculateBasis() };
   };
 
-  let { planeNormal } = colorConfig;
+  const { planeNormal } = colorConfig;
   gui.add(planeNormal, 'x', -1, 1).onChange(onNormalChange).name('normal.x');
   gui.add(planeNormal, 'y', -1, 1).onChange(onNormalChange).name('normal.y');
   gui.add(planeNormal, 'z', -1, 1).onChange(onNormalChange).name('normal.z');
