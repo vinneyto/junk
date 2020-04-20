@@ -1,27 +1,33 @@
-import { ShaderMaterial, Color, Vector3, Matrix4, MathUtils } from 'three';
+import { ShaderMaterial, Vector3, Matrix4, MathUtils } from 'three';
 
 import vertShader from './shaders/vert.glsl';
 import fragShader from './shaders/frag.glsl';
-import { getUnsignedDot, cross, inverse, basis } from '../3jsWrappers';
-
-export interface ColorConfig {
-  planeNormal: Vector3;
-  distanceFromOrigin: number;
-}
+import {
+  getUnsignedDot,
+  cross,
+  inverse,
+  basis,
+  colorToVector3,
+} from '../3jsWrappers';
+import { ColorConfig } from './types';
 
 export class SplitColorShaderMaterial extends ShaderMaterial {
   private dotThreshold = Math.cos(MathUtils.degToRad(45));
 
-  constructor(color1: Color, color2: Color, private colorConfig: ColorConfig) {
+  constructor(private colorConfig: ColorConfig) {
     super({
       vertexShader: vertShader,
       fragmentShader: fragShader,
       uniforms: {
-        u_color1: { value: new Vector3(color1.r, color1.g, color1.b) },
-        u_color2: { value: new Vector3(color2.r, color2.g, color2.b) },
+        u_color1: { value: new Vector3() },
+        u_color2: { value: new Vector3() },
         u_basis: { value: new Matrix4() },
       },
     });
+
+    const { negativeColor, positiveColor } = colorConfig;
+    this.uniforms.u_color1 = { value: colorToVector3(negativeColor) };
+    this.uniforms.u_color2 = { value: colorToVector3(positiveColor) };
 
     this.uniforms.u_basis = { value: this.calculateBasis() };
   }
