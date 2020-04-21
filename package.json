@@ -12,7 +12,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "wotan --fix && git add --all && pretty-quick --staged"
+      "pre-commit": "wotan --fix && git add && pretty-quick --staged"
     }
   },
   "prettier": {
@@ -20,32 +20,32 @@
     "printWidth": 80
   },
   "dependencies": {
+    "dat.gui": "^0.7.7",
+    "three": "^0.115.0"
+  },
+  "devDependencies": {
     "@fimbul/wotan": "0.21.1",
     "@types/compression-webpack-plugin": "2.0.1",
     "@types/dat.gui": "^0.7.5",
     "@types/friendly-errors-webpack-plugin": "0.1.2",
     "@types/html-minifier-terser": "5.0.0",
     "@types/html-webpack-plugin": "3.2.2",
-    "clean-webpack-plugin": "3.0.0",
+    "husky": "4.2.5",
+    "prettier": "2.0.4",
+    "pretty-quick": "2.0.1",
     "compression-webpack-plugin": "3.1.0",
-    "cross-env": "7.0.2",
-    "dat.gui": "^0.7.7",
-    "file-loader": "^6.0.0",
+    "clean-webpack-plugin": "3.0.0",
     "friendly-errors-webpack-plugin": "1.7.0",
-    "gltf-webpack-loader": "^1.0.6",
     "html-webpack-plugin": "4.2.0",
+    "cross-env": "7.0.2",
+    "file-loader": "^6.0.0",
     "raw-loader": "^4.0.1",
-    "three": "^0.115.0",
+    "gltf-webpack-loader": "^1.0.6",
     "ts-loader": "7.0.0",
     "ts-node": "8.8.2",
     "typescript": "3.8.3",
-    "webpack": "4.42.1",
+    "webpack": "^4.43.0",
     "webpack-cli": "3.3.11",
     "webpack-dev-server": "3.10.3"
-  },
-  "devDependencies": {
-    "husky": "4.2.5",
-    "prettier": "2.0.4",
-    "pretty-quick": "2.0.1"
   }
 }
