@@ -49,7 +49,7 @@ export class SplitColorShaderMaterial extends ShaderMaterial {
     const xAxis = cross(zAxis, up);
     const yAxis = cross(zAxis, xAxis);
 
-    const position = normal.clone().normalize().multiplyScalar(-distance);
+    const position = normal.clone().multiplyScalar(-distance);
 
     return inverse(basis(xAxis, yAxis, zAxis).setPosition(position));
   };

@@ -14,6 +14,5 @@ export const getUnsignedDot = (v1: Vector3, v2: Vector3) => {
   return Math.abs(v1n.dot(v2n));
 };
 
-export const colorToVector3 = (color: Color) => {
-  return new Vector3(color.r, color.g, color.b);
-};
+export const colorToVector3 = (color: Color) =>
+  new Vector3(color.r, color.g, color.b);
