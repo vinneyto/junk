@@ -3,6 +3,7 @@ import CompressionPlugin from 'compression-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -17,6 +18,7 @@ const plugins = [
   }),
   new CleanWebpackPlugin(),
   new FriendlyErrorsWebpackPlugin(),
+  new MiniCssExtractPlugin(),
 ];
 
 if (!debug) {
@@ -41,7 +43,14 @@ export default {
   module: {
     rules: [
       { test: /\.ts/, loader: 'ts-loader' },
-      { test: /\.glsl|css/, loader: 'raw-loader' },
+      {
+        test: /\.css/,
+        use: [
+          { loader: MiniCssExtractPlugin.loader, options: { hmr: debug } },
+          'css-loader',
+        ],
+      },
+      { test: /\.glsl/, loader: 'raw-loader' },
       { test: /\.gltf/, loader: 'gltf-webpack-loader' },
       { test: /\.bin|png|svg|jpg|gif/, loader: 'file-loader' },
     ],
@@ -53,4 +62,15 @@ export default {
     noInfo: true,
   },
   plugins,
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        commons: {
+          test: /node_modules/,
+          filename: 'vendors.js',
+          chunks: 'all',
+        },
+      },
+    },
+  },
 };
