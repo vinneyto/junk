@@ -14,11 +14,12 @@ const plugins = [
     meta: {
       viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no',
     },
-    hash: !debug,
   }),
   new CleanWebpackPlugin(),
   new FriendlyErrorsWebpackPlugin(),
-  new MiniCssExtractPlugin(),
+  new MiniCssExtractPlugin({
+    filename: debug ? '[name].css' : '[name].[chunkhash].css',
+  }),
 ];
 
 if (!debug) {
@@ -32,9 +33,11 @@ if (!debug) {
 export default {
   mode: debug ? 'development' : 'production',
   context: path.resolve('./src'),
-  entry: './index.ts',
+  entry: {
+    main: './index.ts',
+  },
   output: {
-    filename: 'bundle.js',
+    filename: debug ? '[name].js' : '[name].[chunkhash].js',
     path: path.resolve('./dist'),
   },
   resolve: {
@@ -64,13 +67,8 @@ export default {
   plugins,
   optimization: {
     splitChunks: {
-      cacheGroups: {
-        commons: {
-          test: /node_modules/,
-          filename: 'vendors.js',
-          chunks: 'all',
-        },
-      },
+      chunks: 'all',
     },
+    runtimeChunk: true,
   },
 };
