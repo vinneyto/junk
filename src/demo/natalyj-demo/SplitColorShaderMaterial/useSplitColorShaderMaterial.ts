@@ -20,7 +20,7 @@ import { createRenderer, resizeRenderer } from '../../../util';
 
 import { SplitColorShaderMaterial } from './SplitColorShaderMaterial';
 import { createCustomGUI } from './createCustomGUI';
-import { ColorConfig, AvailableObjects, GUIConfig } from './types';
+import { ColorConfig, AvailableObjects } from './types';
 
 const FAR = 400;
 const RADIUS = 200;

@@ -3,6 +3,7 @@ import CompressionPlugin from 'compression-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -13,10 +14,12 @@ const plugins = [
     meta: {
       viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no',
     },
-    hash: !debug,
   }),
   new CleanWebpackPlugin(),
   new FriendlyErrorsWebpackPlugin(),
+  new MiniCssExtractPlugin({
+    filename: debug ? '[name].css' : '[name].[chunkhash].css',
+  }),
 ];
 
 if (!debug) {
@@ -30,9 +33,11 @@ if (!debug) {
 export default {
   mode: debug ? 'development' : 'production',
   context: path.resolve('./src'),
-  entry: './index.ts',
+  entry: {
+    main: './index.ts',
+  },
   output: {
-    filename: 'bundle.js',
+    filename: debug ? '[name].js' : '[name].[chunkhash].js',
     path: path.resolve('./dist'),
   },
   resolve: {
@@ -41,7 +46,14 @@ export default {
   module: {
     rules: [
       { test: /\.ts/, loader: 'ts-loader' },
-      { test: /\.glsl|css/, loader: 'raw-loader' },
+      {
+        test: /\.css/,
+        use: [
+          { loader: MiniCssExtractPlugin.loader, options: { hmr: debug } },
+          'css-loader',
+        ],
+      },
+      { test: /\.glsl/, loader: 'raw-loader' },
       { test: /\.gltf/, loader: 'gltf-webpack-loader' },
       { test: /\.bin|png|svg|jpg|gif/, loader: 'file-loader' },
     ],
@@ -53,4 +65,10 @@ export default {
     noInfo: true,
   },
   plugins,
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+    },
+    runtimeChunk: true,
+  },
 };
