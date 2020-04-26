@@ -63,9 +63,7 @@ const addConstantControls = (gui: GUI, config: GUIConfig) => {
 
   const onConstantChange = () => {
     colorConfig.distanceFromOrigin = plane.constant;
-    customMaterial.uniforms.u_basis = {
-      value: customMaterial.calculateBasis(),
-    };
+    customMaterial.uniforms.u_basis.value = customMaterial.calculateBasis();
   };
 
   gui
