@@ -1,4 +1,4 @@
-import { WebGLRenderer, Color, PerspectiveCamera } from 'three';
+import { WebGLRenderer, Color, PerspectiveCamera, Scene, Camera } from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export function createRenderer() {
@@ -12,6 +12,8 @@ export function createRenderer() {
   renderer.domElement.style.top = '0';
   renderer.domElement.style.width = '100%';
   renderer.domElement.style.height = '100%';
+
+  renderer.render(new Scene(), new Camera());
 
   return renderer;
 }
