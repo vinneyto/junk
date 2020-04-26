@@ -4,34 +4,38 @@ import { injectStyles } from './styles';
 
 injectStyles();
 
-const demoName = new URLSearchParams(window.location.search).get('demo');
+choseDemo();
 
-if (demoName === null) {
-  const cont = document.createElement('div');
-  cont.className = 'demo-list';
-  document.body.appendChild(cont);
-  for (const routeName of routes.keys()) {
-    const a = document.createElement('a');
-    a.innerHTML = routeName;
-    a.href = `/?demo=${routeName}`;
-    cont.appendChild(a);
-    cont.appendChild(document.createElement('br'));
+async function choseDemo() {
+  const demoName = new URLSearchParams(window.location.search).get('demo');
+
+  if (demoName === null) {
+    const cont = document.createElement('div');
+    cont.className = 'demo-list';
+    document.body.appendChild(cont);
+    for (const routeName of routes.keys()) {
+      const a = document.createElement('a');
+      a.innerHTML = routeName;
+      a.href = `/?demo=${routeName}`;
+      cont.appendChild(a);
+      cont.appendChild(document.createElement('br'));
+    }
+  } else {
+    const createDemo = routes.get(demoName);
+
+    if (createDemo === undefined) {
+      const msg = 'demo is not found';
+      alert(msg);
+      throw new Error(msg);
+    }
+
+    const demo = await createDemo();
+
+    start(demo);
   }
-} else {
-  const createDemo = routes.get(demoName);
-
-  if (createDemo === undefined) {
-    const msg = 'demo is not found';
-    alert(msg);
-    throw new Error(msg);
-  }
-
-  start(createDemo);
 }
 
-function start(createDemo: () => Demo) {
-  const demo = createDemo();
-
+function start(demo: Demo) {
   const render = () => {
     demo.render();
 
