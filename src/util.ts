@@ -1,4 +1,5 @@
 import { WebGLRenderer, Color, PerspectiveCamera } from 'three';
+import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export function createRenderer() {
   const renderer = new WebGLRenderer({ antialias: true });
@@ -44,4 +45,16 @@ export function resizeRenderer(
   if (resizeRendererToDisplaySize(renderer)) {
     resizePerspectiveCamera(renderer, camera);
   }
+}
+
+export async function fetchGLTF(url: string) {
+  return new Promise<GLTF>((resolve, reject) => {
+    const loader = new GLTFLoader();
+    loader.load(
+      url,
+      (gltf) => resolve(gltf),
+      undefined,
+      (e) => reject(e)
+    );
+  });
 }

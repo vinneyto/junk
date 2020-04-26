@@ -10,7 +10,7 @@ import {
 import { CameraController } from '../CameraController';
 import { createRenderer, resizeRenderer } from '../util';
 
-export function createBoxDemo(): Demo {
+export async function createBoxDemo(): Promise<Demo> {
   const renderer = createRenderer();
   const camera = new PerspectiveCamera(75, 1, 0.01, 0.8);
   const cameraController = new CameraController(0.2, 0.01);

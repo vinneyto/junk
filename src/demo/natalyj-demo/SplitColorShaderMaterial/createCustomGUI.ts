@@ -45,9 +45,7 @@ const addNormalControls = (gui: GUI, config: GUIConfig) => {
   const { customMaterial, colorConfig } = config;
 
   const onNormalChange = () => {
-    customMaterial.uniforms.u_basis = {
-      value: customMaterial.calculateBasis(),
-    };
+    customMaterial.uniforms.u_basis.value = customMaterial.calculateBasis();
   };
 
   const { planeNormal } = colorConfig;
@@ -86,14 +84,14 @@ const addColorControls = (gui: GUI, config: GUIConfig) => {
     const color = new Color().setHex(hex);
 
     negativeColor = color;
-    uniforms.u_color1 = { value: colorToVector3(color) };
+    uniforms.u_color1.value = colorToVector3(color);
   };
 
   const onPositiveColorChange = (hex: number) => {
     const color = new Color().setHex(hex);
 
     positiveColor = color;
-    uniforms.u_color2 = { value: colorToVector3(color) };
+    uniforms.u_color2.value = colorToVector3(color);
   };
 
   const hexColors = {

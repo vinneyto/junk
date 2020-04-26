@@ -13,7 +13,7 @@ import { createRenderer, resizeRenderer } from '../../../util';
 import vertShader from './shaders/vert.glsl';
 import fragShader from './shaders/frag.glsl';
 
-export function useSingleColorShaderMaterial(): Demo {
+export async function useSingleColorShaderMaterial(): Promise<Demo> {
   const renderer = createRenderer();
   const camera = new PerspectiveCamera(75, 1, 0.01, 0.8);
   const cameraController = new CameraController(0.2, 0.01);
