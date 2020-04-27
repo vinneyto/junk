@@ -1,4 +1,4 @@
-import { GLTFRoot, GLTF } from './types';
+import { GLTFRoot, GLTFJson } from './types';
 import { renderGLTF, GLTFResult } from './renderGLTF';
 
 export async function loadGLTF(url: string): Promise<GLTFResult> {
@@ -17,7 +17,7 @@ export async function loadGLTF(url: string): Promise<GLTFResult> {
       .map((i) => fetchImage(`${dir}/${i.uri}`))
   );
 
-  const gltf: GLTF = { root, buffers, images };
+  const gltf: GLTFJson = { root, buffers, images };
 
   return renderGLTF(gltf);
 }

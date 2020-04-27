@@ -1,4 +1,4 @@
-import { GLTF } from './types';
+import { GLTFJson } from './types';
 import {
   GLTFAccessorType,
   GLTFAccessor,
@@ -14,14 +14,16 @@ import {
   InterleavedBuffer,
   BufferAttribute,
   InterleavedBufferAttribute,
+  Matrix4,
 } from 'three';
 import { GLTFPrimitive } from './types/GLTFPrimitive';
 
 export type IBCache = Map<string, InterleavedBuffer>;
 
 export interface GLTFResult {
-  gltf: GLTF;
+  json: GLTFJson;
   scenes: Scene[];
+  meshes: Object3D[];
 }
 
 export const WEBGL_COMPONENT_TYPES = {
@@ -43,31 +45,87 @@ export const WEBGL_TYPE_SIZES = {
   [GLTFAccessorType.MAT4]: 16,
 };
 
-export async function renderGLTF(gltf: GLTF): Promise<GLTFResult> {
-  const scenes: Scene[] = [];
-  // const bufferViews = createBufferViews(gltf);
-  // const textures = createTextures(gltf);
-  // const materials = createMaterials(gltf, textures);
-  // const accessors = createAccessors(gltf, bufferViews);
-  // const meshes = createMeshes(gltf, accessors, materials);
-  // const nodes = createNodes(gltf, meshes);
-  // const scenes = createScenes(gltf, nodes);
+export async function renderGLTF(json: GLTFJson): Promise<GLTFResult> {
+  // const bufferViews = createBufferViews(json);
+  // const textures = createTextures(json);
+  // const materials = createMaterials(json, textures);
+  // const accessors = createAccessors(json, bufferViews);
+  // const meshes = createMeshes(json, accessors, materials);
+  // const nodes = createNodes(json, meshes);
+  // const scenes = createScenes(json, nodes);
   // return scenes;
-  const meshes = createMeshes(gltf);
+  const meshes = createMeshes(json);
+  const scenes = createScenes(json, meshes);
 
-  const scene = new Scene();
-
-  for (const mesh of meshes) {
-    scene.add(mesh);
-  }
-
-  scenes.push(scene);
-
-  return { gltf, scenes };
+  return { json, scenes, meshes };
 }
 
-export function createMeshes(gltf: GLTF): Object3D[] {
-  const { root } = gltf;
+export function createScenes(json: GLTFJson, meshes: Object3D[]): Scene[] {
+  const { root } = json;
+  if (root.scenes === undefined || root.nodes === undefined) {
+    return [];
+  }
+
+  const scenes: Scene[] = [];
+
+  for (const sceneDef of root.scenes) {
+    const scene = new Scene();
+    if (sceneDef.nodes !== undefined) {
+      for (const nodeIndex of sceneDef.nodes) {
+        collectNodes(json, meshes, scene, nodeIndex);
+      }
+    }
+    scenes.push(scene);
+  }
+
+  return scenes;
+}
+
+export function collectNodes(
+  json: GLTFJson,
+  meshes: Object3D[],
+  parent: Object3D,
+  nodeIndex: number
+) {
+  const { root } = json;
+  if (root.nodes === undefined) {
+    return [];
+  }
+
+  const nodeDef = root.nodes[nodeIndex];
+
+  const node = new Object3D();
+  node.name = nodeDef.name !== undefined ? nodeDef.name : '';
+  if (nodeDef.mesh !== undefined) {
+    node.add(meshes[nodeDef.mesh]);
+  }
+  parent.add(node);
+
+  if (nodeDef.matrix !== undefined) {
+    new Matrix4()
+      .fromArray(nodeDef.matrix)
+      .decompose(node.position, node.quaternion, node.scale);
+  } else {
+    if (nodeDef.translation !== undefined) {
+      node.position.fromArray(nodeDef.translation);
+    }
+    if (nodeDef.rotation !== undefined) {
+      node.quaternion.fromArray(nodeDef.rotation);
+    }
+    if (nodeDef.scale !== undefined) {
+      node.scale.fromArray(nodeDef.scale);
+    }
+  }
+
+  if (nodeDef.children !== undefined) {
+    for (const childIndex of nodeDef.children) {
+      collectNodes(json, meshes, node, childIndex);
+    }
+  }
+}
+
+export function createMeshes(json: GLTFJson): Object3D[] {
+  const { root } = json;
   if (root.meshes === undefined) {
     return [];
   }
@@ -75,8 +133,9 @@ export function createMeshes(gltf: GLTF): Object3D[] {
   const result: Object3D[] = [];
   for (const gltfMesh of root.meshes) {
     const wrap = new Object3D();
-    for (const gltfPrimisite of gltfMesh.primitives) {
-      const geometry = createGeometry(gltf, ibCache, gltfPrimisite);
+    wrap.name = gltfMesh.name !== undefined ? gltfMesh.name : '';
+    for (const primitiveDef of gltfMesh.primitives) {
+      const geometry = createGeometry(json, ibCache, primitiveDef);
       const material = createMaterial();
       const mesh = new Mesh(geometry, material);
       wrap.add(mesh);
@@ -87,15 +146,11 @@ export function createMeshes(gltf: GLTF): Object3D[] {
 }
 
 export function createBufferAttribute(
-  gltf: GLTF,
+  json: GLTFJson,
   ibCache: IBCache,
   accessor: GLTFAccessor
 ): BufferAttribute | InterleavedBufferAttribute {
-  const { root } = gltf;
-  if (root.bufferViews === undefined) {
-    throw new Error('bufferViews is not defened');
-  }
-
+  const { root } = json;
   const itemSize = WEBGL_TYPE_SIZES[accessor.type];
   const TypedArray = WEBGL_COMPONENT_TYPES[accessor.componentType];
 
@@ -103,12 +158,12 @@ export function createBufferAttribute(
   const itemBytes = elementBytes * itemSize;
   const byteOffset = accessor.byteOffset || 0;
   const bufferView =
-    accessor.bufferView !== undefined
+    accessor.bufferView !== undefined && root.bufferViews !== undefined
       ? root.bufferViews[accessor.bufferView]
       : undefined;
   const byteStride = bufferView?.byteStride;
   const buffer =
-    bufferView !== undefined ? gltf.buffers[bufferView.buffer] : undefined;
+    bufferView !== undefined ? json.buffers[bufferView.buffer] : undefined;
   const normalized = accessor.normalized === true;
   let bufferAttribute: BufferAttribute | InterleavedBufferAttribute;
 
@@ -152,13 +207,13 @@ export function createBufferAttribute(
 }
 
 export function createGeometry(
-  gltf: GLTF,
+  json: GLTFJson,
   ibCache: IBCache,
   primitive: GLTFPrimitive
 ): BufferGeometry {
-  const { root } = gltf;
+  const { root } = json;
   if (root.accessors === undefined) {
-    throw new Error(`accessors is not defened`);
+    return new BufferGeometry();
   }
   const attrKeys = Object.keys(primitive.attributes);
 
@@ -168,14 +223,14 @@ export function createGeometry(
     const accIndex = primitive.attributes[key];
 
     const accessor = root.accessors[accIndex];
-    const attribute = createBufferAttribute(gltf, ibCache, accessor);
+    const attribute = createBufferAttribute(json, ibCache, accessor);
 
     geometry.setAttribute(key.toLowerCase(), attribute);
   }
 
   if (primitive.indices !== undefined) {
     const index = createBufferAttribute(
-      gltf,
+      json,
       ibCache,
       root.accessors[primitive.indices]
     );
@@ -192,37 +247,37 @@ export function createMaterial(): Material {
   return new MeshBasicMaterial({ color: 'red' });
 }
 
-// export function renderGLTF(gltf: GLTF): Object3D[] {
-//   const bufferViews = createBufferViews(gltf);
-//   const textures = createTextures(gltf);
-//   const materials = createMaterials(gltf, textures);
-//   const accessors = createAccessors(gltf, bufferViews);
-//   const meshes = createMeshes(gltf, accessors, materials);
-//   const nodes = createNodes(gltf, meshes);
-//   const scenes = createScenes(gltf, nodes);
+// export function renderGLTF(json: GLTFJson): Object3D[] {
+//   const bufferViews = createBufferViews(json);
+//   const textures = createTextures(json);
+//   const materials = createMaterials(json, textures);
+//   const accessors = createAccessors(json, bufferViews);
+//   const meshes = createMeshes(json, accessors, materials);
+//   const nodes = createNodes(json, meshes);
+//   const scenes = createScenes(json, nodes);
 
 //   return scenes;
 // }
 
-// function getBufferViewTarget(gltf: GLTF, index: number): BufferViewTarget {
-//   if (gltf.root.bufferViews === undefined) {
+// function getBufferViewTarget(json: GLTFJson, index: number): BufferViewTarget {
+//   if (json.root.bufferViews === undefined) {
 //     return BufferViewTarget.ARRAY_BUFFER;
 //   }
 
-//   const bv = gltf.root.bufferViews[index];
+//   const bv = json.root.bufferViews[index];
 
 //   if (bv.target !== undefined) {
 //     return bv.target as BufferViewTarget;
 //   }
 
-//   if (gltf.root.meshes === undefined || gltf.root.accessors === undefined) {
+//   if (json.root.meshes === undefined || json.root.accessors === undefined) {
 //     return BufferViewTarget.ARRAY_BUFFER;
 //   }
 
-//   for (const m of gltf.root.meshes) {
+//   for (const m of json.root.meshes) {
 //     for (const p of m.primitives) {
 //       if (p.indices !== undefined) {
-//         const a = gltf.root.accessors[p.indices];
+//         const a = json.root.accessors[p.indices];
 //         if (a.bufferView === index) {
 //           return BufferViewTarget.ELEMENT_ARRAY_BUFFER;
 //         }
@@ -233,10 +288,10 @@ export function createMaterial(): Material {
 //   return BufferViewTarget.ARRAY_BUFFER;
 // }
 
-// function createBufferViews(gltf: GLTF) {
-//   return (gltf.root.bufferViews || []).map((bv, index) => {
-//     const buffer = gltf.buffers[bv.buffer];
-//     const target = getBufferViewTarget(gltf, index);
+// function createBufferViews(json: GLTFJson) {
+//   return (json.root.bufferViews || []).map((bv, index) => {
+//     const buffer = json.buffers[bv.buffer];
+//     const target = getBufferViewTarget(json, index);
 
 //     return new BufferView(
 //       buffer,
@@ -248,8 +303,8 @@ export function createMaterial(): Material {
 //   });
 // }
 
-// function createAccessors(gltf: GLTF, bufferViews: BufferView[]) {
-//   return (gltf.root.accessors || []).map((a) => {
+// function createAccessors(json: GLTFJson, bufferViews: BufferView[]) {
+//   return (json.root.accessors || []).map((a) => {
 //     if (a.bufferView === undefined) {
 //       throw new Error('buffer view is not defened');
 //     }
@@ -269,11 +324,11 @@ export function createMaterial(): Material {
 //   });
 // }
 
-// function createTextures(gltf: GLTF) {
-//   return (gltf.root.textures || []).map((t) => {
+// function createTextures(json: GLTFJson) {
+//   return (json.root.textures || []).map((t) => {
 //     const sampler =
-//       t.sampler !== undefined && gltf.root.samplers !== undefined
-//         ? gltf.root.samplers[t.sampler]
+//       t.sampler !== undefined && json.root.samplers !== undefined
+//         ? json.root.samplers[t.sampler]
 //         : {
 //             magFilter: TextureMagFilter.LINEAR,
 //             minFilter: TextureMinFilter.LINEAR_MIPMAP_LINEAR,
@@ -285,14 +340,14 @@ export function createMaterial(): Material {
 //       throw new Error('source is not defened for texture');
 //     }
 
-//     const src = gltf.images[t.source];
+//     const src = json.images[t.source];
 
 //     return new Texture({ ...sampler, src });
 //   });
 // }
 
-// function createMaterials(gltf: GLTF, textures: Texture[]) {
-//   return (gltf.root.materials || []).map((m) => {
+// function createMaterials(json: GLTFJson, textures: Texture[]) {
+//   return (json.root.materials || []).map((m) => {
 //     if (m.pbrMetallicRoughness === undefined) {
 //       throw new Error('unknown material');
 //     }
@@ -323,11 +378,11 @@ export function createMaterial(): Material {
 // }
 
 // function createMeshes(
-//   gltf: GLTF,
+//   json: GLTFJson,
 //   accessors: BufferAccessor[],
 //   materials: PBRMaterial[]
 // ) {
-//   return (gltf.root.meshes || []).map((m) => {
+//   return (json.root.meshes || []).map((m) => {
 //     if (m.primitives.length > 1) {
 //       throw new Error('unknown situation yet');
 //     }
@@ -367,9 +422,9 @@ export function createMaterial(): Material {
 //   });
 // }
 
-// function createNodes(gltf: GLTF, meshes: Mesh[]) {
+// function createNodes(json: GLTFJson, meshes: Mesh[]) {
 //   const nodes: Object3D[] = [];
-//   const gltfNodes = gltf.root.nodes || [];
+//   const gltfNodes = json.root.nodes || [];
 
 //   for (const gltfNode of gltfNodes) {
 //     let node: Object3D;
@@ -413,8 +468,8 @@ export function createMaterial(): Material {
 //   return nodes;
 // }
 
-// function createScenes(gltf: GLTF, nodes: Object3D[]) {
-//   return (gltf.root.scenes || []).map((s) => {
+// function createScenes(json: GLTFJson, nodes: Object3D[]) {
+//   return (json.root.scenes || []).map((s) => {
 //     const scene = new Object3D();
 //     if (s.nodes !== undefined) {
 //       for (const node of s.nodes) {
