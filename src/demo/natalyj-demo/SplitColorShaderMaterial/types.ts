@@ -1,11 +1,4 @@
-import {
-  Plane,
-  PlaneHelper,
-  Vector3,
-  Object3D,
-  Color,
-  ColorKeyframeTrack,
-} from 'three';
+import { Plane, PlaneHelper, Vector3, Object3D, Color } from 'three';
 import { SplitColorShaderMaterial } from './SplitColorShaderMaterial';
 
 export interface ColorConfig {

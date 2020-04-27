@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "target": "esnext",
+    "target": "es2018",
     "module": "commonjs",
     "esModuleInterop": true,
     "moduleResolution": "node",
     "jsx": "react",
-    "lib": ["dom", "esnext"],
+    "lib": ["dom", "es2018"],
     "downlevelIteration": true,
-    "noUnusedParameters": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
