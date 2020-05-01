@@ -4,14 +4,11 @@ import {
   BoxGeometry,
   Color,
   Mesh,
-  MeshBasicMaterial,
   AxesHelper,
   MeshPhysicalMaterial,
-  PointLight,
   AmbientLight,
-  Vector3,
 } from 'three';
-import { createRenderer, resizeRenderer } from '../../../util';
+import { createRenderer, resizeRendererToDisplaySize } from '../../../util';
 import { Demo } from '../../Demo';
 import { CameraController } from '../../../CameraController';
 
@@ -41,12 +38,7 @@ export async function useScanner(): Promise<Demo> {
   ];
 
   const renderer = createRenderer();
-  const cameraController = new CameraController(
-    0.2,
-    0.01,
-    new Vector3(0.08, 0, 0)
-  );
-
+  const cameraController = new CameraController(0.2, 0.01);
   const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new MeshPhysicalMaterial({
     color: 0xffff00,
@@ -72,12 +64,16 @@ export async function useScanner(): Promise<Demo> {
       const width = Math.floor(window.innerWidth * views[i].width);
       const height = Math.floor(window.innerHeight * views[i].height);
 
+      if (resizeRendererToDisplaySize(renderer)) {
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      }
+
       renderer.setViewport(left, bottom, width, height);
       renderer.setScissor(left, bottom, width, height);
       renderer.setScissorTest(true);
       renderer.setClearColor(views[i].background);
 
-      resizeRenderer(renderer, camera);
       cameraController.update(camera);
       renderer.render(scene, camera);
     }
