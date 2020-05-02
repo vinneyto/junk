@@ -1,19 +1,7 @@
 {
-  "compilerOptions": {
-    "allowJs": true,
-    "target": "esnext",
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "jsx": "react",
-    "lib": ["dom", "esnext"],
-    "downlevelIteration": true,
-    "noUnusedParameters": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "sourceMap": true,
-    "strict": true
-  },
-  "exclude": ["node_modules", "./dist/**"]
+  "extends": "./tsconfig.base.json",
+  "files": ["webpack.config.ts"],
+  "ts-node": {
+    "transpileOnly": true
+  }
 }

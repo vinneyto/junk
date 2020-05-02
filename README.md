@@ -1,5 +1,8 @@
 # three-shader
 
+Install Rust and wasm-pack
+https://rustwasm.github.io/docs/wasm-pack/quickstart.html
+
     $ yarn && yarn start
 
 # How to add your demo
