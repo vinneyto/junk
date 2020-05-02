@@ -411,6 +411,7 @@ dependencies = [
  "gltf",
  "js-sys",
  "log",
+ "num-traits",
  "uuid",
  "wasm-bindgen",
  "web-sys",

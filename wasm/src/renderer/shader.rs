@@ -97,7 +97,7 @@ pub fn add_row_numbers(src: &str) -> String {
 }
 
 pub fn add_header(src: &str, defines: &[Define], with_precision: bool) -> String {
-  let mut result = String::from("");
+  let mut result = String::from("#version 300 es\n\n");
   if with_precision {
     result.push_str("precision highp float;\n\n");
   }
