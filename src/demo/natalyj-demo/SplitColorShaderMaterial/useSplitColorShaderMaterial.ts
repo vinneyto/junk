@@ -19,7 +19,6 @@ import {
   AnimationAction,
   Clock,
 } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import Fox from '../models/Fox/Fox.gltf';
 
