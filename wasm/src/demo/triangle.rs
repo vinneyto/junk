@@ -1,5 +1,8 @@
 use super::canvas::Canvas;
-use crate::renderer::context::Context;
+use crate::renderer::context::{
+  AttributeOptions, BufferBaseTarget, BufferTarget, BufferUsage, Cleaning, ComponentType, Context,
+  DrawMode,
+};
 use crate::renderer::shader::Shader;
 use anyhow::Result;
 use js_sys::Error;
@@ -11,6 +14,7 @@ use wasm_bindgen::prelude::*;
 pub struct TriangleDemo {
   canvas: Canvas,
   ctx: Context,
+  shader: Shader,
 }
 
 #[wasm_bindgen]
@@ -21,11 +25,27 @@ impl TriangleDemo {
     let ctx = Context::new(canvas.gl.clone());
     let shader = create_triangle_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
 
-    Ok(TriangleDemo { canvas, ctx })
+    Ok(TriangleDemo {
+      canvas,
+      ctx,
+      shader,
+    })
   }
 
   pub fn update(&mut self) {
-    self.canvas.check_size();
+    if self.canvas.check_size() {
+      self
+        .ctx
+        .viewport(0, 0, self.canvas.width as i32, self.canvas.height as i32);
+    }
+
+    self.ctx.clear_color(1.0, 1.0, 1.0, 1.0);
+    self.ctx.clear(Cleaning::Color);
+    self.ctx.clear(Cleaning::Depth);
+
+    self.shader.bind();
+
+    self.ctx.draw_arrays(DrawMode::Triangles, 0, 3);
   }
 }
 
@@ -34,6 +54,10 @@ fn create_triangle_stuff(ctx: &Context) -> Result<Shader> {
   let frag_src = include_str!("./shaders/triangle_frag.glsl");
 
   let shader = ctx.create_shader(&vert_src, &frag_src, &[])?;
+
+  // prepare
+
+  // ubo
 
   let block_index = shader.get_uniform_block_index("UBOData");
 
@@ -47,9 +71,65 @@ fn create_triangle_stuff(ctx: &Context) -> Result<Shader> {
 
   info!("uniform_indices {:?}", uniform_indices);
 
-  let uniform_offsets = shader.get_uniform_offsets(&uniform_indices);
+  let uniform_offsets = shader.get_active_uniforms_offset(&uniform_indices);
 
   info!("uniform_offsets {:?}", uniform_offsets);
+
+  let num_cells = block_size / (std::mem::size_of::<f32>() as u32);
+
+  let mut buffer_data: Vec<f32> = vec![0.0; num_cells as usize];
+
+  buffer_data[0] = 1.0;
+  buffer_data[1] = 0.2;
+  buffer_data[2] = 0.4;
+
+  info!("buffer_data {:?}", buffer_data);
+
+  let uniform_buffer = ctx.create_buffer(
+    BufferTarget::ArrayBuffer,
+    BufferUsage::StaticDraw,
+    &buffer_data,
+  );
+
+  // vbo
+
+  let vertices = vec![0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+
+  let vertex_buffer = ctx.create_buffer(
+    BufferTarget::ArrayBuffer,
+    BufferUsage::StaticDraw,
+    &vertices,
+  );
+
+  let vao = ctx.create_vertex_array();
+
+  ctx.bind_vertex_array(vao.as_ref());
+
+  let mut attr = AttributeOptions::default();
+
+  attr.location = shader.get_attrib_location("position");
+  attr.component_type = ComponentType::Float;
+  attr.item_size = 2;
+
+  info!("attr {:#?}", attr);
+
+  ctx.bind_attribute(vertex_buffer.as_ref(), &attr);
+
+  ctx.bind_vertex_array(None);
+
+  // render
+
+  let binding_point = 0;
+
+  ctx.bind_buffer_base(
+    BufferBaseTarget::UniformBuffer,
+    binding_point,
+    uniform_buffer.as_ref(),
+  );
+
+  shader.uniform_block_binding(block_index, binding_point);
+
+  ctx.bind_vertex_array(vao.as_ref());
 
   Ok(shader)
 }

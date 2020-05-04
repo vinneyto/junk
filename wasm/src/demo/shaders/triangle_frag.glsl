@@ -1,4 +1,4 @@
-uniform UBOData {
+layout (std140) uniform UBOData {
   float UBORed;
   float UBOGreen;
   float UBOBlue;

@@ -1,7 +1,7 @@
 use super::define::Define;
 use anyhow::{anyhow, Result};
 use js_sys::Array;
-use log::warn;
+use log::error;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlShader};
 
@@ -31,6 +31,10 @@ impl Shader {
     })
   }
 
+  pub fn bind(&self) {
+    self.gl.use_program(Some(&self.program));
+  }
+
   pub fn get_uniform_indices(&self, names: &[&str]) -> Vec<u32> {
     let uniform_names = Array::new();
     for name in names {
@@ -46,7 +50,7 @@ impl Shader {
       .collect()
   }
 
-  pub fn get_uniform_offsets(&self, uniform_indices: &[u32]) -> Vec<u32> {
+  pub fn get_active_uniforms_offset(&self, uniform_indices: &[u32]) -> Vec<i32> {
     let indices_array = Array::new();
     for index in uniform_indices {
       indices_array.push(&JsValue::from_f64(*index as f64));
@@ -62,7 +66,7 @@ impl Shader {
       .dyn_into::<Array>()
       .unwrap()
       .iter()
-      .map(|v| v.as_f64().unwrap_or(0.0) as u32)
+      .map(|v| v.as_f64().unwrap_or(0.0) as i32)
       .collect()
   }
 
@@ -81,6 +85,16 @@ impl Shader {
       .map_err(|_| anyhow!("unable to get block size"))?;
 
     Ok(value.as_f64().unwrap_or(0.0) as u32)
+  }
+
+  pub fn uniform_block_binding(&self, block_index: u32, block_binding: u32) {
+    self
+      .gl
+      .uniform_block_binding(&self.program, block_index, block_binding);
+  }
+
+  pub fn get_attrib_location(&self, name: &str) -> i32 {
+    self.gl.get_attrib_location(&self.program, name)
   }
 }
 
@@ -106,7 +120,7 @@ pub fn compile_shader(
       .get_shader_info_log(&shader)
       .unwrap_or_else(|| String::from("Unknown error creating shader"));
 
-    warn!(
+    error!(
       "{}",
       &format!("\n{}\n\n{}\n", message, add_row_numbers(source))
     );
