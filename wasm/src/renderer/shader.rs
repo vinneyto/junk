@@ -1,6 +1,8 @@
 use super::define::Define;
 use anyhow::{anyhow, Result};
-use log::warn;
+use js_sys::Array;
+use log::error;
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlShader};
 
 pub struct Shader {
@@ -28,6 +30,72 @@ impl Shader {
       program,
     })
   }
+
+  pub fn bind(&self) {
+    self.gl.use_program(Some(&self.program));
+  }
+
+  pub fn get_uniform_indices(&self, names: &[&str]) -> Vec<u32> {
+    let uniform_names = Array::new();
+    for name in names {
+      uniform_names.push(&JsValue::from_str(name));
+    }
+
+    self
+      .gl
+      .get_uniform_indices(&self.program, &uniform_names)
+      .unwrap()
+      .iter()
+      .map(|v| v.as_f64().unwrap_or(0.0) as u32)
+      .collect()
+  }
+
+  pub fn get_active_uniforms_offset(&self, uniform_indices: &[u32]) -> Vec<i32> {
+    let indices_array = Array::new();
+    for index in uniform_indices {
+      indices_array.push(&JsValue::from_f64(*index as f64));
+    }
+
+    self
+      .gl
+      .get_active_uniforms(
+        &self.program,
+        &indices_array,
+        WebGl2RenderingContext::UNIFORM_OFFSET,
+      )
+      .dyn_into::<Array>()
+      .unwrap()
+      .iter()
+      .map(|v| v.as_f64().unwrap_or(0.0) as i32)
+      .collect()
+  }
+
+  pub fn get_uniform_block_index(&self, name: &str) -> u32 {
+    self.gl.get_uniform_block_index(&self.program, name)
+  }
+
+  pub fn get_uniform_block_size(&self, block_index: u32) -> Result<u32> {
+    let value = self
+      .gl
+      .get_active_uniform_block_parameter(
+        &self.program,
+        block_index,
+        WebGl2RenderingContext::UNIFORM_BLOCK_DATA_SIZE,
+      )
+      .map_err(|_| anyhow!("unable to get block size"))?;
+
+    Ok(value.as_f64().unwrap_or(0.0) as u32)
+  }
+
+  pub fn uniform_block_binding(&self, block_index: u32, block_binding: u32) {
+    self
+      .gl
+      .uniform_block_binding(&self.program, block_index, block_binding);
+  }
+
+  pub fn get_attrib_location(&self, name: &str) -> i32 {
+    self.gl.get_attrib_location(&self.program, name)
+  }
 }
 
 pub fn compile_shader(
@@ -52,7 +120,7 @@ pub fn compile_shader(
       .get_shader_info_log(&shader)
       .unwrap_or_else(|| String::from("Unknown error creating shader"));
 
-    warn!(
+    error!(
       "{}",
       &format!("\n{}\n\n{}\n", message, add_row_numbers(source))
     );

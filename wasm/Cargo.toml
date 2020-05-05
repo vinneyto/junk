@@ -48,5 +48,6 @@ features = [
     "WebGlTexture",
     "WebGlFramebuffer",
     "WebGlActiveInfo",
-    "WebGlUniformLocation"
+    "WebGlUniformLocation",
+    "WebGlVertexArrayObject"
 ]
