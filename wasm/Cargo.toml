@@ -14,6 +14,7 @@ anyhow = "1.0.28"
 console_log = "0.2.0"
 console_error_panic_hook = "0.1.6"
 log = "0.4.8"
+nalgebra = "0.21.0"
 js-sys = "0.3.38"
 wasm-bindgen = "0.2.61"
 
@@ -43,6 +44,7 @@ features = [
     "HtmlImageElement",
     "WebGlBuffer",
     "WebGl2RenderingContext",
+    "WebGlRenderingContext",
     "WebGlProgram",
     "WebGlShader",
     "WebGlTexture",
