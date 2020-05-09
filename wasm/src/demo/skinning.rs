@@ -5,7 +5,7 @@ use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
 use super::webgl_canvas::WebGlCanvas;
-use crate::math::{Matrix4, Vector3, Vector4};
+use crate::math::{Matrix4, Vector3};
 use crate::renderer::webgl::context::{
   BufferTarget, BufferUsage, Cleaning, ComponentType, Context, DrawMode,
 };
@@ -25,12 +25,6 @@ impl SkinningDemo {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let shader = create_triangle_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
-
-    let v = Vector4::new(1.0, 0.0, 0.0, 0.0);
-    let tm = Matrix4::rotation_axis(Vector3::forward(), -3.1417 / 2.0);
-    let vt = tm * v;
-
-    info!("tm * v = {:?}", vt);
 
     Ok(SkinningDemo {
       canvas,
@@ -52,6 +46,12 @@ impl SkinningDemo {
 
     self.shader.bind();
 
+    let mt = Matrix4::translation(0.5, 0.0, 0.0);
+    let mr = Matrix4::rotation_axis(Vector3::forward(), 0.5);
+    let model_matrix = mt * mr;
+
+    self.shader.set_matrix4("modelMatrix", &model_matrix);
+
     self.ctx.draw_arrays(DrawMode::Triangles, 0, 3);
   }
 }
@@ -62,7 +62,7 @@ fn create_triangle_stuff(ctx: &Context) -> Result<Shader> {
 
   let shader = ctx.create_shader(&vert_src, &frag_src, &[])?;
 
-  let vertices = vec![0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+  let vertices = vec![0.0, 0.0, 0.2, 0.0, 0.2, 0.2];
 
   let vertex_buffer = ctx.create_buffer(
     BufferTarget::ArrayBuffer,
@@ -75,10 +75,7 @@ fn create_triangle_stuff(ctx: &Context) -> Result<Shader> {
   ctx.bind_buffer(BufferTarget::ArrayBuffer, vertex_buffer.as_ref());
   ctx.switch_attributes(1);
 
-  let mut attr = AttributeOptions::default();
-
-  attr.component_type = ComponentType::Float;
-  attr.item_size = 2;
+  let attr = AttributeOptions::new(ComponentType::Float, 2);
 
   shader.bind_attribute("position", &attr);
 

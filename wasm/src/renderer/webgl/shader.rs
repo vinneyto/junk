@@ -119,6 +119,18 @@ pub struct AttributeOptions {
   pub offset: i32,
 }
 
+impl AttributeOptions {
+  pub fn new(component_type: ComponentType, item_size: i32) -> AttributeOptions {
+    AttributeOptions {
+      component_type,
+      item_size,
+      normalized: false,
+      stride: 0,
+      offset: 0,
+    }
+  }
+}
+
 pub fn compile_shader(
   gl: &WebGlRenderingContext,
   shader_type: u32,
