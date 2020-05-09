@@ -5,7 +5,7 @@ use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
 use super::webgl_canvas::WebGlCanvas;
-use crate::math::{Matrix4, Vector3};
+use crate::math::{Matrix4, Vector3, Vector4};
 use crate::renderer::webgl::context::{
   BufferTarget, BufferUsage, Cleaning, ComponentType, Context, DrawMode,
 };
@@ -26,8 +26,8 @@ impl SkinningDemo {
     let ctx = Context::new(canvas.gl.clone());
     let shader = create_triangle_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
 
-    let v = Vector3::zero();
-    let tm = Matrix4::translation(0.0, 1.0, 0.0);
+    let v = Vector4::new(1.0, 0.0, 0.0, 0.0);
+    let tm = Matrix4::rotation_axis(Vector3::forward(), -3.1417 / 2.0);
     let vt = tm * v;
 
     info!("tm * v = {:?}", vt);

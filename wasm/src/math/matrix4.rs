@@ -1,4 +1,5 @@
 use super::vector3::Vector3;
+use super::vector4::Vector4;
 use std::ops;
 
 #[derive(Debug, Clone, Copy)]
@@ -133,5 +134,21 @@ impl ops::Mul<Vector3> for Matrix4 {
     let nz = (d[2] * x + d[6] * y + d[10] * z + d[14]) * w;
 
     Vector3::new(nx, ny, nz)
+  }
+}
+
+impl ops::Mul<Vector4> for Matrix4 {
+  type Output = Vector4;
+
+  fn mul(self, r: Vector4) -> Vector4 {
+    let Vector4 { x, y, z, w } = r;
+    let d = &self.data;
+
+    let nx = d[0] * x + d[4] * y + d[8] * z + d[12] * w;
+    let ny = d[1] * x + d[5] * y + d[9] * z + d[13] * w;
+    let nz = d[2] * x + d[6] * y + d[10] * z + d[14] * w;
+    let nw = d[3] * x + d[7] * y + d[11] * z + d[15] * w;
+
+    Vector4::new(nx, ny, nz, nw)
   }
 }

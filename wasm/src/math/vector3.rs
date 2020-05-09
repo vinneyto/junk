@@ -34,12 +34,7 @@ impl Vector3 {
 
   pub fn len(&self) -> f32 {
     let Self { x, y, z } = self;
-    let mag_sq = x * x + y * y + z * z;
-    if mag_sq > 0.0 {
-      mag_sq.sqrt()
-    } else {
-      0.0
-    }
+    (x * x + y * y + z * z).sqrt()
   }
 
   pub fn normalize(&self) -> Self {
