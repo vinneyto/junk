@@ -1,13 +1,15 @@
-use super::webgl_canvas::WebGlCanvas;
-use crate::renderer::webgl::context::{
-  BufferTarget, BufferUsage, Cleaning, ComponentType, Context, DrawMode,
-};
-use crate::renderer::webgl::shader::{AttributeOptions, Shader};
 use anyhow::Result;
 use js_sys::Error;
 use log::info;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
+
+use super::webgl_canvas::WebGlCanvas;
+use crate::math::{Matrix4, Vector3};
+use crate::renderer::webgl::context::{
+  BufferTarget, BufferUsage, Cleaning, ComponentType, Context, DrawMode,
+};
+use crate::renderer::webgl::shader::{AttributeOptions, Shader};
 
 #[wasm_bindgen]
 pub struct SkinningDemo {
@@ -23,6 +25,12 @@ impl SkinningDemo {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let shader = create_triangle_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
+
+    let v = Vector3::zero();
+    let tm = Matrix4::translation(0.0, 1.0, 0.0);
+    let vt = tm * v;
+
+    info!("tm * v = {:?}", vt);
 
     Ok(SkinningDemo {
       canvas,
