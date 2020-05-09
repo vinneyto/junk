@@ -16,6 +16,7 @@ pub struct SkinningDemo {
   canvas: WebGlCanvas,
   ctx: Context,
   shader: Shader,
+  angle: f32,
 }
 
 #[wasm_bindgen]
@@ -30,6 +31,7 @@ impl SkinningDemo {
       canvas,
       ctx,
       shader,
+      angle: 0.0,
     })
   }
 
@@ -46,8 +48,10 @@ impl SkinningDemo {
 
     self.shader.bind();
 
+    self.angle += 0.01;
+
     let mt = Matrix4::translation(0.5, 0.0, 0.0);
-    let mr = Matrix4::rotation_axis(Vector3::forward(), 0.5);
+    let mr = Matrix4::rotation_axis(Vector3::forward(), self.angle);
     let model_matrix = mt * mr;
 
     self.shader.set_matrix4("modelMatrix", &model_matrix);

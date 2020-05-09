@@ -8,12 +8,12 @@ pub struct Matrix4 {
 }
 
 impl Matrix4 {
-  pub fn new(data: [f32; 16]) -> Self {
+  pub fn from_array(data: [f32; 16]) -> Self {
     Matrix4 { data }
   }
 
   #[rustfmt::skip]
-  pub fn elements(
+  pub fn new(
     ix: f32, iy: f32, iz: f32, iw: f32,
     jx: f32, jy: f32, jz: f32, jw: f32,
     kx: f32, ky: f32, kz: f32, kw: f32,
@@ -31,7 +31,7 @@ impl Matrix4 {
 
   #[rustfmt::skip]
   pub fn identity() -> Self {
-    Self::elements(
+    Self::new(
       1.0, 0.0, 0.0, 0.0,
       0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 1.0, 0.0,
@@ -41,7 +41,7 @@ impl Matrix4 {
 
   #[rustfmt::skip]
   pub fn translation(x: f32, y: f32, z: f32) -> Self {
-    Self::elements(
+    Self::new(
       1.0, 0.0, 0.0, 0.0,
       0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 1.0, 0.0,
@@ -51,7 +51,7 @@ impl Matrix4 {
 
   #[rustfmt::skip]
   pub fn scale(x: f32, y: f32, z: f32) -> Self {
-    Self::elements(
+    Self::new(
       x, 0.0, 0.0, 0.0,
       0.0, y, 0.0, 0.0,
       0.0, 0.0, z, 0.0,
@@ -67,12 +67,57 @@ impl Matrix4 {
     let x = axis.x; let y = axis.y; let z = axis.z;
     let tx = t * x; let ty = t * y;
 
-    Self::elements(
+    Self::new(
       tx * x + c,      tx * y + s * z,  tx * z - s * y, 0.0,
       tx * y - s * z,  ty * y + c,      ty * z + s * x, 0.0,
       tx * z + s * y,  ty * z - s * x,  t * z * z + c, 0.0,
       0.0, 0.0, 0.0, 1.0,
     )
+  }
+
+  #[rustfmt::skip]
+  pub fn inverse(&self) -> Self {
+    let me = &self.data;
+
+    let n11 = me[0]; let n21 = me[1]; let n31 = me[2]; let n41 = me[3];
+    let n12 = me[4]; let n22 = me[5]; let n32 = me[6]; let n42 = me[7];
+    let n13 = me[8]; let n23 = me[9]; let n33 = me[10]; let n43 = me[11];
+    let n14 = me[12]; let n24 = me[13]; let n34 = me[14]; let n44 = me[15];
+
+    let t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44;
+    let t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44;
+    let t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44;
+    let t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+
+    let det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+
+    if det == 0.0 { return Matrix4::from_array([0.0; 16]) };
+
+    let det_inv = 1.0 / det;
+
+    let mut te = [0.0; 16];
+
+    te[0] = t11 * det_inv;
+    te[1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * det_inv;
+    te[2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * det_inv;
+    te[3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * det_inv;
+
+    te[4] = t12 * det_inv;
+    te[5] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * det_inv;
+    te[6] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * det_inv;
+    te[7] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * det_inv;
+
+    te[8] = t13 * det_inv;
+    te[9] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * det_inv;
+    te[10] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * det_inv;
+    te[11] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * det_inv;
+
+    te[12] = t14 * det_inv;
+    te[13] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * det_inv;
+    te[14] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * det_inv;
+    te[15] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * det_inv;
+
+    Matrix4::from_array(te)
   }
 }
 
@@ -116,7 +161,7 @@ impl ops::Mul<Matrix4> for Matrix4 {
     te[ 11 ] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
     te[ 15 ] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
 
-    Matrix4::new(te)
+    Matrix4::from_array(te)
   }
 }
 

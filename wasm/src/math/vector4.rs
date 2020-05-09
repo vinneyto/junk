@@ -144,6 +144,19 @@ impl ops::Mul<Vector4> for Vector4 {
   }
 }
 
+impl ops::Mul<Vector4> for f32 {
+  type Output = Vector4;
+
+  fn mul(self, r: Vector4) -> Vector4 {
+    Vector4 {
+      x: self * r.x,
+      y: self * r.y,
+      z: self * r.z,
+      w: self * r.w,
+    }
+  }
+}
+
 impl ops::Div<f32> for Vector4 {
   type Output = Vector4;
 

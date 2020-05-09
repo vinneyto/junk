@@ -138,6 +138,18 @@ impl ops::Mul<Vector3> for Vector3 {
   }
 }
 
+impl ops::Mul<Vector3> for f32 {
+  type Output = Vector3;
+
+  fn mul(self, r: Vector3) -> Vector3 {
+    Vector3 {
+      x: self * r.x,
+      y: self * r.y,
+      z: self * r.z,
+    }
+  }
+}
+
 impl ops::Div<f32> for Vector3 {
   type Output = Vector3;
 
