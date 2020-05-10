@@ -3,7 +3,7 @@ use log::error;
 use std::collections::HashMap;
 use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation};
 
-use super::context::ComponentType;
+use super::context::TypedArrayKind;
 use super::define::Define;
 use crate::math::{Matrix4, Vector3, Vector4};
 
@@ -50,7 +50,7 @@ impl Shader {
     self.gl.vertex_attrib_pointer_with_i32(
       *location,
       attribute.item_size,
-      attribute.component_type as u32,
+      attribute.component_type.as_u32(),
       attribute.normalized,
       attribute.stride,
       attribute.offset,
@@ -108,11 +108,21 @@ impl Shader {
 
     Some(())
   }
+
+  pub fn set_matrix4_data(&self, name: &str, data: &[f32]) -> Option<()> {
+    let location = self.uniform_locations.get(name)?;
+
+    self
+      .gl
+      .uniform_matrix4fv_with_f32_array(Some(location), false, data);
+
+    Some(())
+  }
 }
 
 #[derive(Debug, Default)]
 pub struct AttributeOptions {
-  pub component_type: ComponentType,
+  pub component_type: TypedArrayKind,
   pub item_size: i32,
   pub normalized: bool,
   pub stride: i32,
@@ -120,7 +130,7 @@ pub struct AttributeOptions {
 }
 
 impl AttributeOptions {
-  pub fn new(component_type: ComponentType, item_size: i32) -> AttributeOptions {
+  pub fn new(component_type: TypedArrayKind, item_size: i32) -> AttributeOptions {
     AttributeOptions {
       component_type,
       item_size,

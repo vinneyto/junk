@@ -126,16 +126,10 @@ impl Context {
     self.gl.draw_arrays(mode.as_u32(), first, count);
   }
 
-  pub fn draw_elements(
-    &self,
-    mode: DrawMode,
-    count: i32,
-    component_type: ComponentType,
-    offset: i32,
-  ) {
+  pub fn draw_elements(&self, mode: DrawMode, count: i32, kind: TypedArrayKind, offset: i32) {
     self
       .gl
-      .draw_elements_with_i32(mode.as_u32(), count, component_type as u32, offset);
+      .draw_elements_with_i32(mode.as_u32(), count, kind.as_u32(), offset);
   }
 }
 
@@ -150,22 +144,6 @@ impl Cleaning {
       Self::Color => WebGlRenderingContext::COLOR_BUFFER_BIT,
       Self::Depth => WebGlRenderingContext::DEPTH_BUFFER_BIT,
     }
-  }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ComponentType {
-  Byte = 5120,
-  UnsignedByte = 5121,
-  Short = 5122,
-  UnsignedShort = 5123,
-  UnsignedInt = 5125,
-  Float = 5126,
-}
-
-impl Default for ComponentType {
-  fn default() -> Self {
-    Self::Float
   }
 }
 
@@ -201,12 +179,14 @@ impl BufferUsage {
 
 pub enum DrawMode {
   Triangles,
+  Lines,
 }
 
 impl DrawMode {
   pub fn as_u32(&self) -> u32 {
     match self {
       Self::Triangles => WebGlRenderingContext::TRIANGLES,
+      Self::Lines => WebGlRenderingContext::LINES,
     }
   }
 }
@@ -225,9 +205,16 @@ impl Feature {
   }
 }
 
+#[derive(Debug)]
 pub enum TypedArrayKind {
   Uint16,
   Float32,
+}
+
+impl Default for TypedArrayKind {
+  fn default() -> Self {
+    Self::Float32
+  }
 }
 
 impl TypedArrayKind {
