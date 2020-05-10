@@ -24,7 +24,7 @@ impl Matrix4 {
       jx, jy, jz, jw,
       kx, ky, kz, kw,
       tx, ty, tz, tw
-  ];
+    ];
 
     Matrix4 { data }
   }
