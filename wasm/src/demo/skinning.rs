@@ -48,13 +48,25 @@ impl SkinningDemo {
 
     self.shader.bind();
 
+    let aspect = (self.canvas.width as f32) / (self.canvas.height as f32);
+    let half_size = 5.0;
+
+    let projection = Matrix4::orthographic(
+      half_size * aspect * -1.0,
+      half_size * aspect,
+      half_size,
+      half_size * -1.0,
+      half_size * -1.0,
+      half_size,
+    );
+
     self.angle += 0.01;
 
-    let mt = Matrix4::translation(0.5, 0.0, 0.0);
+    let mt = Matrix4::translation(2.0, 0.0, 0.0);
     let mr = Matrix4::rotation_axis(Vector3::forward(), self.angle);
-    let model_matrix = mt * mr;
+    let mvp = projection * mt * mr;
 
-    self.shader.set_matrix4("modelMatrix", &model_matrix);
+    self.shader.set_matrix4("mvp", &mvp);
 
     self.ctx.draw_arrays(DrawMode::Triangles, 0, 3);
   }
@@ -66,7 +78,7 @@ fn create_triangle_stuff(ctx: &Context) -> Result<Shader> {
 
   let shader = ctx.create_shader(&vert_src, &frag_src, &[])?;
 
-  let vertices = vec![0.0, 0.0, 0.2, 0.0, 0.2, 0.2];
+  let vertices = vec![0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
 
   let vertex_buffer = ctx.create_buffer(
     BufferTarget::ArrayBuffer,

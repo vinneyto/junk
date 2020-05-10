@@ -24,7 +24,7 @@ impl Matrix4 {
       jx, jy, jz, jw,
       kx, ky, kz, kw,
       tx, ty, tz, tw
-    ];
+  ];
 
     Matrix4 { data }
   }
@@ -119,6 +119,51 @@ impl Matrix4 {
 
     Matrix4::from_array(te)
   }
+
+  #[rustfmt::skip]
+  pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> Self {
+    let top = near * (fov * 0.5).tan();
+    let height = 2.0 * fov;
+    let width = aspect * height;
+    let left = -0.5 * width;
+    let right = left + width;
+    let bottom = top - height;
+
+    let mut te = [0.0; 16];
+    let x = 2.0 * near / (right - left);
+    let y = 2.0 * near / (top - bottom);
+
+    let a = (right + left) / (right - left);
+    let b = (top + bottom) / (top - bottom);
+    let c = - (far + near) / (far - near);
+    let d = - 2.0 * far * near / (far - near);
+
+    te[0] = x; te[4] = 0.0; te[8] = a; te[12] = 0.0;
+    te[1] = 0.0; te[5] = y; te[9] = b; te[13] = 0.0;
+    te[2] = 0.0; te[6] = 0.0; te[10] = c; te[14] = d;
+    te[3] = 0.0; te[7] = 0.0; te[11] = -1.0; te[15] = 0.0;
+
+    Matrix4::from_array(te)
+  }
+
+  #[rustfmt::skip]
+  pub fn orthographic(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) -> Self {
+    let mut te = [0.0; 16];
+    let w = 1.0 / ( right - left );
+    let h = 1.0 / ( top - bottom );
+    let p = 1.0 / ( far - near );
+
+    let x = ( right + left ) * w;
+    let y = ( top + bottom ) * h;
+    let z = ( far + near ) * p;
+
+    te[0] = 2.0 * w; te[4] = 0.0; te[8] = 0.0; te[12] = -x;
+    te[1] = 0.0; te[5] = 2.0 * h; te[9] = 0.0; te[13] = -y;
+    te[2] = 0.0; te[6] = 0.0; te[10] = - 2.0 * p; te[14] = -z;
+    te[3] = 0.0; te[7] = 0.0; te[11] = 0.0; te[15] = 1.0;
+
+    Matrix4::from_array(te)
+  }
 }
 
 impl ops::Mul<Matrix4> for Matrix4 {
@@ -129,37 +174,37 @@ impl ops::Mul<Matrix4> for Matrix4 {
     let ae = &self.data;
     let be = &r.data;
 
-    let a11 = ae[ 0 ]; let a12 = ae[ 4 ]; let a13 = ae[ 8 ]; let a14 = ae[ 12 ];
-    let a21 = ae[ 1 ]; let a22 = ae[ 5 ]; let a23 = ae[ 9 ]; let a24 = ae[ 13 ];
-    let a31 = ae[ 2 ]; let a32 = ae[ 6 ]; let a33 = ae[ 10 ]; let a34 = ae[ 14 ];
-    let a41 = ae[ 3 ]; let a42 = ae[ 7 ]; let a43 = ae[ 11 ]; let a44 = ae[ 15 ];
+    let a11 = ae[0]; let a12 = ae[4]; let a13 = ae[8]; let a14 = ae[12];
+    let a21 = ae[1]; let a22 = ae[5]; let a23 = ae[9]; let a24 = ae[13];
+    let a31 = ae[2]; let a32 = ae[6]; let a33 = ae[10]; let a34 = ae[14];
+    let a41 = ae[3]; let a42 = ae[7]; let a43 = ae[11]; let a44 = ae[15];
 
-    let b11 = be[ 0 ]; let b12 = be[ 4 ]; let b13 = be[ 8 ]; let b14 = be[ 12 ];
-    let b21 = be[ 1 ]; let b22 = be[ 5 ]; let b23 = be[ 9 ]; let b24 = be[ 13 ];
-    let b31 = be[ 2 ]; let b32 = be[ 6 ]; let b33 = be[ 10 ]; let b34 = be[ 14 ];
-    let b41 = be[ 3 ]; let b42 = be[ 7 ]; let b43 = be[ 11 ]; let b44 = be[ 15 ];
+    let b11 = be[0]; let b12 = be[4]; let b13 = be[8]; let b14 = be[12];
+    let b21 = be[1]; let b22 = be[5]; let b23 = be[9]; let b24 = be[13];
+    let b31 = be[2]; let b32 = be[6]; let b33 = be[10]; let b34 = be[14];
+    let b41 = be[3]; let b42 = be[7]; let b43 = be[11]; let b44 = be[15];
 
     let mut te = [0.0; 16];
 
-    te[ 0 ] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
-    te[ 4 ] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
-    te[ 8 ] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
-    te[ 12 ] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+    te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
+    te[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+    te[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+    te[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
 
-    te[ 1 ] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
-    te[ 5 ] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
-    te[ 9 ] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
-    te[ 13 ] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+    te[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+    te[5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
+    te[9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+    te[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
 
-    te[ 2 ] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
-    te[ 6 ] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
-    te[ 10 ] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
-    te[ 14 ] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+    te[2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+    te[6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+    te[10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
+    te[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
 
-    te[ 3 ] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
-    te[ 7 ] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
-    te[ 11 ] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
-    te[ 15 ] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
+    te[3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+    te[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+    te[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+    te[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
 
     Matrix4::from_array(te)
   }
