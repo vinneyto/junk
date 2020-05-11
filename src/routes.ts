@@ -3,6 +3,7 @@ import { Demo } from './demo/Demo';
 import { useSingleColorShaderMaterial as natalyjSingleColorShaderMaterial } from './demo/natalyj-demo/SingleColorShaderMaterial/useSingleColorShaderMaterial';
 import { useSplitColorShaderMaterial as natalyjSplitColorShaderMaterial } from './demo/natalyj-demo/SplitColorShaderMaterial/useSplitColorShaderMaterial';
 import { createWasmDemoFactory } from './demo/createWasmDemoFactory';
+import { useScanner as natalyjScanner } from './demo/natalyj-demo/Scanner/useScanner';
 
 const vinneytoWasmTriangleDemo = createWasmDemoFactory('TriangleDemo');
 const vinneytoWasmSkinningDemo = createWasmDemoFactory('SkinningDemo');
@@ -16,3 +17,4 @@ routes.set(
 routes.set('natalyj-splitColorShaderMaterial', natalyjSplitColorShaderMaterial);
 routes.set('vinneyto-wasm-webgl2-triangle', vinneytoWasmTriangleDemo);
 routes.set('vinneyto-wasm-skinning', vinneytoWasmSkinningDemo);
+routes.set('natalyj-scanner', natalyjScanner);

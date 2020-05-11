@@ -1,11 +1,18 @@
-import { WebGLRenderer, Color, PerspectiveCamera, Scene, Camera } from 'three';
+import {
+  WebGLRenderer,
+  Color,
+  PerspectiveCamera,
+  Scene,
+  Camera,
+  Vector2,
+} from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export function createRenderer() {
   const renderer = new WebGLRenderer({ antialias: true });
   document.body.appendChild(renderer.domElement);
-  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setClearColor(new Color('white'));
+  renderer.setPixelRatio(window.devicePixelRatio);
 
   renderer.domElement.style.position = 'fixed';
   renderer.domElement.style.left = '0';
@@ -18,14 +25,26 @@ export function createRenderer() {
   return renderer;
 }
 
+const sizeMap = new WeakMap<WebGLRenderer, Vector2>();
+
 export function resizeRendererToDisplaySize(renderer: WebGLRenderer) {
   const canvas = renderer.domElement;
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  const needResize =
-    canvas.width !== width * window.devicePixelRatio ||
-    canvas.height !== height * window.devicePixelRatio;
+  const width = canvas.offsetWidth;
+  const height = canvas.offsetHeight;
+
+  let size = sizeMap.get(renderer);
+  if (size === undefined) {
+    size = new Vector2();
+    sizeMap.set(renderer, size);
+  }
+
+  const newSizeX = width * window.devicePixelRatio;
+  const newSizeY = height * window.devicePixelRatio;
+
+  const needResize = newSizeX !== size.x || newSizeY !== size.y;
   if (needResize) {
+    size.x = newSizeX;
+    size.y = newSizeY;
     renderer.setSize(width, height, false);
   }
   return needResize;
