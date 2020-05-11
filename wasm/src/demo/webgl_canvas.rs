@@ -4,17 +4,17 @@ use log::Level;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{window, HtmlCanvasElement, WebGl2RenderingContext};
+use web_sys::{window, HtmlCanvasElement, WebGlRenderingContext};
 
-pub struct Canvas {
+pub struct WebGlCanvas {
   pub canvas: HtmlCanvasElement,
-  pub gl: WebGl2RenderingContext,
+  pub gl: WebGlRenderingContext,
   pub width: u32,
   pub height: u32,
 }
 
-impl Canvas {
-  pub fn new() -> StdResult<Canvas, JsValue> {
+impl WebGlCanvas {
+  pub fn new() -> StdResult<WebGlCanvas, JsValue> {
     console_error_panic_hook::set_once();
 
     console_log::init_with_level(Level::Info)
@@ -27,7 +27,7 @@ impl Canvas {
 
     fit_canvas(&canvas)?;
 
-    Ok(Canvas {
+    Ok(WebGlCanvas {
       canvas,
       gl,
       width,
@@ -67,12 +67,12 @@ pub fn create_canvas() -> Result<HtmlCanvasElement, Error> {
   Ok(canvas)
 }
 
-pub fn get_webgl_context(canvas: &HtmlCanvasElement) -> Result<WebGl2RenderingContext, Error> {
+pub fn get_webgl_context(canvas: &HtmlCanvasElement) -> Result<WebGlRenderingContext, Error> {
   canvas
-    .get_context("webgl2")
+    .get_context("webgl")
     .map_err(|e| Error::new(&format!("error during context creation, {:?}", e)))?
-    .ok_or_else(|| Error::new("null was returned"))?
-    .dyn_into::<WebGl2RenderingContext>()
+    .ok_or_else(|| Error::new("null was returned instead of context"))?
+    .dyn_into::<WebGlRenderingContext>()
     .map_err(|e| Error::new(&format!("can't cast to context, {:?}", e)))
 }
 

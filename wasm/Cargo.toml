@@ -43,6 +43,7 @@ features = [
     "HtmlImageElement",
     "WebGlBuffer",
     "WebGl2RenderingContext",
+    "WebGlRenderingContext",
     "WebGlProgram",
     "WebGlShader",
     "WebGlTexture",

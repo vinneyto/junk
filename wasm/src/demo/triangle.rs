@@ -1,9 +1,9 @@
-use super::canvas::Canvas;
-use crate::renderer::context::{
+use super::webgl2_canvas::WebGl2Canvas;
+use crate::renderer::webgl2::context::{
   AttributeOptions, BufferBaseTarget, BufferTarget, BufferUsage, Cleaning, ComponentType, Context,
   DrawMode,
 };
-use crate::renderer::shader::Shader;
+use crate::renderer::webgl2::shader::Shader;
 use anyhow::Result;
 use js_sys::Error;
 use log::info;
@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct TriangleDemo {
-  canvas: Canvas,
+  canvas: WebGl2Canvas,
   ctx: Context,
   shader: Shader,
 }
@@ -21,7 +21,7 @@ pub struct TriangleDemo {
 impl TriangleDemo {
   #[wasm_bindgen(constructor)]
   pub fn new() -> StdResult<TriangleDemo, JsValue> {
-    let canvas = Canvas::new()?;
+    let canvas = WebGl2Canvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let shader = create_triangle_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
 
