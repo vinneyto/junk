@@ -1,0 +1,53 @@
+[package]
+name = "wasm"
+version = "0.1.0"
+authors = ["vinneyto <vinneyto@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1.0.28"
+console_log = "0.2.0"
+console_error_panic_hook = "0.1.6"
+log = "0.4.8"
+js-sys = "0.3.38"
+wasm-bindgen = "0.2.61"
+
+[dependencies.num-traits]
+version = "0.2"
+default-features = false
+
+[dependencies.gltf]
+version = "0.15"
+features = ["extras", "names"]
+
+[dependencies.uuid]
+version = "0.8.1"
+features = ["v4", "wasm-bindgen"]
+
+[dependencies.web-sys]
+version = "0.3.39"
+features = [
+    "console",
+    "Document",
+    "CssStyleDeclaration",
+    "Window",
+    "Node",
+    "Element",
+    "HtmlElement",
+    "HtmlCanvasElement",
+    "HtmlImageElement",
+    "WebGlBuffer",
+    "WebGl2RenderingContext",
+    "WebGlProgram",
+    "WebGlShader",
+    "WebGlTexture",
+    "WebGlFramebuffer",
+    "WebGlActiveInfo",
+    "WebGlUniformLocation",
+    "WebGlVertexArrayObject"
+]

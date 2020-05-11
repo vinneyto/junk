@@ -4,3 +4,4 @@ node_modules
 dist
 .history
 .firebase
+/pkg

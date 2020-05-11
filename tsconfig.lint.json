@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "exclude": ["node_modules", "./dist/**"],
+  "compilerOptions": {
+    "lib": ["DOM", "ESNext"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}

@@ -4,6 +4,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -20,6 +21,7 @@ const plugins = [
   new MiniCssExtractPlugin({
     filename: debug ? '[name].css' : '[name].[chunkhash].css',
   }),
+  new WasmPackPlugin({ crateDirectory: path.join(__dirname, 'wasm') }),
 ];
 
 if (!debug) {
