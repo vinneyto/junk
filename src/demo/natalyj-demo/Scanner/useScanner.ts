@@ -1,7 +1,6 @@
 import {
   PerspectiveCamera,
   Scene,
-  BoxGeometry,
   Color,
   Mesh,
   MeshPhysicalMaterial,
@@ -17,6 +16,7 @@ import {
   Object3D,
   PlaneHelper,
   Plane,
+  BoxBufferGeometry,
 } from 'three';
 import Duck from '../models/Duck/Duck.gltf';
 import {
@@ -30,7 +30,7 @@ import { createCustomGUI } from './createCustomGUI';
 import { UpscaleShaderMaterial } from './UpscaleShaderMaterial';
 
 const CAMERA_OFFSET = 0.01;
-const CROSS_WIDTH = 1;
+const CROSS_WIDTH = 0.001;
 const CROSS_COLOR = new Color('blue');
 
 interface View {
@@ -108,12 +108,25 @@ export async function useScanner(): Promise<Demo> {
 
 // @ts-ignore
 const createBox = () => {
-  const geometry = new BoxGeometry(0.1, 0.1, 0.1);
+  const geometry = new BoxBufferGeometry(0.1, 0.1, 0.1);
   const material = new MeshPhysicalMaterial({
     color: 0xffff00,
     metalness: 0.1,
     roughness: 0.5,
   });
+
+  const normal = new Vector3();
+
+  for (let i = 0; i < geometry.attributes.position.array.length; i += 3) {
+    normal
+      .set(
+        geometry.attributes.position.array[i],
+        geometry.attributes.position.array[i + 1],
+        geometry.attributes.position.array[i + 2]
+      )
+      .normalize()
+      .toArray(geometry.attributes.normal.array, i);
+  }
 
   return new Mesh(geometry, material);
 };
@@ -140,10 +153,13 @@ const buildViews = (cameras: Camera[], scenes: Scene[]): View[] => [
 ];
 
 const addDucks = async (scannerScene: Scene, crossSectionScene: Scene) => {
+  // @ts-ignore
   const gltf = await fetchGLTF(Duck);
 
-  const wholeDuck = gltf.scene;
-  wholeDuck.scale.set(0.1, 0.1, 0.1);
+  // const wholeDuck = gltf.scene;
+  // wholeDuck.scale.set(0.1, 0.1, 0.1);
+  const wholeDuck = createBox();
+  wholeDuck.position.y = 0.05;
   scannerScene.add(wholeDuck);
 
   const crossedDuck = wholeDuck.clone();
