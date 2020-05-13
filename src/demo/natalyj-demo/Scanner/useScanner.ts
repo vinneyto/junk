@@ -15,6 +15,8 @@ import {
   FrontSide,
   WebGLRenderer,
   Object3D,
+  PlaneHelper,
+  Plane,
 } from 'three';
 import Duck from '../models/Duck/Duck.gltf';
 import {
@@ -27,7 +29,7 @@ import { CameraController } from '../../../CameraController';
 import { createCustomGUI } from './createCustomGUI';
 import { UpscaleShaderMaterial } from './UpscaleShaderMaterial';
 
-const ORTHO_CAMERA_OFFSET = 0.01;
+const CAMERA_OFFSET = 0.01;
 const CROSS_WIDTH = 1;
 const CROSS_COLOR = new Color('blue');
 
@@ -53,8 +55,8 @@ export async function useScanner(): Promise<Demo> {
     -1,
     1,
     1,
-    -ORTHO_CAMERA_OFFSET,
-    -0.1,
+    -CAMERA_OFFSET,
+    0.01,
     0.1
   );
 
@@ -64,7 +66,12 @@ export async function useScanner(): Promise<Demo> {
   );
 
   const cameraHelper = new CameraHelper(orthographicCamera);
+  cameraHelper.visible = false;
   scannerScene.add(cameraHelper);
+
+  const plane = new Plane(new Vector3(0, 0, 1), orthographicCamera.near);
+  const planeHelper = new PlaneHelper(plane, 0.5, CROSS_COLOR.getHex());
+  scannerScene.add(planeHelper);
 
   const { wholeDuck, upscaleMaterial } = await addDucks(
     scannerScene,
@@ -74,7 +81,7 @@ export async function useScanner(): Promise<Demo> {
   [scannerScene, crossSectionScene].forEach((scene) =>
     scene.add(new AmbientLight())
   );
-  createCustomGUI(orthographicCamera, cameraHelper);
+  createCustomGUI(orthographicCamera, cameraHelper, plane);
 
   const render = () => {
     const resized = resizeRendererToDisplaySize(renderer);
@@ -99,8 +106,9 @@ export async function useScanner(): Promise<Demo> {
   return { render };
 }
 
+// @ts-ignore
 const createBox = () => {
-  const geometry = new BoxGeometry(0.01, 0.01, 0.01);
+  const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new MeshPhysicalMaterial({
     color: 0xffff00,
     metalness: 0.1,
@@ -135,7 +143,7 @@ const addDucks = async (scannerScene: Scene, crossSectionScene: Scene) => {
   const gltf = await fetchGLTF(Duck);
 
   const wholeDuck = gltf.scene;
-  wholeDuck.scale.set(0.05, 0.05, 0.05);
+  wholeDuck.scale.set(0.1, 0.1, 0.1);
   scannerScene.add(wholeDuck);
 
   const crossedDuck = wholeDuck.clone();
@@ -175,9 +183,9 @@ const updateRenderer = (
       bbox.expandByObject(object);
       bbox.getSize(size);
 
-      camera.left = -size.x / 2 - ORTHO_CAMERA_OFFSET;
-      camera.right = size.x / 1.5 + ORTHO_CAMERA_OFFSET;
-      camera.top = size.y + ORTHO_CAMERA_OFFSET;
+      camera.left = -size.x / 2 - CAMERA_OFFSET;
+      camera.right = size.x / 1.5 + CAMERA_OFFSET;
+      camera.top = size.y + CAMERA_OFFSET;
       camera.updateProjectionMatrix();
       cameraHelper.update();
     }
