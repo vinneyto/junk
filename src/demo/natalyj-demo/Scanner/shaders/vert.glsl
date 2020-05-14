@@ -1,5 +1,8 @@
 uniform float u_upscale_coef;
 
 void main() {
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position + normal * u_upscale_coef, 1.0);
+  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+  vec4 modelNormal = normalize(modelMatrix * vec4(normal, 0.0));
+
+  gl_Position = projectionMatrix * viewMatrix * (modelPosition + modelNormal * u_upscale_coef);
 }
