@@ -153,13 +153,12 @@ const buildViews = (cameras: Camera[], scenes: Scene[]): View[] => [
 ];
 
 const addDucks = async (scannerScene: Scene, crossSectionScene: Scene) => {
-  // @ts-ignore
   const gltf = await fetchGLTF(Duck);
 
-  // const wholeDuck = gltf.scene;
-  // wholeDuck.scale.set(0.1, 0.1, 0.1);
-  const wholeDuck = createBox();
-  wholeDuck.position.y = 0.05;
+  const wholeDuck = gltf.scene;
+  wholeDuck.scale.set(0.1, 0.1, 0.1);
+  // const wholeDuck = createBox();
+  // wholeDuck.position.y = 0.05;
   scannerScene.add(wholeDuck);
 
   const crossedDuck = wholeDuck.clone();
@@ -221,25 +220,35 @@ const renderToRenderer = (
   view: View,
   upscaleMaterial: UpscaleShaderMaterial
 ) => {
-  const { scene, camera, background } = view;
+  const { scene, camera } = view;
 
   if (camera instanceof OrthographicCamera) {
-    upscaleMaterial.uniforms.u_color.value = CROSS_COLOR;
-    upscaleMaterial.uniforms.u_upscale_coef.value = 0;
-    upscaleMaterial.side = FrontSide;
-    renderer.render(scene, camera);
-
+    // need to save depth buffer during all renders
     renderer.autoClearDepth = false;
-    upscaleMaterial.side = BackSide;
+
+    // draw a transparent corridor
+    upscaleMaterial.colorWrite = false;
+
+    // front side with initial size
+    upscaleMaterial.setProperties(0, FrontSide);
     renderer.render(scene, camera);
 
+    // back side with reduced size
+    upscaleMaterial.setProperties(-CROSS_WIDTH, BackSide);
+    renderer.render(scene, camera);
+
+    // start actual drawing
+    upscaleMaterial.colorWrite = true;
+
+    // save color of two future renders
     renderer.autoClearColor = false;
-    upscaleMaterial.uniforms.u_upscale_coef.value = -CROSS_WIDTH;
-    upscaleMaterial.side = FrontSide;
+
+    // back side with initial size
+    upscaleMaterial.setProperties(0, BackSide);
     renderer.render(scene, camera);
 
-    upscaleMaterial.side = BackSide;
-    upscaleMaterial.uniforms.u_color.value = new Color(background);
+    // front side with reduced size
+    upscaleMaterial.setProperties(-CROSS_WIDTH, FrontSide);
     renderer.render(scene, camera);
   } else {
     renderer.render(scene, camera);

@@ -1,4 +1,4 @@
-import { Color, ShaderMaterial } from 'three';
+import { Color, ShaderMaterial, Side } from 'three';
 
 import vertShader from './shaders/vert.glsl';
 import fragShader from './shaders/frag.glsl';
@@ -13,5 +13,10 @@ export class UpscaleShaderMaterial extends ShaderMaterial {
         u_color: { value: crossColor },
       },
     });
+  }
+
+  setProperties(upscaleCoef: number, side: Side) {
+    this.uniforms.u_upscale_coef.value = upscaleCoef;
+    this.side = side;
   }
 }
