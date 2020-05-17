@@ -7,8 +7,13 @@ export class Context {
     this.gl.viewport(x, y, width, height);
   }
 
-  clear(mask: number): void {
-    this.gl.clear(mask);
+  // TODO type for mask
+  clear(mask?: number): void {
+    if (mask !== undefined) {
+      this.gl.clear(mask);
+    } else {
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
   }
 
   clearColor(r: number, g: number, b: number, a: number): void {
@@ -26,7 +31,7 @@ export class Context {
   createShader(
     vertexSrc: string,
     fragmentSrc: string,
-    defines: Defines
+    defines?: Defines
   ): Shader {
     return new Shader(this.gl, vertexSrc, fragmentSrc, defines);
   }
