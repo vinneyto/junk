@@ -1,39 +1,67 @@
 import { Shader, Defines } from './Shader';
 
-export abstract class Context {
-  // @ts-ignore
+export class Context {
   constructor(private readonly gl: WebGLRenderingContext) {}
 
-  abstract viewport(x: number, y: number, width: number, height: number): void;
+  setViewport(x: number, y: number, width: number, height: number): void {
+    this.gl.viewport(x, y, width, height);
+  }
 
-  abstract clear(target: number): void;
+  clear(mask: number): void {
+    this.gl.clear(mask);
+  }
 
-  abstract clearColor(r: number, g: number, b: number, a: number): void;
+  clearColor(r: number, g: number, b: number, a: number): void {
+    this.gl.clearColor(r, g, b, a);
+  }
 
-  abstract set(feature: number, enabled: boolean): void;
+  set(feature: number, enable: boolean): void {
+    if (enable) {
+      this.gl.enable(feature);
+    } else {
+      this.gl.disable(feature);
+    }
+  }
 
-  abstract createShader(
-    vertexSrc: number,
-    fragmentSrc: number,
+  createShader(
+    vertexSrc: string,
+    fragmentSrc: string,
     defines: Defines
-  ): Shader;
+  ): Shader {
+    return new Shader(this.gl, vertexSrc, fragmentSrc, defines);
+  }
 
-  abstract createBuffer(
+  createBuffer(
     target: number,
     usage: number,
     data: Float32Array | Uint16Array
-  ): WebGLBuffer | null;
+  ): WebGLBuffer | null {
+    const buffer = this.gl.createBuffer();
 
-  abstract bindBuffer(target: number, buffer: WebGLBuffer | null): void;
+    this.gl.bindBuffer(target, buffer);
+    this.gl.bufferData(target, data, usage);
 
-  abstract switchAttributes(amount: number): void;
+    return buffer;
+  }
 
-  abstract drawArrays(mode: number, first: number, count: number): void;
+  bindBuffer(target: number, buffer: WebGLBuffer | null): void {
+    this.gl.bindBuffer(target, buffer);
+  }
 
-  abstract drawElements(
+  // TODO
+  // @ts-ignore
+  switchAttributes(amount: number): void {}
+
+  drawArrays(mode: number, first: number, count: number): void {
+    this.gl.drawArrays(mode, first, count);
+  }
+
+  drawElements(
     mode: number,
     count: number,
     type: number,
     offset: number
-  ): void;
+  ): void {
+    this.gl.drawElements(mode, count, type, offset);
+  }
 }
