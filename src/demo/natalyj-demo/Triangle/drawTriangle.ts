@@ -1,4 +1,4 @@
-import { Context } from '../../../engine';
+import { Context, Cleansing } from '../../../engine';
 
 import { Demo } from '../../Demo';
 
@@ -13,10 +13,12 @@ export async function drawTriangle(): Promise<Demo> {
   const context = new Context(renderingContext);
   context.setViewport(0, 0, canvas.width, canvas.height);
   context.clearColor(0, 0, 0, 0);
-  context.clear();
+  context.clear([Cleansing.Color]);
 
   const shader = context.createShader(vertShader, fragShader);
   shader.bind();
+
+  context.switchAttributes(shader.getAttributesAmount());
 
   const render = () => {};
 

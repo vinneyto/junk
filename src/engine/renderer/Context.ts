@@ -1,19 +1,20 @@
-import { Shader, Defines } from './Shader';
+import { Shader } from './Shader';
+import { Cleansing, Defines } from './types';
 
 export class Context {
+  private attribAmount: number = 0;
+
   constructor(private readonly gl: WebGLRenderingContext) {}
 
   setViewport(x: number, y: number, width: number, height: number): void {
     this.gl.viewport(x, y, width, height);
   }
 
-  // TODO type for mask
-  clear(mask?: number): void {
-    if (mask !== undefined) {
-      this.gl.clear(mask);
-    } else {
-      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    }
+  clear(masks: Cleansing[]): void {
+    const mask: Cleansing = masks.reduce(
+      (result, currentMask) => result | currentMask
+    );
+    this.gl.clear(mask);
   }
 
   clearColor(r: number, g: number, b: number, a: number): void {
@@ -21,9 +22,11 @@ export class Context {
   }
 
   set(feature: number, enable: boolean): void {
-    if (enable) {
+    const isAlreadyEnabled = this.gl.isEnabled(feature);
+
+    if (enable && !isAlreadyEnabled) {
       this.gl.enable(feature);
-    } else {
+    } else if (!enable && isAlreadyEnabled) {
       this.gl.disable(feature);
     }
   }
@@ -46,6 +49,8 @@ export class Context {
     this.gl.bindBuffer(target, buffer);
     this.gl.bufferData(target, data, usage);
 
+    this.gl.bindBuffer(target, null);
+
     return buffer;
   }
 
@@ -53,9 +58,19 @@ export class Context {
     this.gl.bindBuffer(target, buffer);
   }
 
-  // TODO
-  // @ts-ignore
-  switchAttributes(amount: number): void {}
+  switchAttributes(amount: number): void {
+    if (this.attribAmount < amount) {
+      for (let index = this.attribAmount; index < amount; index++) {
+        this.gl.enableVertexAttribArray(index);
+      }
+    } else if (this.attribAmount > amount) {
+      for (let index = amount; index < this.attribAmount; index++) {
+        this.gl.disableVertexAttribArray(index);
+      }
+    }
+
+    this.attribAmount = amount;
+  }
 
   drawArrays(mode: number, first: number, count: number): void {
     this.gl.drawArrays(mode, first, count);
