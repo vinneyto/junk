@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::*;
 use super::webgl_canvas::WebGlCanvas;
 use crate::math::{Matrix4, Vector3};
 use crate::renderer::webgl::context::{
-  BufferTarget, BufferUsage, Cleaning, Context, DrawMode, TypedArrayKind,
+  BufferTarget, BufferUsage, Cleaning, Context, DrawMode, TextureKind, TypedArrayKind,
 };
 use crate::renderer::webgl::define::Define;
 use crate::renderer::webgl::shader::{AttributeOptions, Shader};
@@ -100,72 +100,94 @@ fn compute_bone_matrices(angle: f32) -> Vec<Matrix4> {
   vec![m1, m2, m3, m4]
 }
 
+fn bone_matrices_to_vec(matrices: &[Matrix4]) -> Vec<f32> {
+  let mut data: Vec<f32> = vec![];
+  for bone in matrices {
+    data.extend(&bone.data);
+  }
+  data
+}
+
 fn create_skinning_stuff(ctx: &Context) -> Result<Shader> {
+  ctx.get_extension("OES_texture_float")?;
+
   let vert_src = include_str!("./shaders/skinning_vert.glsl");
   let frag_src = include_str!("./shaders/skinning_frag.glsl");
 
   let shader = ctx.create_shader(&vert_src, &frag_src, &[Define::int("MAX_BONES", 4)])?;
 
+  let position: Vec<f32> = vec![
+    0.0, 1.0, // 0
+    0.0, -1.0, // 1
+    2.0, 1.0, // 2
+    2.0, -1.0, // 3
+    4.0, 1.0, // 4
+    4.0, -1.0, // 5
+    6.0, 1.0, // 6
+    6.0, -1.0, // 7
+    8.0, 1.0, // 8
+    8.0, -1.0, // 9
+  ];
+
   let position_buffer = ctx.create_buffer(
     BufferTarget::ArrayBuffer,
     BufferUsage::StaticDraw,
-    &vec![
-      0.0, 1.0, // 0
-      0.0, -1.0, // 1
-      2.0, 1.0, // 2
-      2.0, -1.0, // 3
-      4.0, 1.0, // 4
-      4.0, -1.0, // 5
-      6.0, 1.0, // 6
-      6.0, -1.0, // 7
-      8.0, 1.0, // 8
-      8.0, -1.0, // 9
-    ],
+    &position,
   );
+
+  let bone_ndx: Vec<f32> = vec![
+    0.0, 0.0, 0.0, 0.0, // 0
+    0.0, 0.0, 0.0, 0.0, // 1
+    0.0, 1.0, 0.0, 0.0, // 2
+    0.0, 1.0, 0.0, 0.0, // 3
+    1.0, 0.0, 0.0, 0.0, // 4
+    1.0, 0.0, 0.0, 0.0, // 5
+    1.0, 2.0, 0.0, 0.0, // 6
+    1.0, 2.0, 0.0, 0.0, // 7
+    2.0, 0.0, 0.0, 0.0, // 8
+    2.0, 0.0, 0.0, 0.0, // 9
+  ];
 
   let bone_ndx_buffer = ctx.create_buffer(
     BufferTarget::ArrayBuffer,
     BufferUsage::StaticDraw,
-    &vec![
-      0.0, 0.0, 0.0, 0.0, // 0
-      0.0, 0.0, 0.0, 0.0, // 1
-      0.0, 1.0, 0.0, 0.0, // 2
-      0.0, 1.0, 0.0, 0.0, // 3
-      1.0, 0.0, 0.0, 0.0, // 4
-      1.0, 0.0, 0.0, 0.0, // 5
-      1.0, 2.0, 0.0, 0.0, // 6
-      1.0, 2.0, 0.0, 0.0, // 7
-      2.0, 0.0, 0.0, 0.0, // 8
-      2.0, 0.0, 0.0, 0.0, // 9
-    ],
+    &bone_ndx,
   );
 
-  let weight_buffer = ctx.create_buffer(
-    BufferTarget::ArrayBuffer,
-    BufferUsage::StaticDraw,
-    &vec![
-      1.0, 0.0, 0.0, 0.0, // 0
-      1.0, 0.0, 0.0, 0.0, // 1
-      0.5, 0.5, 0.0, 0.0, // 2
-      0.5, 0.5, 0.0, 0.0, // 3
-      1.0, 0.0, 0.0, 0.0, // 4
-      1.0, 0.0, 0.0, 0.0, // 5
-      0.5, 0.5, 0.0, 0.0, // 6
-      0.5, 0.5, 0.0, 0.0, // 7
-      1.0, 0.0, 0.0, 0.0, // 8
-      1.0, 0.0, 0.0, 0.0, // 9
-    ],
-  );
+  let weight: Vec<f32> = vec![
+    1.0, 0.0, 0.0, 0.0, // 0
+    1.0, 0.0, 0.0, 0.0, // 1
+    0.5, 0.5, 0.0, 0.0, // 2
+    0.5, 0.5, 0.0, 0.0, // 3
+    1.0, 0.0, 0.0, 0.0, // 4
+    1.0, 0.0, 0.0, 0.0, // 5
+    0.5, 0.5, 0.0, 0.0, // 6
+    0.5, 0.5, 0.0, 0.0, // 7
+    1.0, 0.0, 0.0, 0.0, // 8
+    1.0, 0.0, 0.0, 0.0, // 9
+  ];
+
+  let weight_buffer =
+    ctx.create_buffer(BufferTarget::ArrayBuffer, BufferUsage::StaticDraw, &weight);
+
+  let indices: Vec<u16> = vec![
+    0, 1, 0, 2, 1, 3, 2, 3, //
+    2, 4, 3, 5, 4, 5, 4, 6, 5, 7, //
+    6, 7, 6, 8, 7, 9, 8, 9,
+  ];
 
   let indices_buffer = ctx.create_buffer(
     BufferTarget::ElementArrayBuffer,
     BufferUsage::StaticDraw,
-    &vec![
-      0, 1, 0, 2, 1, 3, 2, 3, //
-      2, 4, 3, 5, 4, 5, 4, 6, 5, 7, //
-      6, 7, 6, 8, 7, 9, 8, 9,
-    ],
+    &indices,
   );
+
+  let bone_matrix_texture = ctx.create_texture();
+
+  ctx.bind_texture(TextureKind::Texture2d, bone_matrix_texture.as_ref());
+
+  let bone_matrices = compute_bone_matrices(0.0);
+  let bone_data = bone_matrices_to_vec(&bone_matrices);
 
   shader.bind();
 
