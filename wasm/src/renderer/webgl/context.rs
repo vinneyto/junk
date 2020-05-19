@@ -83,6 +83,12 @@ impl Context {
     self.gl.create_texture()
   }
 
+  pub fn active_texture(&self, unit: u32) {
+    self
+      .gl
+      .active_texture(WebGlRenderingContext::TEXTURE0 + unit);
+  }
+
   pub fn bind_texture(&self, target: TextureKind, texture: Option<&WebGlTexture>) {
     self.gl.bind_texture(target.as_u32(), texture)
   }
@@ -276,6 +282,7 @@ pub enum TexParam {
   LinearMipMapNearest,
   NearestMimMapLinear,
   LinearMipMapLinear,
+  ClampToEdge,
 }
 
 impl TexParam {
@@ -287,6 +294,7 @@ impl TexParam {
       Self::LinearMipMapNearest => WebGlRenderingContext::LINEAR_MIPMAP_NEAREST,
       Self::NearestMimMapLinear => WebGlRenderingContext::NEAREST_MIPMAP_LINEAR,
       Self::LinearMipMapLinear => WebGlRenderingContext::LINEAR_MIPMAP_LINEAR,
+      Self::ClampToEdge => WebGlRenderingContext::CLAMP_TO_EDGE,
     }
   }
 }

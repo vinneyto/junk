@@ -2,11 +2,13 @@ use anyhow::Result;
 use js_sys::Error;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
+use web_sys::WebGlTexture;
 
 use super::webgl_canvas::WebGlCanvas;
 use crate::math::{Matrix4, Vector3};
 use crate::renderer::webgl::context::{
-  BufferTarget, BufferUsage, Cleaning, Context, DrawMode, TextureKind, TypedArrayKind,
+  BufferTarget, BufferUsage, Cleaning, Context, DrawMode, TexParam, TexParamName, TextureFormat,
+  TextureKind, TypedArrayKind,
 };
 use crate::renderer::webgl::define::Define;
 use crate::renderer::webgl::shader::{AttributeOptions, Shader};
@@ -16,6 +18,7 @@ pub struct SkinningDemo {
   canvas: WebGlCanvas,
   ctx: Context,
   shader: Shader,
+  bone_matrix_texture: Option<WebGlTexture>,
   angle: f32,
   inverse_bone: Vec<Matrix4>,
 }
@@ -26,7 +29,8 @@ impl SkinningDemo {
   pub fn new() -> StdResult<SkinningDemo, JsValue> {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
-    let shader = create_skinning_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
+    let (shader, bone_matrix_texture) =
+      create_skinning_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
     let inverse_bone = compute_bone_matrices(0.0)
       .iter()
       .map(|m| m.inverse())
@@ -36,12 +40,13 @@ impl SkinningDemo {
       canvas,
       ctx,
       shader,
+      bone_matrix_texture,
       angle: 0.0,
       inverse_bone,
     })
   }
 
-  pub fn update(&mut self) {
+  pub fn update(&mut self) -> StdResult<(), JsValue> {
     if self.canvas.check_size() {
       self
         .ctx
@@ -74,18 +79,35 @@ impl SkinningDemo {
       .map(|v| *v.1 * self.inverse_bone[v.0])
       .collect();
 
-    let mut data: Vec<f32> = vec![];
+    self
+      .ctx
+      .bind_texture(TextureKind::Texture2d, self.bone_matrix_texture.as_ref());
 
-    for bone in bone_matrices {
-      data.extend(&bone.data);
-    }
+    let bone_data = bone_matrices_to_vec(&bone_matrices);
+
+    self
+      .ctx
+      .texture_data(
+        TextureKind::Texture2d,
+        0,
+        TextureFormat::RGBA,
+        4,
+        4,
+        0,
+        TextureFormat::RGBA,
+        &bone_data,
+      )
+      .map_err(|e| Error::new(&format!("{}", e)))?;
 
     self.shader.set_matrix4("projection", &projection);
-    self.shader.set_matrix4_data("bones[0]", &data);
+    self.shader.set_integer("boneMatrixTexture", 0);
+    self.shader.set_float("numBones", 4.0);
 
     self
       .ctx
       .draw_elements(DrawMode::Lines, 26, TypedArrayKind::Uint16, 0);
+
+    Ok(())
   }
 }
 
@@ -108,7 +130,7 @@ fn bone_matrices_to_vec(matrices: &[Matrix4]) -> Vec<f32> {
   data
 }
 
-fn create_skinning_stuff(ctx: &Context) -> Result<Shader> {
+fn create_skinning_stuff(ctx: &Context) -> Result<(Shader, Option<WebGlTexture>)> {
   ctx.get_extension("OES_texture_float")?;
 
   let vert_src = include_str!("./shaders/skinning_vert.glsl");
@@ -186,8 +208,26 @@ fn create_skinning_stuff(ctx: &Context) -> Result<Shader> {
 
   ctx.bind_texture(TextureKind::Texture2d, bone_matrix_texture.as_ref());
 
-  let bone_matrices = compute_bone_matrices(0.0);
-  let bone_data = bone_matrices_to_vec(&bone_matrices);
+  ctx.texture_parameter(
+    TextureKind::Texture2d,
+    TexParamName::TextureMinFilter,
+    TexParam::Nearest,
+  );
+  ctx.texture_parameter(
+    TextureKind::Texture2d,
+    TexParamName::TextureMagFilter,
+    TexParam::Nearest,
+  );
+  ctx.texture_parameter(
+    TextureKind::Texture2d,
+    TexParamName::TextureWrapS,
+    TexParam::ClampToEdge,
+  );
+  ctx.texture_parameter(
+    TextureKind::Texture2d,
+    TexParamName::TextureWrapT,
+    TexParam::ClampToEdge,
+  );
 
   shader.bind();
 
@@ -210,5 +250,5 @@ fn create_skinning_stuff(ctx: &Context) -> Result<Shader> {
 
   ctx.bind_buffer(BufferTarget::ElementArrayBuffer, indices_buffer.as_ref());
 
-  Ok(shader)
+  Ok((shader, bone_matrix_texture))
 }
