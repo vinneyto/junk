@@ -1,5 +1,12 @@
 import { Shader } from './Shader';
-import { Cleansing, Defines } from './types';
+import {
+  Cleansing,
+  Defines,
+  BindingTarget,
+  DataUsage,
+  DrawMode,
+  NumberType,
+} from './types';
 
 export class Context {
   private attribAmount: number = 0;
@@ -40,22 +47,25 @@ export class Context {
   }
 
   createBuffer(
-    target: number,
-    usage: number,
-    data: Float32Array | Uint16Array
+    target: BindingTarget,
+    data: Float32Array | Uint16Array,
+    usage: DataUsage
   ): WebGLBuffer | null {
     const buffer = this.gl.createBuffer();
 
-    this.gl.bindBuffer(target, buffer);
+    this.bindBuffer(target, buffer);
     this.gl.bufferData(target, data, usage);
-
-    this.gl.bindBuffer(target, null);
+    this.unbindBuffer(target);
 
     return buffer;
   }
 
-  bindBuffer(target: number, buffer: WebGLBuffer | null): void {
+  bindBuffer(target: BindingTarget, buffer: WebGLBuffer | null): void {
     this.gl.bindBuffer(target, buffer);
+  }
+
+  unbindBuffer(target: BindingTarget): void {
+    this.gl.bindBuffer(target, null);
   }
 
   switchAttributes(amount: number): void {
@@ -72,14 +82,14 @@ export class Context {
     this.attribAmount = amount;
   }
 
-  drawArrays(mode: number, first: number, count: number): void {
+  drawArrays(mode: DrawMode, first: number, count: number): void {
     this.gl.drawArrays(mode, first, count);
   }
 
   drawElements(
-    mode: number,
+    mode: DrawMode,
     count: number,
-    type: number,
+    type: NumberType,
     offset: number
   ): void {
     this.gl.drawElements(mode, count, type, offset);

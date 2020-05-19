@@ -1,4 +1,11 @@
-import { Context, Cleansing } from '../../../engine';
+import {
+  Context,
+  Cleansing,
+  DrawMode,
+  NumberType,
+  BindingTarget,
+  DataUsage,
+} from '../../../engine';
 
 import { Demo } from '../../Demo';
 
@@ -18,9 +25,27 @@ export async function drawTriangle(): Promise<Demo> {
   const shader = context.createShader(vertShader, fragShader);
   shader.bind();
 
-  context.switchAttributes(shader.getAttributesAmount());
+  const positions = new Float32Array([0, 0, 0, 0.5, 0.7, 0]);
+  const positionsBuffer = context.createBuffer(
+    BindingTarget.ArrayBuffer,
+    positions,
+    DataUsage.StaticDraw
+  );
 
-  const render = () => {};
+  context.switchAttributes(shader.getAttributesAmount());
+  context.bindBuffer(BindingTarget.ArrayBuffer, positionsBuffer);
+  shader.bindAttribute(
+    shader.getAttributesNames()[0],
+    2,
+    NumberType.Float,
+    false,
+    0,
+    0
+  );
+
+  const render = () => {
+    context.drawArrays(DrawMode.Triangles, 0, 3);
+  };
 
   return { render };
 }

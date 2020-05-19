@@ -1,4 +1,4 @@
-import { Defines } from './types';
+import { Defines, NumberType } from './types';
 import { createShader, createProgram, buildAttributesMap } from './helpers';
 
 export class Shader {
@@ -28,7 +28,7 @@ export class Shader {
   bindAttribute(
     name: string,
     itemSize: number,
-    componentType: number,
+    componentType: NumberType,
     normalized: boolean,
     stride: number,
     offset: number
@@ -73,5 +73,9 @@ export class Shader {
 
   getAttributesAmount(): number {
     return this.attributeLocations.size;
+  }
+
+  getAttributesNames(): string[] {
+    return [...this.attributeLocations.keys()];
   }
 }
