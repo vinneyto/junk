@@ -1,4 +1,9 @@
-export type Defines = Record<string, string | number | boolean>;
+export type Defines = Map<string, string | number | boolean>;
+
+export enum ShaderType {
+  Vertex = WebGLRenderingContext.VERTEX_SHADER,
+  Fragment = WebGLRenderingContext.FRAGMENT_SHADER,
+}
 
 export enum Cleansing {
   Color = WebGLRenderingContext.COLOR_BUFFER_BIT,
@@ -50,4 +55,25 @@ export enum DataUsage {
   DynamicDraw = WebGLRenderingContext.DYNAMIC_DRAW,
   /** Data is not intended to be changed, but intended to be used a few times */
   StreamDraw = WebGLRenderingContext.STREAM_DRAW,
+}
+
+export enum ContextFeature {
+  /** Blending of the computed fragment color values */
+  Blend = WebGLRenderingContext.BLEND,
+  /** Culling of polygons */
+  CullFace = WebGLRenderingContext.CULL_FACE,
+  /** Depth comparisons and updating of the depth buffer */
+  DepthTest = WebGLRenderingContext.DEPTH_TEST,
+  /** Dithering of color components before they get written to the color buffer */
+  Dither = WebGLRenderingContext.DITHER,
+  /** Adding an offset to depth values of polygon's fragments */
+  PolygonOffsetFill = WebGLRenderingContext.POLYGON_OFFSET_FILL,
+  /** Computation of a temporary coverage value determined by the alpha value */
+  SampleAlphaToCoverage = WebGLRenderingContext.SAMPLE_ALPHA_TO_COVERAGE,
+  /** ANDing the fragment's coverage with the temporary coverage value */
+  SampleCoverage = WebGLRenderingContext.SAMPLE_COVERAGE,
+  /** Scissor test that discards fragments that are outside of the scissor rectangle */
+  ScissorTest = WebGLRenderingContext.SCISSOR_TEST,
+  /** Stencil testing and updating to the stencil buffer */
+  StencilTest = WebGLRenderingContext.STENCIL_TEST,
 }

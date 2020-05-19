@@ -1,3 +1,5 @@
+import { Defines } from '../types';
+
 export const createShader = (
   gl: WebGLRenderingContext,
   type: number,
@@ -50,4 +52,25 @@ export const createProgram = (
   }
 
   return program;
+};
+
+export const addHeaders = (
+  src: string,
+  defines?: Defines,
+  with_precision = false
+): string => {
+  let headers = '';
+
+  if (with_precision) {
+    headers += 'precision highp float;\n\n';
+  }
+
+  if (defines !== undefined && defines.size !== 0) {
+    for (const [variable, value] of defines) {
+      headers += `#define ${variable} ${value}\n`;
+    }
+    headers += '\n\n';
+  }
+
+  return headers + src;
 };

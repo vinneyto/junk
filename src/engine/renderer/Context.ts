@@ -6,6 +6,7 @@ import {
   DataUsage,
   DrawMode,
   NumberType,
+  ContextFeature,
 } from './types';
 
 export class Context {
@@ -28,7 +29,7 @@ export class Context {
     this.gl.clearColor(r, g, b, a);
   }
 
-  set(feature: number, enable: boolean): void {
+  set(feature: ContextFeature, enable: boolean): void {
     const isAlreadyEnabled = this.gl.isEnabled(feature);
 
     if (enable && !isAlreadyEnabled) {

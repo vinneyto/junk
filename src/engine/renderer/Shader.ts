@@ -1,24 +1,37 @@
-import { Defines, NumberType } from './types';
-import { createShader, createProgram, buildAttributesMap } from './helpers';
+import { Defines, NumberType, ShaderType } from './types';
+import {
+  createShader,
+  createProgram,
+  buildAttributesMap,
+  addHeaders,
+  buildUniformsMap,
+} from './helpers';
 
 export class Shader {
   private program: WebGLProgram;
   private attributeLocations: Map<string, number>;
+  private uniformLocations: Map<string, WebGLUniformLocation>;
 
   constructor(
     private readonly gl: WebGLRenderingContext,
     vertexSrc: string,
     fragmentSrc: string,
-    // TODO
-    // @ts-ignore
     defines?: Defines
   ) {
-    const vertShader = createShader(gl, gl.VERTEX_SHADER, vertexSrc);
-    const fragShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
+    const vertShader = createShader(
+      gl,
+      ShaderType.Vertex,
+      addHeaders(vertexSrc, defines)
+    );
+    const fragShader = createShader(
+      gl,
+      ShaderType.Fragment,
+      addHeaders(fragmentSrc, defines, true)
+    );
 
     this.program = createProgram(gl, vertShader, fragShader);
     this.attributeLocations = buildAttributesMap(gl, this.program);
-    // TODO uniforms
+    this.uniformLocations = buildUniformsMap(gl, this.program);
   }
 
   bind(): void {
@@ -49,26 +62,24 @@ export class Shader {
     );
   }
 
-  // @ts-ignore
   setBool(name: string, value: boolean): void {
-    const index = this.attributeLocations.get(name);
+    const index = this.uniformLocations.get(name);
 
     if (index === undefined) {
       throw new Error(`Cannot find attribute ${name}`);
     }
 
-    // TODO
+    this.gl.uniform1i(index, Number(value));
   }
 
-  // @ts-ignore
   setFloat(name: string, value: number): void {
-    const index = this.attributeLocations.get(name);
+    const index = this.uniformLocations.get(name);
 
     if (index === undefined) {
       throw new Error(`Cannot find attribute ${name}`);
     }
 
-    // TODO
+    this.gl.uniform1f(index, value);
   }
 
   getAttributesAmount(): number {
@@ -77,5 +88,13 @@ export class Shader {
 
   getAttributesNames(): string[] {
     return [...this.attributeLocations.keys()];
+  }
+
+  getUniformsAmount(): number {
+    return this.uniformLocations.size;
+  }
+
+  getUniformsNames(): string[] {
+    return [...this.uniformLocations.keys()];
   }
 }
