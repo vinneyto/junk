@@ -35,7 +35,7 @@ export enum NumberType {
   Short = WebGLRenderingContext.SHORT,
   /** unsigned 8-bit int, values: [0, 255] */
   uByte = WebGLRenderingContext.UNSIGNED_BYTE,
-  /** unsigned 16-bit integer, values: [0, 65535] */
+  /** unsigned 16-bit int, values: [0, 65535] */
   uShort = WebGLRenderingContext.UNSIGNED_SHORT,
   /** 32-bit IEEE floating point number */
   Float = WebGLRenderingContext.FLOAT,

@@ -22,9 +22,6 @@ export async function drawTriangle(): Promise<Demo> {
   context.clearColor(0, 0, 0, 0);
   context.clear([Cleansing.Color]);
 
-  const shader = context.createShader(vertShader, fragShader);
-  shader.bind();
-
   const positions = new Float32Array([0, 0, 0, 0.5, 0.7, 0]);
   const positionsBuffer = context.createBuffer(
     BindingTarget.ArrayBuffer,
@@ -32,6 +29,8 @@ export async function drawTriangle(): Promise<Demo> {
     DataUsage.StaticDraw
   );
 
+  const shader = context.createShader(vertShader, fragShader);
+  shader.bind();
   context.switchAttributes(shader.getAttributesAmount());
   context.bindBuffer(BindingTarget.ArrayBuffer, positionsBuffer);
   shader.bindAttribute(
