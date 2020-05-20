@@ -44,7 +44,7 @@ export enum NumberType {
 export enum BindingTarget {
   /** Buffer containing vertex attributes */
   ArrayBuffer = WebGLRenderingContext.ARRAY_BUFFER,
-  /** Buffer used for ele,emt indices */
+  /** Buffer used for element indices */
   ElementArrayBuffer = WebGLRenderingContext.ELEMENT_ARRAY_BUFFER,
 }
 

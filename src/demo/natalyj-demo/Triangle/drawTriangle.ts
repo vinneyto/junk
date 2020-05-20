@@ -5,6 +5,7 @@ import {
   NumberType,
   BindingTarget,
   DataUsage,
+  Canvas,
 } from '../../../engine';
 
 import { Demo } from '../../Demo';
@@ -13,12 +14,8 @@ import vertShader from './shaders/vert.glsl';
 import fragShader from './shaders/frag.glsl';
 
 export async function drawTriangle(): Promise<Demo> {
-  const canvas = document.createElement('canvas');
-  document.body.appendChild(canvas);
-  const renderingContext = canvas.getContext('webgl') as WebGLRenderingContext;
-
-  const context = new Context(renderingContext);
-  context.setViewport(0, 0, canvas.width, canvas.height);
+  const canvas = new Canvas({ width: '100vw', height: '100vh' });
+  const context = new Context(canvas.getWebGLContext());
   context.clearColor(0, 0, 0, 0);
   context.clear([Cleansing.Color]);
 
@@ -43,6 +40,10 @@ export async function drawTriangle(): Promise<Demo> {
   );
 
   const render = () => {
+    if (canvas.resize()) {
+      const { width, height } = canvas.getCanvasElement();
+      context.setViewport(0, 0, width, height);
+    }
     context.drawArrays(DrawMode.Triangles, 0, 3);
   };
 
