@@ -1,12 +1,12 @@
 use super::define::Define;
 use super::shader::Shader;
-use anyhow::Result;
-use js_sys::{Float32Array, Object, Uint16Array, WebAssembly};
+use anyhow::{anyhow, Result};
+use js_sys::{Float32Array, Object, Uint16Array, Uint8Array, WebAssembly};
 use num_traits::Num;
 use std::cell::RefCell;
 use std::default::Default;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{WebGlBuffer, WebGlRenderingContext};
+use web_sys::{WebGlBuffer, WebGlRenderingContext, WebGlTexture};
 
 pub struct Context {
   gl: WebGlRenderingContext,
@@ -19,6 +19,14 @@ impl Context {
       gl,
       attrib_amount: RefCell::new(0),
     }
+  }
+
+  pub fn get_extension(&self, name: &str) -> Result<Object> {
+    self
+      .gl
+      .get_extension(name)
+      .map_err(|e| anyhow!("{:?}", e))?
+      .ok_or_else(|| anyhow!("Unable to get extension {}", name))
   }
 
   pub fn viewport(&self, x: i32, y: i32, width: i32, height: i32) {
@@ -67,27 +75,59 @@ impl Context {
     Some(buffer)
   }
 
-  pub fn create_buffer_from_slice(
-    &self,
-    target: BufferTarget,
-    usage: BufferUsage,
-    data: &[u8],
-  ) -> Option<WebGlBuffer> {
-    let buffer = self.gl.create_buffer()?;
+  pub fn bind_buffer(&self, target: BufferTarget, buffer: Option<&WebGlBuffer>) {
+    self.gl.bind_buffer(target.as_u32(), buffer);
+  }
 
-    self.gl.bind_buffer(target.as_u32(), Some(&buffer));
+  pub fn create_texture(&self) -> Option<WebGlTexture> {
+    self.gl.create_texture()
+  }
+
+  pub fn active_texture(&self, unit: u32) {
+    self
+      .gl
+      .active_texture(WebGlRenderingContext::TEXTURE0 + unit);
+  }
+
+  pub fn bind_texture(&self, target: TextureKind, texture: Option<&WebGlTexture>) {
+    self.gl.bind_texture(target.as_u32(), texture)
+  }
+
+  pub fn texture_parameter(&self, target: TextureKind, name: TexParamName, param: TexParam) {
+    self
+      .gl
+      .tex_parameteri(target.as_u32(), name.as_u32(), param.as_u32() as i32)
+  }
+
+  pub fn texture_data<T: BufferItem>(
+    &self,
+    target: TextureKind,
+    level: i32,
+    internal_format: TextureFormat,
+    width: i32,
+    height: i32,
+    border: i32,
+    format: TextureFormat,
+    data: &[T],
+  ) -> Result<()> {
+    let start = data.as_ptr() as u32 / size_u32::<T>();
+    let end = start + data.len() as u32;
+    let array = get_typed_array::<T>(start, end);
 
     self
       .gl
-      .buffer_data_with_u8_array(target.as_u32(), data, usage.as_u32());
-
-    self.gl.bind_buffer(target.as_u32(), None);
-
-    Some(buffer)
-  }
-
-  pub fn bind_buffer(&self, target: BufferTarget, buffer: Option<&WebGlBuffer>) {
-    self.gl.bind_buffer(target.as_u32(), buffer);
+      .tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+        target.as_u32(),
+        level,
+        internal_format.as_u32() as i32,
+        width,
+        height,
+        border,
+        format.as_u32(),
+        T::array_kind().as_u32(),
+        Some(array).as_ref(),
+      )
+      .map_err(|e| anyhow!("{:?}", e))
   }
 
   pub fn switch_attributes(&self, amount: u32) {
@@ -205,8 +245,77 @@ impl Feature {
   }
 }
 
+pub enum TextureKind {
+  Texture2d,
+}
+
+impl TextureKind {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::Texture2d => WebGlRenderingContext::TEXTURE_2D,
+    }
+  }
+}
+
+pub enum TexParamName {
+  TextureMinFilter,
+  TextureMagFilter,
+  TextureWrapS,
+  TextureWrapT,
+}
+
+impl TexParamName {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::TextureMinFilter => WebGlRenderingContext::TEXTURE_MIN_FILTER,
+      Self::TextureMagFilter => WebGlRenderingContext::TEXTURE_MAG_FILTER,
+      Self::TextureWrapS => WebGlRenderingContext::TEXTURE_WRAP_S,
+      Self::TextureWrapT => WebGlRenderingContext::TEXTURE_WRAP_T,
+    }
+  }
+}
+
+pub enum TexParam {
+  Linear,
+  Nearest,
+  NearestMipMapNearest,
+  LinearMipMapNearest,
+  NearestMimMapLinear,
+  LinearMipMapLinear,
+  ClampToEdge,
+}
+
+impl TexParam {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::Linear => WebGlRenderingContext::LINEAR,
+      Self::Nearest => WebGlRenderingContext::NEAREST,
+      Self::NearestMipMapNearest => WebGlRenderingContext::NEAREST_MIPMAP_NEAREST,
+      Self::LinearMipMapNearest => WebGlRenderingContext::LINEAR_MIPMAP_NEAREST,
+      Self::NearestMimMapLinear => WebGlRenderingContext::NEAREST_MIPMAP_LINEAR,
+      Self::LinearMipMapLinear => WebGlRenderingContext::LINEAR_MIPMAP_LINEAR,
+      Self::ClampToEdge => WebGlRenderingContext::CLAMP_TO_EDGE,
+    }
+  }
+}
+
+pub enum TextureFormat {
+  RGBA,
+  RGB,
+}
+
+impl TextureFormat {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::RGBA => WebGlRenderingContext::RGBA,
+      Self::RGB => WebGlRenderingContext::RGB,
+    }
+  }
+}
+
 #[derive(Debug)]
 pub enum TypedArrayKind {
+  Uint8,
   Uint16,
   Float32,
 }
@@ -220,6 +329,7 @@ impl Default for TypedArrayKind {
 impl TypedArrayKind {
   pub fn as_u32(&self) -> u32 {
     match self {
+      TypedArrayKind::Uint8 => WebGlRenderingContext::UNSIGNED_BYTE,
       TypedArrayKind::Uint16 => WebGlRenderingContext::UNSIGNED_SHORT,
       TypedArrayKind::Float32 => WebGlRenderingContext::FLOAT,
     }
@@ -240,6 +350,7 @@ fn get_memory_buffer() -> JsValue {
 fn get_typed_array<T: BufferItem>(start: u32, end: u32) -> Object {
   let buffer = get_memory_buffer();
   match T::array_kind() {
+    TypedArrayKind::Uint8 => Uint8Array::new(&buffer).subarray(start, end).into(),
     TypedArrayKind::Uint16 => Uint16Array::new(&buffer).subarray(start, end).into(),
     TypedArrayKind::Float32 => Float32Array::new(&buffer).subarray(start, end).into(),
   }
@@ -247,6 +358,11 @@ fn get_typed_array<T: BufferItem>(start: u32, end: u32) -> Object {
 
 pub trait BufferItem: Num {
   fn array_kind() -> TypedArrayKind;
+}
+impl BufferItem for u8 {
+  fn array_kind() -> TypedArrayKind {
+    TypedArrayKind::Uint8
+  }
 }
 impl BufferItem for u16 {
   fn array_kind() -> TypedArrayKind {
