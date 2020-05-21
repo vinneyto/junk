@@ -1,39 +1,111 @@
-import { Shader, Defines } from './Shader';
+import { Shader } from './Shader';
+import {
+  Cleansing,
+  Defines,
+  BindingTarget,
+  DataUsage,
+  DrawMode,
+  NumberType,
+  ContextFeature,
+} from './types';
 
-export abstract class Context {
-  // @ts-ignore
+export class Context {
+  private attribAmount: number = 0;
+
   constructor(private readonly gl: WebGLRenderingContext) {}
 
-  abstract viewport(x: number, y: number, width: number, height: number): void;
+  setViewport(x: number, y: number, width: number, height: number): void {
+    this.gl.viewport(x, y, width, height);
+  }
 
-  abstract clear(target: number): void;
+  clear(color = false, depth = false, stencil = false): void {
+    let mask: Cleansing = 0;
 
-  abstract clearColor(r: number, g: number, b: number, a: number): void;
+    if (color) {
+      mask |= Cleansing.Color;
+    }
 
-  abstract set(feature: number, enabled: boolean): void;
+    if (depth) {
+      mask |= Cleansing.Depth;
+    }
 
-  abstract createShader(
-    vertexSrc: number,
-    fragmentSrc: number,
-    defines: Defines
-  ): Shader;
+    if (stencil) {
+      mask |= Cleansing.Stencil;
+    }
 
-  abstract createBuffer(
-    target: number,
-    usage: number,
-    data: Float32Array | Uint16Array
-  ): WebGLBuffer | null;
+    if (mask !== 0) {
+      this.gl.clear(mask);
+    }
+  }
 
-  abstract bindBuffer(target: number, buffer: WebGLBuffer | null): void;
+  clearColor(r: number, g: number, b: number, a: number): void {
+    this.gl.clearColor(r, g, b, a);
+  }
 
-  abstract switchAttributes(amount: number): void;
+  set(feature: ContextFeature, enable: boolean): void {
+    const isAlreadyEnabled = this.gl.isEnabled(feature);
 
-  abstract drawArrays(mode: number, first: number, count: number): void;
+    if (enable && !isAlreadyEnabled) {
+      this.gl.enable(feature);
+    } else if (!enable && isAlreadyEnabled) {
+      this.gl.disable(feature);
+    }
+  }
 
-  abstract drawElements(
-    mode: number,
+  createShader(
+    vertexSrc: string,
+    fragmentSrc: string,
+    defines?: Defines
+  ): Shader {
+    return new Shader(this.gl, vertexSrc, fragmentSrc, defines);
+  }
+
+  createBuffer(
+    target: BindingTarget,
+    data: Float32Array | Uint16Array,
+    usage: DataUsage
+  ): WebGLBuffer | null {
+    const buffer = this.gl.createBuffer();
+
+    this.bindBuffer(target, buffer);
+    this.gl.bufferData(target, data, usage);
+    this.unbindBuffer(target);
+
+    return buffer;
+  }
+
+  bindBuffer(target: BindingTarget, buffer: WebGLBuffer | null): void {
+    this.gl.bindBuffer(target, buffer);
+  }
+
+  unbindBuffer(target: BindingTarget): void {
+    this.gl.bindBuffer(target, null);
+  }
+
+  switchAttributes(amount: number): void {
+    if (this.attribAmount < amount) {
+      for (let index = this.attribAmount; index < amount; index++) {
+        this.gl.enableVertexAttribArray(index);
+      }
+    } else if (this.attribAmount > amount) {
+      for (let index = amount; index < this.attribAmount; index++) {
+        this.gl.disableVertexAttribArray(index);
+      }
+    }
+
+    this.attribAmount = amount;
+  }
+
+  drawArrays(mode: DrawMode, first: number, count: number): void {
+    this.gl.drawArrays(mode, first, count);
+  }
+
+  drawElements(
+    mode: DrawMode,
     count: number,
-    type: number,
+    type: NumberType,
     offset: number
-  ): void;
+  ): void {
+    this.gl.drawElements(mode, count, type, offset);
+  }
 }
