@@ -3,3 +3,5 @@ export * from './renderer/Shader';
 export * from './renderer/types';
 
 export * from './canvas/Canvas';
+
+export * from './math/Vector3';
