@@ -1,26 +1,100 @@
-export type Defines = Record<string, string | number | boolean>;
+import { Defines, NumberType, ShaderType } from './types';
+import {
+  createShader,
+  createProgram,
+  buildAttributesMap,
+  addHeaders,
+  buildUniformsMap,
+} from './helpers';
 
-export abstract class Shader {
+export class Shader {
+  private program: WebGLProgram;
+  private attributeLocations: Map<string, number>;
+  private uniformLocations: Map<string, WebGLUniformLocation>;
+
   constructor(
-    // @ts-ignore
     private readonly gl: WebGLRenderingContext,
-    _vertexSrc: string,
-    _fragmentSrc: string,
-    _defines: Defines
-  ) {}
+    vertexSrc: string,
+    fragmentSrc: string,
+    defines?: Defines
+  ) {
+    const vertShader = createShader(
+      gl,
+      ShaderType.Vertex,
+      addHeaders(vertexSrc, defines)
+    );
+    const fragShader = createShader(
+      gl,
+      ShaderType.Fragment,
+      addHeaders(fragmentSrc, defines, true)
+    );
 
-  abstract bind(): void;
+    this.program = createProgram(gl, vertShader, fragShader);
+    this.attributeLocations = buildAttributesMap(gl, this.program);
+    this.uniformLocations = buildUniformsMap(gl, this.program);
+  }
 
-  abstract bindAttribute(
+  bind(): void {
+    this.gl.useProgram(this.program);
+  }
+
+  bindAttribute(
     name: string,
     itemSize: number,
-    componentType: number,
+    componentType: NumberType,
     normalized: boolean,
     stride: number,
     offset: number
-  ): void;
+  ): void {
+    const index = this.attributeLocations.get(name);
 
-  abstract setBool(name: string, value: boolean): void;
+    if (index === undefined) {
+      throw new Error(`Cannot find attribute ${name}`);
+    }
 
-  abstract setFloat(name: string, value: number): void;
+    this.gl.vertexAttribPointer(
+      index,
+      itemSize,
+      componentType,
+      normalized,
+      stride,
+      offset
+    );
+  }
+
+  setBool(name: string, value: boolean): void {
+    const index = this.uniformLocations.get(name);
+
+    if (index === undefined) {
+      throw new Error(`Cannot find attribute ${name}`);
+    }
+
+    this.gl.uniform1i(index, Number(value));
+  }
+
+  setFloat(name: string, value: number): void {
+    const index = this.uniformLocations.get(name);
+
+    if (index === undefined) {
+      throw new Error(`Cannot find attribute ${name}`);
+    }
+
+    this.gl.uniform1f(index, value);
+  }
+
+  getAttributesAmount(): number {
+    return this.attributeLocations.size;
+  }
+
+  getAttributesNames(): string[] {
+    return [...this.attributeLocations.keys()];
+  }
+
+  getUniformsAmount(): number {
+    return this.uniformLocations.size;
+  }
+
+  getUniformsNames(): string[] {
+    return [...this.uniformLocations.keys()];
+  }
 }
