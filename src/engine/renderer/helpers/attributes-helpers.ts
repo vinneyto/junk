@@ -9,7 +9,7 @@ export const buildAttributesMap = (
 ): Map<string, number> => {
   const attributeLocations = new Map<string, number>();
 
-  [...Array(getActiveAttributesAmount(gl, program)).keys()].forEach((index) => {
+  for (let index = 0; index < getActiveAttributesAmount(gl, program); index++) {
     const currentAttribute = gl.getActiveAttrib(program, index);
 
     if (currentAttribute === null) {
@@ -18,7 +18,7 @@ export const buildAttributesMap = (
 
     const { name } = currentAttribute;
     attributeLocations.set(name, gl.getAttribLocation(program, name));
-  });
+  }
 
   return attributeLocations;
 };

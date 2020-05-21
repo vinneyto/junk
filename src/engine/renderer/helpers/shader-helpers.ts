@@ -19,7 +19,8 @@ export const createShader = (
 
     const formattedSrc = src
       .split('\n')
-      .reduce((result, row, index) => result + `${index + 1}  ${row}\n`, '');
+      .map((row, index) => `${index + 1}  ${row}`)
+      .join('\n');
     console.log(formattedSrc);
 
     gl.deleteShader(shader);
@@ -46,7 +47,7 @@ export const createProgram = (
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.log(gl.getProgramInfoLog(program));
+    console.error(gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
     throw new Error('Cannot link a program');
   }
@@ -67,9 +68,13 @@ export const addHeaders = (
 
   if (defines !== undefined && defines.size !== 0) {
     for (const [variable, value] of defines) {
-      headers += `#define ${variable} ${value}\n`;
+      if (typeof value === 'boolean' && value) {
+        headers += `#define ${variable}\n`;
+      } else if (typeof value === 'number') {
+        headers += `#define ${variable} ${value}\n`;
+      }
     }
-    headers += '\n\n';
+    headers += '\n';
   }
 
   return headers + src;

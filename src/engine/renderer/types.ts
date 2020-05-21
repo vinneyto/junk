@@ -1,4 +1,4 @@
-export type Defines = Map<string, string | number | boolean>;
+export type Defines = Map<string, number | boolean>;
 
 export enum ShaderType {
   Vertex = WebGLRenderingContext.VERTEX_SHADER,

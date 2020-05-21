@@ -9,7 +9,7 @@ export const buildUniformsMap = (
 ): Map<string, WebGLUniformLocation> => {
   const uniformsLocations = new Map<string, WebGLUniformLocation>();
 
-  [...Array(getActiveUniformsAmount(gl, program)).keys()].forEach((index) => {
+  for (let index = 0; index < getActiveUniformsAmount(gl, program); index++) {
     const currentUniform = gl.getActiveUniform(program, index);
 
     if (currentUniform === null) {
@@ -24,7 +24,7 @@ export const buildUniformsMap = (
     }
 
     uniformsLocations.set(name, uniformLocation);
-  });
+  }
 
   return uniformsLocations;
 };

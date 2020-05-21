@@ -18,11 +18,24 @@ export class Context {
     this.gl.viewport(x, y, width, height);
   }
 
-  clear(masks: Cleansing[]): void {
-    const mask: Cleansing = masks.reduce(
-      (result, currentMask) => result | currentMask
-    );
-    this.gl.clear(mask);
+  clear(color = false, depth = false, stencil = false): void {
+    let mask: Cleansing = 0;
+
+    if (color) {
+      mask |= Cleansing.Color;
+    }
+
+    if (depth) {
+      mask |= Cleansing.Depth;
+    }
+
+    if (stencil) {
+      mask |= Cleansing.Stencil;
+    }
+
+    if (mask !== 0) {
+      this.gl.clear(mask);
+    }
   }
 
   clearColor(r: number, g: number, b: number, a: number): void {

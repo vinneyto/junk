@@ -1,6 +1,5 @@
 import {
   Context,
-  Cleansing,
   DrawMode,
   NumberType,
   BindingTarget,
@@ -17,7 +16,7 @@ export async function drawTriangle(): Promise<Demo> {
   const canvas = new Canvas({ width: '100vw', height: '100vh' });
   const context = new Context(canvas.getWebGLContext());
   context.clearColor(0, 0, 0, 0);
-  context.clear([Cleansing.Color]);
+  context.clear(true);
 
   const positions = new Float32Array([0, 0, 0, 0.5, 0.7, 0]);
   const positionsBuffer = context.createBuffer(
