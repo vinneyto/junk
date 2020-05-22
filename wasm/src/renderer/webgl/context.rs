@@ -336,7 +336,7 @@ fn size_u32<T>() -> u32 {
   std::mem::size_of::<T>() as u32
 }
 
-fn get_memory_buffer() -> JsValue {
+pub fn get_memory_buffer() -> JsValue {
   wasm_bindgen::memory()
     .dyn_into::<WebAssembly::Memory>()
     .unwrap_or_else(|_| panic!("Should be a memory"))

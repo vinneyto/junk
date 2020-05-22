@@ -9,9 +9,8 @@ use nphysics3d::object::{
 };
 use nphysics3d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 
-use crate::renderer::webgl::context::get_typed_array_from_slice;
+use crate::renderer::webgl::context::get_memory_buffer;
 
 #[wasm_bindgen]
 pub struct PhysicsDemo {
@@ -114,9 +113,11 @@ impl PhysicsDemo {
   pub fn get_render_data(&mut self, index: usize) -> Float32Array {
     self.game_objects[index].update_render_data(&self.colliders, &mut self.render_data);
 
-    get_typed_array_from_slice(&self.render_data)
-      .dyn_into::<Float32Array>()
-      .unwrap_or_else(|_| panic!("array is not Float32Array"))
+    Float32Array::new_with_byte_offset_and_length(
+      &get_memory_buffer(),
+      self.render_data.as_ptr() as u32,
+      self.render_data.len() as u32,
+    )
   }
 }
 
