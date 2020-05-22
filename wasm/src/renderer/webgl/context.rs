@@ -62,9 +62,7 @@ impl Context {
 
     self.gl.bind_buffer(target.as_u32(), Some(&buffer));
 
-    let start = data.as_ptr() as u32 / size_u32::<T>();
-    let end = start + data.len() as u32;
-    let array = get_typed_array::<T>(start, end);
+    let array = get_typed_array_from_slice(data);
 
     self
       .gl
@@ -110,9 +108,7 @@ impl Context {
     format: TextureFormat,
     data: &[T],
   ) -> Result<()> {
-    let start = data.as_ptr() as u32 / size_u32::<T>();
-    let end = start + data.len() as u32;
-    let array = get_typed_array::<T>(start, end);
+    let array = get_typed_array_from_slice(data);
 
     self
       .gl
@@ -340,11 +336,17 @@ fn size_u32<T>() -> u32 {
   std::mem::size_of::<T>() as u32
 }
 
-fn get_memory_buffer() -> JsValue {
+pub fn get_memory_buffer() -> JsValue {
   wasm_bindgen::memory()
     .dyn_into::<WebAssembly::Memory>()
     .unwrap_or_else(|_| panic!("Should be a memory"))
     .buffer()
+}
+
+pub fn get_typed_array_from_slice<T: BufferItem>(data: &[T]) -> Object {
+  let start = data.as_ptr() as u32 / size_u32::<T>();
+  let end = start + data.len() as u32;
+  get_typed_array::<T>(start, end)
 }
 
 fn get_typed_array<T: BufferItem>(start: u32, end: u32) -> Object {
