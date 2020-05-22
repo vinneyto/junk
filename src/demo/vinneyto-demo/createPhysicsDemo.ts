@@ -27,14 +27,8 @@ export async function createPhysicsDemo(): Promise<Demo> {
   cameraController.setRotation(Math.PI / 6, Math.PI / 8);
   const scene = new Scene();
 
-  const geometry = new PlaneGeometry(10, 10);
-  geometry.rotateX(-Math.PI / 2);
-  const material = new MeshBasicMaterial({
-    color: 'gray',
-    side: DoubleSide,
-  });
-  const box = new Mesh(geometry, material);
-  scene.add(box);
+  const ground = createGround();
+  scene.add(ground);
 
   const light = new DirectionalLight();
   light.position.set(0, 1, 0);
@@ -52,13 +46,11 @@ export async function createPhysicsDemo(): Promise<Demo> {
 
     demo.step();
 
-    const amount = demo.get_amount();
-
     for (let i = 0; i < gameObjects.length; i++) {
       gameObjects[i].visible = false;
     }
 
-    for (let i = 0; i < amount; i++) {
+    for (let i = 0; i < demo.get_amount(); i++) {
       const render_data = demo.get_render_data(i);
       transformMatrix.fromArray(render_data, 0);
 
@@ -86,6 +78,16 @@ export async function createPhysicsDemo(): Promise<Demo> {
   };
 
   return { render };
+}
+
+function createGround() {
+  const g = new PlaneGeometry(10, 10);
+  g.rotateX(-Math.PI / 2);
+  const m = new MeshBasicMaterial({
+    color: 'gray',
+    side: DoubleSide,
+  });
+  return new Mesh(g, m);
 }
 
 function createCuboid() {
