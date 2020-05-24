@@ -1,5 +1,5 @@
-use js_sys::Float32Array;
-use na::Vector3;
+use js_sys::{Float32Array, Function};
+use na::{Matrix4, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -14,7 +14,6 @@ use crate::renderer::webgl::context::get_memory_buffer;
 
 #[wasm_bindgen]
 pub struct PhysicsDemo {
-  render_data: Vec<f32>,
   game_objects: Vec<Box<dyn GameObject>>,
 
   mechanical_world: DefaultMechanicalWorld<f32>,
@@ -29,7 +28,6 @@ pub struct PhysicsDemo {
 impl PhysicsDemo {
   #[wasm_bindgen(constructor)]
   pub fn new() -> PhysicsDemo {
-    let render_data = vec![0.0; 100];
     let mut game_objects: Vec<Box<dyn GameObject>> = vec![];
 
     let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
@@ -85,7 +83,6 @@ impl PhysicsDemo {
     )));
 
     PhysicsDemo {
-      render_data,
       game_objects,
       mechanical_world,
       geometrical_world,
@@ -106,18 +103,21 @@ impl PhysicsDemo {
     )
   }
 
-  pub fn get_amount(&self) -> u32 {
-    self.game_objects.len() as u32
-  }
+  pub fn update_view_objects(&self, cb: Function) {
+    let mut render_data: Vec<f32> = vec![0.0; 16];
 
-  pub fn get_render_data(&mut self, index: usize) -> Float32Array {
-    self.game_objects[index].update_render_data(&self.colliders, &mut self.render_data);
+    for (i, game_object) in self.game_objects.iter().enumerate() {
+      game_object.update_render_data(&self.colliders, &mut render_data);
 
-    Float32Array::new_with_byte_offset_and_length(
-      &get_memory_buffer(),
-      self.render_data.as_ptr() as u32,
-      self.render_data.len() as u32,
-    )
+      let array = Float32Array::new_with_byte_offset_and_length(
+        &get_memory_buffer(),
+        render_data.as_ptr() as u32,
+        render_data.len() as u32,
+      );
+
+      cb.call2(&JsValue::NULL, &array, &JsValue::from_f64(i as f64))
+        .unwrap_or_else(|_| panic!("unable to update view"));
+    }
   }
 }
 
@@ -155,13 +155,16 @@ impl CuboidObject {
 impl GameObject for CuboidObject {
   fn update_render_data(&self, bodies: &DefaultColliderSet<f32>, data: &mut [f32]) {
     if let Some(collider) = bodies.get(self.handle) {
-      let m = collider.position().to_homogeneous();
+      let mut sm = Matrix4::from_element(0.0);
+      sm[(0, 0)] = self.half_size.x * 2.0;
+      sm[(1, 1)] = self.half_size.y * 2.0;
+      sm[(2, 2)] = self.half_size.z * 2.0;
+      sm[(3, 3)] = 1.0;
+
+      let mm = collider.position().to_homogeneous() * sm;
       for i in 0..16 {
-        data[i] = m[i];
+        data[i] = mm[i];
       }
-      data[16] = self.half_size.x * 2.0;
-      data[17] = self.half_size.y * 2.0;
-      data[18] = self.half_size.z * 2.0;
     }
   }
 }

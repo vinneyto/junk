@@ -41,36 +41,34 @@ export async function createPhysicsDemo(): Promise<Demo> {
   const gameObjects: Object3D[] = [];
   const transformMatrix = new Matrix4();
 
+  const hideGameObject = (object: Object3D) => {
+    object.visible = false;
+  };
+
+  const updateGameObject = (data: Float32Array, index: number) => {
+    transformMatrix.fromArray(data, 0);
+
+    if (gameObjects.length < index + 1) {
+      const cuboid = createCuboid();
+      gameObjects.push(cuboid);
+      scene.add(cuboid);
+      console.log('add cuboid');
+    }
+
+    const object = gameObjects[index];
+    transformMatrix.decompose(object.position, object.quaternion, object.scale);
+
+    object.visible = true;
+  };
+
   const render = () => {
     resizeRenderer(renderer, camera);
 
     demo.step();
 
-    for (let i = 0; i < gameObjects.length; i++) {
-      gameObjects[i].visible = false;
-    }
+    gameObjects.forEach(hideGameObject);
 
-    for (let i = 0; i < demo.get_amount(); i++) {
-      const render_data = demo.get_render_data(i);
-      transformMatrix.fromArray(render_data, 0);
-
-      if (gameObjects.length < i + 1) {
-        const cuboid = createCuboid();
-        gameObjects.push(cuboid);
-        scene.add(cuboid);
-        console.log('add cuboid');
-      }
-
-      const object = gameObjects[i];
-      transformMatrix.decompose(
-        object.position,
-        object.quaternion,
-        object.scale
-      );
-
-      object.scale.fromArray(render_data, 16);
-      object.visible = true;
-    }
+    demo.update_view_objects(updateGameObject);
 
     cameraController.update(camera);
 
