@@ -25,6 +25,11 @@ export class Vector4 {
     return new Vector4(1, 0, 0, 0);
   }
 
+  /** Construct a Vector4 out of given Vector3 and w component */
+  static from(vector3: Vector3, w: number) {
+    return new Vector4(vector3.x, vector3.y, vector3.z, w);
+  }
+
   /////////// OPERATIONS WITH ANOTHER VECTOR ///////////
 
   /** Calculate (this vector + passed vector) */
@@ -75,11 +80,6 @@ export class Vector4 {
       this.z === vector.z &&
       this.w === vector.w
     );
-  }
-
-  /** Construct a Vector3 out of given Vector3 and w component */
-  from(vector3: Vector3, w: number) {
-    return new Vector4(vector3.x, vector3.y, vector3.z, w);
   }
 
   ////////////// OPERATIONS WITH A SCALAR //////////////
