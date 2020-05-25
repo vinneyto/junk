@@ -1,11 +1,11 @@
 use anyhow::{anyhow, Result};
 use log::error;
+use na::{Matrix4, Vector3, Vector4};
 use std::collections::HashMap;
 use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation};
 
 use super::context::TypedArrayKind;
 use super::define::Define;
-use crate::math::{Matrix4, Vector3, Vector4};
 
 pub struct Shader {
   gl: WebGlRenderingContext,
@@ -83,7 +83,7 @@ impl Shader {
     Some(())
   }
 
-  pub fn set_vector4(&self, name: &str, v: &Vector4) -> Option<()> {
+  pub fn set_vector4(&self, name: &str, v: &Vector4<f32>) -> Option<()> {
     let location = self.uniform_locations.get(name)?;
 
     self.gl.uniform4f(Some(location), v.x, v.y, v.z, v.w);
@@ -91,7 +91,7 @@ impl Shader {
     Some(())
   }
 
-  pub fn set_vector3(&self, name: &str, v: &Vector3) -> Option<()> {
+  pub fn set_vector3(&self, name: &str, v: &Vector3<f32>) -> Option<()> {
     let location = self.uniform_locations.get(name)?;
 
     self.gl.uniform3f(Some(location), v.x, v.y, v.z);
@@ -99,7 +99,7 @@ impl Shader {
     Some(())
   }
 
-  pub fn set_matrix4(&self, name: &str, m: &Matrix4) -> Option<()> {
+  pub fn set_matrix4(&self, name: &str, m: &Matrix4<f32>) -> Option<()> {
     let location = self.uniform_locations.get(name)?;
 
     self
