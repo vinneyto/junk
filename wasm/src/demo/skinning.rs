@@ -7,8 +7,8 @@ use web_sys::WebGlTexture;
 
 use super::webgl_canvas::WebGlCanvas;
 use crate::renderer::webgl::context::{
-  BufferTarget, BufferUsage, Cleaning, Context, DrawMode, TexParam, TexParamName, TextureFormat,
-  TextureKind, TypedArrayKind,
+  BufferTarget, BufferUsage, Context, DrawMode, TexParam, TexParamName, TextureFormat, TextureKind,
+  TypedArrayKind,
 };
 use crate::renderer::webgl::define::Define;
 use crate::renderer::webgl::shader::{AttributeOptions, Shader};
@@ -54,8 +54,7 @@ impl SkinningDemo {
     }
 
     self.ctx.clear_color(1.0, 1.0, 1.0, 1.0);
-    self.ctx.clear(Cleaning::Color);
-    self.ctx.clear(Cleaning::Depth);
+    self.ctx.clear(true, true);
 
     self.shader.bind();
 

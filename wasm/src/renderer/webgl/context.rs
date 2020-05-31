@@ -33,8 +33,18 @@ impl Context {
     self.gl.viewport(x, y, width, height);
   }
 
-  pub fn clear(&self, target: Cleaning) {
-    self.gl.clear(target.as_u32());
+  pub fn clear(&self, color: bool, depth: bool) {
+    let mut clear = 0;
+
+    if color {
+      clear |= Cleaning::Color.as_u32();
+    }
+
+    if depth {
+      clear |= Cleaning::Depth.as_u32();
+    }
+
+    self.gl.clear(clear);
   }
 
   pub fn clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
@@ -309,7 +319,7 @@ impl TextureFormat {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TypedArrayKind {
   Uint8,
   Uint16,

@@ -120,7 +120,7 @@ impl Shader {
   }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AttributeOptions {
   pub component_type: TypedArrayKind,
   pub item_size: i32,
