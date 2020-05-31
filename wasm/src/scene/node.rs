@@ -8,7 +8,6 @@ pub struct Node {
   pub position: Vector3<f32>,
   pub rotation: UnitQuaternion<f32>,
   pub isometry: Isometry3<f32>,
-  pub attachment: Option<Index>,
   pub visible: bool,
 }
 
@@ -20,7 +19,6 @@ impl Node {
       position: Vector3::new(0.0, 0.0, 0.0),
       rotation: UnitQuaternion::identity(),
       isometry: Isometry3::identity(),
-      attachment: None,
       visible: true,
     }
   }
