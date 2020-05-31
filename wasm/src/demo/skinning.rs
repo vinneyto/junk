@@ -1,11 +1,11 @@
 use anyhow::Result;
 use js_sys::Error;
+use na::{Isometry3, Matrix4, Orthographic3, Vector3};
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 use web_sys::WebGlTexture;
 
 use super::webgl_canvas::WebGlCanvas;
-use crate::math::{Matrix4, Vector3};
 use crate::renderer::webgl::context::{
   BufferTarget, BufferUsage, Cleaning, Context, DrawMode, TexParam, TexParamName, TextureFormat,
   TextureKind, TypedArrayKind,
@@ -20,7 +20,7 @@ pub struct SkinningDemo {
   shader: Shader,
   bone_matrix_texture: Option<WebGlTexture>,
   angle: f32,
-  inverse_bone: Vec<Matrix4>,
+  inverse_bone: Vec<Matrix4<f32>>,
 }
 
 #[wasm_bindgen]
@@ -33,7 +33,7 @@ impl SkinningDemo {
       create_skinning_stuff(&ctx).map_err(|e| Error::new(&format!("{}", e)))?;
     let inverse_bone = compute_bone_matrices(0.0)
       .iter()
-      .map(|m| m.inverse())
+      .map(|m| m.try_inverse().unwrap_or_else(|| Matrix4::identity()))
       .collect();
 
     Ok(SkinningDemo {
@@ -62,18 +62,19 @@ impl SkinningDemo {
     let aspect = (self.canvas.width as f32) / (self.canvas.height as f32);
     let half_size = 10.0;
 
-    let projection = Matrix4::orthographic(
+    let projection = Orthographic3::new(
       half_size * aspect * -1.0,
       half_size * aspect,
       half_size,
       half_size * -1.0,
       half_size * -1.0,
       half_size,
-    );
+    )
+    .to_homogeneous();
 
     self.angle += 0.01;
 
-    let bone_matrices: Vec<Matrix4> = compute_bone_matrices(self.angle.sin())
+    let bone_matrices: Vec<Matrix4<f32>> = compute_bone_matrices(self.angle.sin())
       .iter()
       .enumerate()
       .map(|v| *v.1 * self.inverse_bone[v.0])
@@ -111,21 +112,26 @@ impl SkinningDemo {
   }
 }
 
-fn compute_bone_matrices(angle: f32) -> Vec<Matrix4> {
-  let mt = Matrix4::translation(4.0, 0.0, 0.0);
-  let mr = Matrix4::rotation_axis(Vector3::forward(), angle);
-  let m1 = Matrix4::identity();
-  let m2 = m1 * mr * mt;
-  let m3 = m2 * mr * mt;
-  let m4 = Matrix4::identity();
+fn compute_bone_matrices(angle: f32) -> Vec<Matrix4<f32>> {
+  let shift = Isometry3::new(Vector3::new(4.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0));
+  let rotate = Isometry3::new(Vector3::new(0.0, 0.0, 0.0), Vector3::z() * angle);
+  let i1 = Isometry3::identity();
+  let i2 = i1 * rotate * shift;
+  let i3 = i2 * rotate * shift;
+  let i4 = Isometry3::identity();
 
-  vec![m1, m2, m3, m4]
+  vec![
+    i1.to_homogeneous(),
+    i2.to_homogeneous(),
+    i3.to_homogeneous(),
+    i4.to_homogeneous(),
+  ]
 }
 
-fn bone_matrices_to_vec(matrices: &[Matrix4]) -> Vec<f32> {
+fn bone_matrices_to_vec(matrices: &[Matrix4<f32>]) -> Vec<f32> {
   let mut data: Vec<f32> = vec![];
   for bone in matrices {
-    data.extend(&bone.data);
+    data.extend(bone.iter());
   }
   data
 }

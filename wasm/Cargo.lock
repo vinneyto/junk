@@ -659,6 +659,7 @@ dependencies = [
  "anyhow",
  "console_error_panic_hook",
  "console_log",
+ "generational-arena",
  "gltf",
  "js-sys",
  "log",
