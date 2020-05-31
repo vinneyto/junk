@@ -1,25 +1,28 @@
 import { Vector3 } from './Vector3';
+import { Vector4 } from './Vector4';
+
+const ELEMENTS_AMOUNT = 16;
 
 export class Matrix4 {
   private elements: number[];
 
   constructor(
-    ix: number,
-    iy: number,
-    iz: number,
-    iw: number,
-    jx: number,
-    jy: number,
-    jz: number,
-    jw: number,
-    kx: number,
-    ky: number,
-    kz: number,
-    kw: number,
-    tx: number,
-    ty: number,
-    tz: number,
-    tw: number
+    ix = 1,
+    iy = 0,
+    iz = 0,
+    iw = 0,
+    jx = 0,
+    jy = 1,
+    jz = 0,
+    jw = 0,
+    kx = 0,
+    ky = 0,
+    kz = 1,
+    kw = 0,
+    tx = 0,
+    ty = 0,
+    tz = 0,
+    tw = 1
   ) {
     this.elements = [
       ix,
@@ -41,12 +44,16 @@ export class Matrix4 {
     ];
   }
 
+  ///////////////////// STATIC METHODS ///////////////////
+
+  /** Returns an identity matrix */
   static identity(): Matrix4 {
     return new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
   }
 
+  /** Returns a matrix built out of elements from passed array */
   static from(elements: number[]): Matrix4 {
-    if (elements.length !== 16) {
+    if (elements.length !== ELEMENTS_AMOUNT) {
       throw new Error(
         'To build Matrix4 object you need to pass an array of 16 elements'
       );
@@ -72,14 +79,17 @@ export class Matrix4 {
     );
   }
 
+  /** Returns a matrix with passed values of translation */
   static translation(x: number, y: number, z: number): Matrix4 {
     return new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1);
   }
 
+  /** Returns a matrix with passed values of scale */
   static scale(x: number, y: number, z: number): Matrix4 {
     return new Matrix4(x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1);
   }
 
+  /** Returns a matrix with passed values of rotation */
   static rotationAxis(axis: Vector3, angle: number): Matrix4 {
     const { x, y, z } = axis;
 
@@ -115,14 +125,73 @@ export class Matrix4 {
     );
   }
 
+  /** Returns a result of m1 * m2 as a new matrix */
   static multiplyMatrices(m1: Matrix4, m2: Matrix4): Matrix4 {
     return m1.multiply(m2);
   }
 
+  /** Returns an orthographic projection matrix */
+  static makeOrthographic(
+    left: number,
+    right: number,
+    top: number,
+    bottom: number,
+    near: number,
+    far: number
+  ): Matrix4 {
+    const rlInv = 1 / (right - left);
+    const tbInv = 1 / (top - bottom);
+    const nfInv = 1 / (near - far);
+
+    const x = -(right + left) * rlInv;
+    const y = -(top + bottom) * tbInv;
+    const z = -(far + near) * nfInv;
+
+    const a = 2 * rlInv;
+    const b = 2 * tbInv;
+    const c = 2 * nfInv;
+
+    return new Matrix4(a, 0, 0, 0, 0, b, 0, 0, 0, 0, c, 0, x, y, z, 1);
+  }
+
+  /** Returns a perspective projection matrix */
+  static makePerspective(
+    fov: number,
+    aspect: number,
+    near: number,
+    far: number
+  ) {
+    const height = fov * 2;
+    const width = height * aspect;
+
+    const left = -0.5 * width;
+    const right = left + width;
+    const top = near * Math.tan(fov * 0.5);
+    const bottom = top - height;
+
+    const rlInv = 1 / (right - left);
+    const tbInv = 1 / (top - bottom);
+    const fnInv = 1 / (near - far);
+
+    const x = 2 * near * rlInv;
+    const y = 2 * near * tbInv;
+
+    const a = (right + left) * rlInv;
+    const b = (top + bottom) * tbInv;
+    const c = -(far + near) * fnInv;
+    const d = -2 * far * near * fnInv;
+
+    return new Matrix4(x, 0, 0, 0, 0, y, 0, 0, a, b, c, -1, 0, 0, d, 0);
+  }
+
+  ////////////// OPERATIONS WITH THIS MATRIX //////////////
+
+  /** Returns elements of matrix as an array in a column-major order */
   getElements(): number[] {
     return this.elements;
   }
 
+  /** Returns an inverse matrix of this matrix */
   getInverse(): Matrix4 {
     const n11 = this.elements[0];
     const n21 = this.elements[1];
@@ -287,53 +356,27 @@ export class Matrix4 {
     return Matrix4.from(te);
   }
 
-  makeOrthographic(
-    left: number,
-    right: number,
-    top: number,
-    bottom: number,
-    near: number,
-    far: number
-  ): Matrix4 {
-    const rlInv = 1 / (right - left);
-    const tbInv = 1 / (top - bottom);
-    const nfInv = 1 / (near - far);
-
-    const x = -(right + left) * rlInv;
-    const y = -(top + bottom) * tbInv;
-    const z = -(far + near) * nfInv;
-
-    const a = 2 * rlInv;
-    const b = 2 * tbInv;
-    const c = 2 * nfInv;
-
-    return new Matrix4(a, 0, 0, 0, 0, b, 0, 0, 0, 0, c, 0, x, y, z, 1);
+  /** Returns a new matrix with the same values as this matrix */
+  clone(): Matrix4 {
+    return Matrix4.from(this.elements);
   }
 
-  makePerspective(fov: number, aspect: number, near: number, far: number) {
-    const height = fov * 2;
-    const width = height * aspect;
+  /** Indicates if this and passed matrices are equal */
+  equals(matrix: Matrix4): boolean {
+    const otherElements = matrix.getElements();
 
-    const left = -0.5 * width;
-    const right = left + width;
-    const top = near * Math.tan(fov * 0.5);
-    const bottom = top - height;
+    for (let i = 0; i < ELEMENTS_AMOUNT; i++) {
+      if (this.elements[i] !== otherElements[i]) {
+        return false;
+      }
+    }
 
-    const rlInv = 1 / (right - left);
-    const tbInv = 1 / (top - bottom);
-    const fnInv = 1 / (near - far);
-
-    const x = 2 * near * rlInv;
-    const y = 2 * near * tbInv;
-
-    const a = (right + left) * rlInv;
-    const b = (top + bottom) * tbInv;
-    const c = -(far + near) * fnInv;
-    const d = -2 * far * near * fnInv;
-
-    return new Matrix4(x, 0, 0, 0, 0, y, 0, 0, a, b, c, -1, 0, 0, d, 0);
+    return true;
   }
 
+  ////////////////// MULTIPLICATION WITH THIS MATRIX /////////////////
+
+  /** Returns the result of (this matrix * passed matrix) */
   multiply(matrix: Matrix4): Matrix4 {
     const a = this.elements;
     const b = matrix.getElements();
@@ -397,7 +440,35 @@ export class Matrix4 {
     return Matrix4.from(result);
   }
 
+  /** Returns the result of (this matrix * scalar) */
   multiplyScalar(scalar: number): Matrix4 {
     return Matrix4.from(this.elements.map((element) => element * scalar));
+  }
+
+  /** Returns the result of (this matrix * vector3) */
+  multiplyVector3(vector: Vector3): Vector3 {
+    const { x, y, z } = vector;
+    const d = this.elements;
+
+    const w = 1.0 / (d[3] * x + d[7] * y + d[11] * z + d[15]);
+
+    const nx = (d[0] * x + d[4] * y + d[8] * z + d[12]) * w;
+    const ny = (d[1] * x + d[5] * y + d[9] * z + d[13]) * w;
+    const nz = (d[2] * x + d[6] * y + d[10] * z + d[14]) * w;
+
+    return new Vector3(nx, ny, nz);
+  }
+
+  /** Returns the result of (this matrix * vector4) */
+  multiplyVector4(vector: Vector4): Vector4 {
+    const { x, y, z, w } = vector;
+    const d = this.elements;
+
+    const nx = d[0] * x + d[4] * y + d[8] * z + d[12] * w;
+    const ny = d[1] * x + d[5] * y + d[9] * z + d[13] * w;
+    const nz = d[2] * x + d[6] * y + d[10] * z + d[14] * w;
+    const nw = d[3] * x + d[7] * y + d[11] * z + d[15] * w;
+
+    return new Vector4(nx, ny, nz, nw);
   }
 }

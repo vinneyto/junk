@@ -25,7 +25,7 @@ export class Vector3 {
 
   /////////// OPERATIONS WITH ANOTHER VECTOR ///////////
 
-  /** Calculate (this vector + passed vector) */
+  /** Returns the result of (this vector + passed vector) */
   add(vector: Vector3): Vector3 {
     const x = this.x + vector.x;
     const y = this.y + vector.y;
@@ -34,7 +34,7 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate (this vector - passed vector) */
+  /** Returns the result of (this vector - passed vector) */
   sub(vector: Vector3): Vector3 {
     const x = this.x - vector.x;
     const y = this.y - vector.y;
@@ -43,7 +43,7 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate (this vector * passed vector) */
+  /** Returns the result of (this vector * passed vector) */
   multiply(vector: Vector3): Vector3 {
     const x = this.x * vector.x;
     const y = this.y * vector.y;
@@ -52,7 +52,7 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate (this vector / passed vector) */
+  /** Returns the result of (this vector / passed vector) */
   divide(vector: Vector3): Vector3 {
     const x = this.x / vector.x;
     const y = this.y / vector.y;
@@ -61,7 +61,7 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate a cross product from this and passed vectors */
+  /** Returns the result of a cross product from this and passed vectors */
   cross(vector: Vector3): Vector3 {
     const x = this.y * vector.z - this.z * vector.y;
     const y = this.z * vector.x - this.x * vector.z;
@@ -70,7 +70,7 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate a dot product from this and passed vectors */
+  /** Returns the result of a dot product from this and passed vectors */
   dot(vector: Vector3): number {
     return this.x * vector.x + this.y * vector.y + this.z * vector.z;
   }
@@ -82,7 +82,7 @@ export class Vector3 {
 
   ////////////// OPERATIONS WITH A SCALAR //////////////
 
-  /** Calculate (this vector + scalar) */
+  /** Returns the result of (this vector + scalar) */
   addScalar(scalar: number): Vector3 {
     const x = this.x + scalar;
     const y = this.y + scalar;
@@ -91,12 +91,12 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate (this vector - scalar) */
+  /** Returns the result of (this vector - scalar) */
   subScalar(scalar: number): Vector3 {
     return this.addScalar(-scalar);
   }
 
-  /** Calculate (this vector * scalar) */
+  /** Returns the result of (this vector * scalar) */
   multiplyScalar(scalar: number): Vector3 {
     const x = this.x * scalar;
     const y = this.y * scalar;
@@ -105,7 +105,7 @@ export class Vector3 {
     return new Vector3(x, y, z);
   }
 
-  /** Calculate (this vector / scalar) */
+  /** Returns the result of (this vector / scalar) */
   divideScalar(scalar: number): Vector3 {
     return this.multiplyScalar(1 / scalar);
   }
