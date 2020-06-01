@@ -3,7 +3,9 @@ use na::{Matrix4, Vector3};
 use std::collections::HashMap;
 use web_sys::{WebGlBuffer, WebGlRenderingContext, WebGlTexture};
 
-use super::context::Context;
+use super::context::{BufferTarget, Context};
+use super::material::material::Material;
+use super::material::material_params::MaterialParams;
 use super::shader::{AttributeOptions, Shader};
 use crate::scene::scene::Scene;
 
@@ -21,24 +23,14 @@ pub struct Geometry {
 }
 
 #[derive(Debug, Clone)]
-pub struct DebugMaterialParams {
-  color: Vector3<f32>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Material {
-  Debug(DebugMaterialParams),
-}
-
-#[derive(Debug, Clone)]
 pub struct Mesh {
   pub geometry: Geometry,
   pub material: Material,
 }
 
 pub struct CameraState {
-  pub view_matrix: Matrix4<f32>,
-  pub projection_matrix: Matrix4<f32>,
+  pub view: Matrix4<f32>,
+  pub projection: Matrix4<f32>,
 }
 
 pub struct Renderer {
@@ -62,7 +54,40 @@ impl Renderer {
     }
   }
 
-  pub fn render(&self, scene: &Scene, meshes: &Arena<Mesh>, camera_state: &CameraState) {}
+  pub fn render(&mut self, scene: &mut Scene, meshes: &Arena<Mesh>, camera_state: &CameraState) {
+    scene.update_world_isometry();
 
-  fn bind_geometry(&self) {}
+    let visible_items = scene.collect_visible_items();
+
+    for handle in visible_items {
+      let node = scene.get_node(handle).unwrap();
+      let mesh = meshes.get(node.mesh.unwrap()).unwrap();
+
+      let shader_id = match &mesh.material {
+        Material::Debug(debug_params) => self.setup_mesh_shader(debug_params),
+      };
+
+      self.bind_geometry(&shader_id, &mesh.geometry);
+    }
+  }
+
+  fn setup_mesh_shader<T: MaterialParams>(&mut self, params: &T) -> String {
+    todo!("later")
+  }
+
+  fn bind_geometry(&self, shader_id: &str, geometry: &Geometry) {
+    let shader = self.shaders.get(shader_id).unwrap();
+
+    self.ctx.switch_attributes(geometry.attributes.len() as u32);
+
+    for name in shader.get_attribute_locations().keys() {
+      if let Some(attribute) = geometry.attributes.get(name) {
+        let buffer = self.buffers.get(attribute.buffer).unwrap();
+        self
+          .ctx
+          .bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
+        shader.bind_attribute(name, &attribute.options);
+      }
+    }
+  }
 }

@@ -118,6 +118,10 @@ impl Shader {
 
     Some(())
   }
+
+  pub fn get_attribute_locations(&self) -> &HashMap<String, u32> {
+    &self.attribute_locations
+  }
 }
 
 #[derive(Debug, Default, Clone)]

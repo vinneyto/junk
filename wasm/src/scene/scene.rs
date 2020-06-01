@@ -86,24 +86,20 @@ impl Scene {
     Some(())
   }
 
-  pub fn collect_visible_items(&self) -> Vec<(Index, Index)> {
-    let mut items: Vec<(Index, Index)> = vec![];
+  pub fn collect_visible_items(&self) -> Vec<Index> {
+    let mut items: Vec<Index> = vec![];
 
     self.collect_visible_items_subtree(self.root_handle, &mut items);
 
     items
   }
 
-  pub fn collect_visible_items_subtree(
-    &self,
-    handle: Index,
-    items: &mut Vec<(Index, Index)>,
-  ) -> Option<()> {
+  pub fn collect_visible_items_subtree(&self, handle: Index, items: &mut Vec<Index>) -> Option<()> {
     let node = self.get_node(handle)?;
 
     if node.visible {
-      if let Some(mesh_handle) = node.mesh {
-        items.push((handle, mesh_handle));
+      if node.mesh.is_some() {
+        items.push(handle);
       }
 
       for child_handle in &node.children {
