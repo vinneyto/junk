@@ -1,16 +1,10 @@
-import { Demo } from '../Demo';
-import {
-  PerspectiveCamera,
-  Scene,
-  PointLight,
-  MeshPhysicalMaterial,
-  BoxGeometry,
-  Mesh,
-} from 'three';
-import { CameraController } from '../../CameraController';
-import { createRenderer, resizeRenderer } from '../../util';
-import { fetchGLTF } from '../../gltf/fetchGLTF';
+import { Demo } from '../../Demo';
+import { PerspectiveCamera, Scene } from 'three';
+import { CameraController } from '../../../CameraController';
+import { createRenderer, resizeRenderer } from '../../../util';
+import { fetchGLTF } from '../../../gltf/fetchGLTF';
 import whaleGltfSrc from './models/whale.CYCLES.gltf';
+import { createBufferAttributes } from '../../../gltf/three';
 
 export async function createGltfSkinningDemo(): Promise<Demo> {
   const renderer = createRenderer();
@@ -27,24 +21,13 @@ export async function createGltfSkinningDemo(): Promise<Demo> {
 
   const whaleGltf = await fetchGLTF(whaleGltfSrc);
 
-  console.log(whaleGltf);
+  const attributes = createBufferAttributes(whaleGltf);
 
-  const geometry = new BoxGeometry(0.1, 0.1, 0.1);
-  const material = new MeshPhysicalMaterial({
-    color: 0xff0000,
-    metalness: 0.1,
-    roughness: 0.5,
-  });
-  const box = new Mesh(geometry, material);
-  scene.add(box);
-
-  const light = new PointLight();
-  scene.add(light);
+  console.log(attributes);
 
   const render = () => {
     resizeRenderer(renderer, camera);
 
-    light.position.copy(camera.position);
     cameraController.update(camera);
 
     renderer.render(scene, camera);

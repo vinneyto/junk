@@ -10,14 +10,40 @@ export enum GLTFAccessorType {
   MAT4 = 'MAT4',
 }
 
+export enum GLTFComponentType {
+  I8 = 5120,
+  U8 = 5121,
+  I16 = 5122,
+  U16 = 5123,
+  U32 = 5125,
+  F32 = 5126,
+}
+
 export interface GLTFAccessor extends GLTFBase {
   bufferView?: number;
   byteOffset?: number;
-  componentType: number;
+  componentType: GLTFComponentType;
   normalized?: boolean;
   count: number;
   type: GLTFAccessorType;
   max?: number[];
   min?: number[];
-  sparse?: object;
+  sparse?: {
+    count: number;
+    indices: {
+      bufferView: number;
+      byteOffset?: number;
+      componentType: GLTFComponentType;
+      extensions?: object;
+      extras?: any;
+    };
+    values: {
+      bufferView: number;
+      byteOffset?: number;
+      extensions?: object;
+      extras?: any;
+    };
+    extensions?: object;
+    extras?: any;
+  };
 }
