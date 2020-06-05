@@ -1,14 +1,12 @@
 use anyhow::Result;
 use generational_arena::{Arena, Index};
-use std::cell::RefCell;
+use na::{Matrix4, Vector3};
 use std::collections::HashMap;
-use std::rc::Rc;
 use web_sys::{WebGlBuffer, WebGlRenderingContext};
 
 use super::context::{BufferItem, BufferTarget, BufferUsage, Context, DrawMode, TypedArrayKind};
-use super::material::material::Material;
-use super::material::material_params::{CameraState, MaterialParams, Uniform};
 use super::shader::{AttributeOptions, Shader};
+use crate::scene::node::Node;
 use crate::scene::scene::Scene;
 
 #[derive(Debug, Clone)]
@@ -25,22 +23,38 @@ pub struct Geometry {
 }
 
 #[derive(Debug, Clone)]
+pub struct DebugMaterialParams {
+  pub color: Vector3<f32>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Material {
+  Debug(DebugMaterialParams),
+}
+
+#[derive(Debug, Clone)]
 pub struct Mesh {
   pub geometry: Geometry,
   pub material: Material,
 }
 
+#[derive(Debug, Clone)]
+pub struct CameraState {
+  view: Matrix4<f32>,
+  projection: Matrix4<f32>,
+}
+
 pub struct Renderer {
   ctx: Context,
   buffers: Arena<WebGlBuffer>,
-  shaders: Rc<RefCell<HashMap<String, Shader>>>,
+  shaders: HashMap<String, Shader>,
 }
 
 impl Renderer {
   pub fn new(gl: WebGlRenderingContext) -> Renderer {
     let ctx = Context::new(gl);
     let buffers = Arena::new();
-    let shaders = Rc::new(RefCell::new(HashMap::new()));
+    let shaders = HashMap::new();
     Renderer {
       ctx,
       buffers,
@@ -60,7 +74,7 @@ impl Renderer {
   }
 
   pub fn render(
-    &self,
+    &mut self,
     scene: &mut Scene,
     meshes: &Arena<Mesh>,
     camera_state: &CameraState,
@@ -76,8 +90,8 @@ impl Renderer {
       let material = &mesh.material;
 
       match material {
-        Material::Debug(debug_params) => {
-          self.setup_mesh_shader(debug_params, geometry, camera_state)?
+        Material::Debug(params) => {
+          self.setup_debug_material(node, params, geometry, camera_state)?
         }
       };
 
@@ -100,46 +114,47 @@ impl Renderer {
     Ok(())
   }
 
-  fn setup_mesh_shader<T: MaterialParams>(
-    &self,
-    material_params: &T,
+  fn bind_geometry(&self, shader: &Shader, geometry: &Geometry) {
+    self.ctx.switch_attributes(geometry.attributes.len() as u32);
+
+    for name in shader.get_attribute_locations().keys() {
+      if let Some(attribute) = geometry.attributes.get(name) {
+        let buffer = self.buffers.get(attribute.buffer).unwrap();
+        self
+          .ctx
+          .bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
+        shader.bind_attribute(name, &attribute.options);
+      }
+    }
+  }
+
+  fn setup_debug_material(
+    &mut self,
+    node: &Node,
+    params: &DebugMaterialParams,
     geometry: &Geometry,
-    camera_state: &CameraState,
+    _camera_state: &CameraState,
   ) -> Result<()> {
-    let tag = material_params.get_tag();
+    let tag = "debug";
 
-    if self.shaders.borrow().get(&tag).is_none() {
-      let defines = material_params.get_defines();
-      let (vertex_src, fragment_src) = material_params.get_shader_src();
-      let shader = self
-        .ctx
-        .create_shader(&vertex_src, &fragment_src, &defines)?;
-      self.shaders.borrow_mut().insert(tag.clone(), shader);
-    }
+    if self.shaders.get(tag).is_none() {
+      let vert_src = include_str!("./shaders/debug_vert.glsl");
+      let frag_src = include_str!("./shaders/debug_frag.glsl");
 
-    if let Some(shader) = self.shaders.borrow().get(&tag) {
-      shader.bind();
+      self.shaders.insert(
+        tag.to_string(),
+        self.ctx.create_shader(vert_src, frag_src, &vec![])?,
+      );
+    };
 
-      for uniform in material_params.get_uniforms(camera_state) {
-        match uniform {
-          Uniform::Float { name, value } => shader.set_float(&name, value),
-          Uniform::Vector3 { name, value } => shader.set_vector3(&name, &value),
-          Uniform::Matrix4 { name, value } => shader.set_matrix4(&name, &value),
-        };
-      }
+    let shader = self.shaders.get(tag).unwrap();
 
-      self.ctx.switch_attributes(geometry.attributes.len() as u32);
+    shader.bind();
 
-      for name in shader.get_attribute_locations().keys() {
-        if let Some(attribute) = geometry.attributes.get(name) {
-          let buffer = self.buffers.get(attribute.buffer).unwrap();
-          self
-            .ctx
-            .bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
-          shader.bind_attribute(name, &attribute.options);
-        }
-      }
-    }
+    shader.set_vector3("color", &params.color);
+    shader.set_matrix4("modelMatrix", &node.isometry.to_homogeneous());
+
+    self.bind_geometry(shader, geometry);
 
     Ok(())
   }
