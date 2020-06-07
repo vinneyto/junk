@@ -7,6 +7,7 @@ import { useScanner as natalyjScanner } from './demo/natalyj-demo/Scanner/useSca
 import { createPhysicsDemo } from './demo/vinneyto-demo/createPhysicsDemo';
 import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangle/drawTriangle';
 import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
+import { createGameDemo as vinneytoCreateGameDemo } from './demo/vinneyto-demo/createGameDemo';
 
 const vinneytoWasmTriangleDemo = createWasmDemoFactory('TriangleDemo');
 const vinneytoWasmSkinningDemo = createWasmDemoFactory('SkinningDemo');
@@ -24,3 +25,4 @@ routes.set('natalyj-scanner', natalyjScanner);
 routes.set('vinneyto-physics', createPhysicsDemo);
 routes.set('natalyj-triangle', natalyjDrawTriangle);
 routes.set('vinneyto-camera-demo', vinneytoCreateCameraDemo);
+routes.set('vinneyto-game-demo', vinneytoCreateGameDemo);

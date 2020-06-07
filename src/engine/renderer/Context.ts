@@ -14,6 +14,10 @@ export class Context {
 
   constructor(private readonly gl: WebGLRenderingContext) {}
 
+  getCanvas() {
+    return this.gl.canvas as HTMLCanvasElement;
+  }
+
   setViewport(x: number, y: number, width: number, height: number): void {
     this.gl.viewport(x, y, width, height);
   }
@@ -62,7 +66,7 @@ export class Context {
 
   createBuffer(
     target: BindingTarget,
-    data: Float32Array | Uint16Array,
+    data: Float32Array | Uint16Array | Uint8Array,
     usage: DataUsage
   ): WebGLBuffer | null {
     const buffer = this.gl.createBuffer();
