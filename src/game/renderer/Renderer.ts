@@ -1,11 +1,14 @@
 import { mat4, vec4 } from 'gl-matrix';
 import { Node } from './Node';
 import { Context } from '../../engine/renderer/Context';
-import { Shader, NumberType, BindingTarget, DataUsage } from '../../engine';
+import { Shader } from '../../engine';
 import { GLTF } from '../../gltf/types';
-import { GLTFAccessorType } from '../../gltf/types/GLTFAccessor';
-import { Attribute } from './Mesh';
-import { v4 } from 'uuid';
+import {
+  createGltfAttributes,
+  createGltfMeshes,
+  createGltfScenes,
+} from './util';
+import { Mesh, Material } from './Mesh';
 
 export class Renderer {
   public width: number = 0;
@@ -76,94 +79,24 @@ export class Renderer {
 
     for (const node of this.visibleNodes) {
       if (node.mesh !== undefined) {
-        console.log(node);
+        this.renderMesh(node, node.mesh);
       }
     }
+  }
+
+  renderMesh(_node: Node, _mesh: Mesh) {}
+
+  getShader(material: Material) {
+    const hasColorMap = material.colorMap !== undefined;
+    // @ts-ignore
+    const tag = `colorMap=${hasColorMap}`;
   }
 
   createGltfScenes(gltf: GLTF): Node[] {
-    // @ts-ignore
-    const attributes = this.createGltfAttributes(gltf);
+    const attributes = createGltfAttributes(gltf, this.ctx, this.buffers);
+    const meshes = createGltfMeshes(gltf, attributes);
+    const scenes = createGltfScenes(gltf, meshes);
 
-    return [];
-  }
-
-  private createGltfAttributes(gltf: GLTF) {
-    if (gltf.root.accessors === undefined) {
-      throw new Error('there is no accessors');
-    }
-
-    if (gltf.root.bufferViews === undefined) {
-      throw new Error('bufferViews is undefined');
-    }
-
-    const attributes: Attribute[] = [];
-    const bufferIds = new Map<number, string>();
-
-    for (let accIdx = 0; accIdx < gltf.root.accessors.length; accIdx++) {
-      const accessorDef = gltf.root.accessors[accIdx];
-
-      if (accessorDef.bufferView !== undefined) {
-        const bufferViewDef = gltf.root.bufferViews[accessorDef.bufferView];
-        let bufferId = bufferIds.get(accessorDef.bufferView);
-        let buffer =
-          bufferId !== undefined ? this.buffers.get(bufferId) : undefined;
-
-        if (bufferId === undefined || buffer === undefined) {
-          const array = new Uint8Array(
-            gltf.buffers[bufferViewDef.buffer],
-            bufferViewDef.byteOffset || 0,
-            bufferViewDef.byteLength
-          );
-          if (gltf.root.meshes === undefined) {
-            throw new Error('meshes is not found');
-          }
-          // TODO could we remove it?
-          const isIndexBuffer = gltf.root.meshes.some((m) =>
-            m.primitives.some((p) => p.indices === accIdx)
-          );
-          buffer = this.ctx.createBuffer(
-            !isIndexBuffer
-              ? BindingTarget.ArrayBuffer
-              : BindingTarget.ElementArrayBuffer,
-            array,
-            DataUsage.StaticDraw
-          )!;
-          bufferId = v4();
-          this.buffers.set(bufferId, buffer);
-          bufferIds.set(accessorDef.bufferView, bufferId);
-        }
-
-        attributes.push({
-          buffer: bufferId,
-          itemSize: mapAccessorTypeToItemSize[accessorDef.type],
-          componentType: accessorDef.componentType,
-          normalized: accessorDef.normalized || false,
-          stride: bufferViewDef.byteStride || 0,
-          offset: accessorDef.byteOffset || 0,
-        });
-      } else {
-        attributes.push({
-          buffer: '',
-          itemSize: 3,
-          componentType: NumberType.Float,
-          normalized: false,
-          stride: 0,
-          offset: 0,
-        });
-      }
-    }
-
-    return attributes;
+    return scenes;
   }
 }
-
-const mapAccessorTypeToItemSize = {
-  [GLTFAccessorType.SCALAR]: 1,
-  [GLTFAccessorType.VEC2]: 2,
-  [GLTFAccessorType.VEC3]: 3,
-  [GLTFAccessorType.VEC4]: 4,
-  [GLTFAccessorType.MAT2]: 4,
-  [GLTFAccessorType.MAT3]: 9,
-  [GLTFAccessorType.MAT4]: 16,
-};
