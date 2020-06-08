@@ -57,7 +57,7 @@ export default {
       },
       { test: /\.glsl/, loader: 'raw-loader' },
       { test: /\.gltf/, loader: 'gltf-webpack-loader' },
-      { test: /\.bin|png|svg|jpg|gif/, loader: 'file-loader' },
+      { test: /\.bin|png|svg|jpg|gif|glb/, loader: 'file-loader' },
     ],
   },
   devServer: {

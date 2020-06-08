@@ -1,7 +1,7 @@
 use generational_arena::Index;
 use na::{Isometry3, UnitQuaternion, Vector3};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node {
   pub parent: Option<Index>,
   pub children: Vec<Index>,

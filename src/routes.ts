@@ -6,6 +6,7 @@ import { createWasmDemoFactory } from './demo/createWasmDemoFactory';
 import { useScanner as natalyjScanner } from './demo/natalyj-demo/Scanner/useScanner';
 import { createPhysicsDemo } from './demo/vinneyto-demo/createPhysicsDemo';
 import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangle/drawTriangle';
+import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo/createWasmGltfDemo';
 
 const vinneytoWasmTriangleDemo = createWasmDemoFactory('TriangleDemo');
 const vinneytoWasmSkinningDemo = createWasmDemoFactory('SkinningDemo');
@@ -22,3 +23,4 @@ routes.set('vinneyto-wasm-skinning', vinneytoWasmSkinningDemo);
 routes.set('natalyj-scanner', natalyjScanner);
 routes.set('vinneyto-physics', createPhysicsDemo);
 routes.set('natalyj-triangle', natalyjDrawTriangle);
+routes.set('vinneyto-wasm-gltf-demo', vinneytoWasmGltfDemo);

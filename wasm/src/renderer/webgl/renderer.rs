@@ -2,7 +2,7 @@ use anyhow::Result;
 use generational_arena::{Arena, Index};
 use na::{Matrix4, Vector3};
 use std::collections::HashMap;
-use web_sys::{WebGlBuffer, WebGlRenderingContext};
+use web_sys::WebGlBuffer;
 
 use super::context::{BufferItem, BufferTarget, BufferUsage, Context, DrawMode, TypedArrayKind};
 use super::shader::{AttributeOptions, Shader};
@@ -23,13 +23,13 @@ pub struct Geometry {
 }
 
 #[derive(Debug, Clone)]
-pub struct DebugMaterialParams {
+pub struct PBRMaterialParams {
   pub color: Vector3<f32>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Material {
-  Debug(DebugMaterialParams),
+  PBR(PBRMaterialParams),
 }
 
 #[derive(Debug, Clone)]
@@ -51,8 +51,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn new(gl: WebGlRenderingContext) -> Renderer {
-    let ctx = Context::new(gl);
+  pub fn new(ctx: Context) -> Renderer {
     let buffers = Arena::new();
     let shaders = HashMap::new();
     Renderer {
@@ -60,6 +59,18 @@ impl Renderer {
       buffers,
       shaders,
     }
+  }
+
+  pub fn set_size(&self, width: i32, height: i32) {
+    self.ctx.viewport(0, 0, width, height)
+  }
+
+  pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
+    self.ctx.clear_color(r, g, b, a);
+  }
+
+  pub fn clear(&self, color: bool, depth: bool) {
+    self.ctx.clear(color, depth);
   }
 
   pub fn create_buffer<T: BufferItem>(
@@ -90,9 +101,7 @@ impl Renderer {
       let material = &mesh.material;
 
       match material {
-        Material::Debug(params) => {
-          self.setup_debug_material(node, params, geometry, camera_state)?
-        }
+        Material::PBR(params) => self.setup_pbr_material(node, params, geometry, camera_state)?,
       };
 
       if let Some(index_handle) = &geometry.indices {
@@ -128,18 +137,18 @@ impl Renderer {
     }
   }
 
-  fn setup_debug_material(
+  fn setup_pbr_material(
     &mut self,
     node: &Node,
-    params: &DebugMaterialParams,
+    params: &PBRMaterialParams,
     geometry: &Geometry,
     _camera_state: &CameraState,
   ) -> Result<()> {
-    let tag = "debug";
+    let tag = "pbr";
 
     if self.shaders.get(tag).is_none() {
-      let vert_src = include_str!("./shaders/debug_vert.glsl");
-      let frag_src = include_str!("./shaders/debug_frag.glsl");
+      let vert_src = include_str!("./shaders/pbr_vert.glsl");
+      let frag_src = include_str!("./shaders/pbr_frag.glsl");
 
       self.shaders.insert(
         tag.to_string(),
