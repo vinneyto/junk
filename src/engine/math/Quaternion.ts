@@ -1,8 +1,10 @@
-import { Vector3 } from "./Vector3";
-import { Matrix4 } from "./Matrix4";
+import { Vector3 } from './Vector3';
+import { Matrix4 } from './Matrix4';
 
 export class Quaternion {
-  constructor(private x = 0, private y = 0, private z = 0, private w = 1) { }
+  constructor(public x = 0, public y = 0, public z = 0, public w = 1) {}
+
+  ///////////////////// STATIC METHODS ///////////////////
 
   /** Returns a quaternion, constructed from the angle rotation around the axis.
    * Axis should be normalized, angle is in radians. */
@@ -19,9 +21,15 @@ export class Quaternion {
    * Matrix should be a pure rotation matrix */
   static setFromRotationMatrix(matrix: Matrix4): Quaternion {
     const elements = matrix.getElements();
-    const m11 = elements[0], m12 = elements[4], m13 = elements[8],
-      m21 = elements[1], m22 = elements[5], m23 = elements[9],
-      m31 = elements[2], m32 = elements[6], m33 = elements[10];
+    const m11 = elements[0],
+      m12 = elements[4],
+      m13 = elements[8],
+      m21 = elements[1],
+      m22 = elements[5],
+      m23 = elements[9],
+      m31 = elements[2],
+      m32 = elements[6],
+      m33 = elements[10];
     const trace = m11 + m22 + m33;
 
     let x, y, z, w;
@@ -43,7 +51,7 @@ export class Quaternion {
     } else if (m22 > m33) {
       const s = 2 * Math.sqrt(1 + m22 - m11 - m33);
 
-      x = (m21 + m12)/ s;
+      x = (m21 + m12) / s;
       y = 0.25 * s;
       z = (m23 + m32) / s;
       w = (m13 - m31) / s;
@@ -57,7 +65,7 @@ export class Quaternion {
     }
 
     return new Quaternion(x, y, z, w);
-  } 
+  }
 
   /** Returns a quaternion, constructed from rotation required to rotate from first vector to second one.
    * Vectors should be unit ones. */
@@ -85,15 +93,52 @@ export class Quaternion {
       w = r;
     }
 
-    return new Quaternion(x, y, z, w).normalizeMut();
+    return new Quaternion(x, y, z, w).normalize();
   }
 
-  /** Calculate a dot product from this and passed quaternions */
+  /** Make the target quaternion be the result of the spherical linear interpolation between start and end quaternions. */
+  static slerp(
+    start: Quaternion,
+    end: Quaternion,
+    target: Quaternion,
+    t: number
+  ): Quaternion {
+    return target.copy(start).slerp(end, t);
+  }
+
+  ///////////////// OPERATIONS WITH THIS AND OTHER QUATERNIONS /////////////////
+
+  /** Calculate a dot product from this and passed quaternions. */
   dot(quaternion: Quaternion): number {
-    return this.x * quaternion.x + this.y * quaternion.y + this.z * quaternion.z + this.w * quaternion.w;
+    return (
+      this.x * quaternion.x +
+      this.y * quaternion.y +
+      this.z * quaternion.z +
+      this.w * quaternion.w
+    );
   }
 
-  /** Indicates if this and passed quaternions are equal */
+  /** Make this quaternion be the result of q1 * q2. */
+  multiplyQuaternions(q1: Quaternion, q2: Quaternion): Quaternion {
+    this.x = q1.x * q2.w + q1.w * q2.x + q1.y * q2.z - q1.z * q2.y;
+    this.y = q1.y * q2.w + q1.w * q2.y + q1.z * q2.x - q1.x * q2.z;
+    this.z = q1.z * q2.w + q1.w * q2.z + q1.x * q2.y - q1.y * q2.x;
+    this.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+
+    return this;
+  }
+
+  /** Make this quaternion be the result of this quaternion * passed quaternion. */
+  multiply(quaternion: Quaternion): Quaternion {
+    return this.multiplyQuaternions(this, quaternion);
+  }
+
+  /** Make this quaternion be the result of passed quaternion * this quaternion. */
+  premultiply(quaternion: Quaternion): Quaternion {
+    return this.multiplyQuaternions(quaternion, this);
+  }
+
+  /** Indicates if this and passed quaternions are equal. */
   equals(quaternion: Quaternion): boolean {
     return (
       this.x === quaternion.x &&
@@ -103,58 +148,117 @@ export class Quaternion {
     );
   }
 
+  /** Set components of this quaternion to the values of passed quaternion. */
+  copy(quaternion: Quaternion): Quaternion {
+    this.x = quaternion.x;
+    this.y = quaternion.y;
+    this.z = quaternion.z;
+    this.w = quaternion.w;
+
+    return this;
+  }
+
   /** Returns the value of angle in radians between this and passed quaternions. */
   angleTo(quaternion: Quaternion): number {
     const dot = this.dot(quaternion);
-    const clampedDot = Math.max(-1, Math.min(1, dot))
+    const clampedDot = Math.max(-1, Math.min(1, dot));
     const cosBetween = Math.abs(clampedDot);
 
-    return 2 * Math.acos(cosBetween); 
+    return 2 * Math.acos(cosBetween);
   }
 
-  /** Returns the rotational conjugate of this quaternion. */
+  /** Rotate this quaternion towards passed quaternion by a given angular step. */
+  rotateTowards(quaternion: Quaternion, step: number): Quaternion {
+    const angle = this.angleTo(quaternion);
+    return angle === 0
+      ? this
+      : this.slerp(quaternion, Math.min(1, step / angle));
+  }
+
+  /** Make this quaternion the result of the spherical linear interpolation between this and passed quaternions. */
+  slerp(quaternion: Quaternion, t: number): Quaternion {
+    if (t === 0) {
+      return this;
+    }
+    if (t === 1) {
+      return this.copy(quaternion);
+    }
+
+    const x = this.x,
+      y = this.y,
+      z = this.z,
+      w = this.w;
+
+    let cosHalfTheta =
+      x * quaternion.x + y * quaternion.y + z * quaternion.z + w * quaternion.w;
+
+    if (cosHalfTheta < 0) {
+      this.copy(quaternion).negate();
+      cosHalfTheta = -cosHalfTheta;
+    } else {
+      this.copy(quaternion);
+    }
+
+    if (cosHalfTheta >= 1) {
+      (this.x = x), (this.y = y), (this.z = z), (this.w = w);
+      return this;
+    }
+
+    const sqrSinHalfTheta = 1 - cosHalfTheta * cosHalfTheta;
+
+    if (sqrSinHalfTheta <= Number.EPSILON) {
+      const s = 1 - t;
+      this.x = s * x + t * this.x;
+      this.y = s * y + t * this.y;
+      this.z = s * z + t * this.z;
+      this.w = s * w + t * this.w;
+
+      return this.normalize();
+    }
+
+    const sinHalfTheta = Math.sqrt(sqrSinHalfTheta);
+    const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta);
+    const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
+    const ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
+
+    this.w = w * ratioA + this.w * ratioB;
+    this.x = x * ratioA + this.x * ratioB;
+    this.y = y * ratioA + this.y * ratioB;
+    this.z = z * ratioA + this.z * ratioB;
+
+    return this;
+  }
+
+  ///////////////// OPERATIONS WITH THIS QUATERNION ONLY /////////////////
+
+  /** Make this quaternion the rotational conjugate of itself. */
   conjugate(): Quaternion {
-    return new Quaternion(
-      this.x * -1,
-      this.y * -1,
-      this.z * -1,
-      this.w
-    );
+    this.x = -this.x;
+    this.y = -this.y;
+    this.z = -this.z;
+
+    return this;
   }
 
   /** Calculate a squared length for this quaternion. */
   lengthSquared(): number {
-    return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
+    return (
+      this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w
+    );
   }
 
-  /** Calculate a length for this quaternion. */ 
+  /** Calculate a length for this quaternion. */
+
   length(): number {
     return Math.sqrt(this.lengthSquared());
   }
 
-  /** Calculate a unit quaternion for this quaternion. */
+  /** Make this quaternion a unit one. */
   normalize(): Quaternion {
     const length = this.length();
-    
-    if (length === 0) {
-      return new Quaternion();
-    } else {
-      const l = 1 / length;
-      return new Quaternion(
-        this.x * l,
-        this.y * l,
-        this.z * l,
-        this.w * l,
-      );
-    }
-  }
-
-  /** Make this quaternion a unit one. */
-  normalizeMut(): Quaternion {
-    const length = this.length();
 
     if (length === 0) {
-      this.x = 0, this.y = 0, this.z = 0, this.w = 1;
+      (this.x = 0), (this.y = 0), (this.z = 0), (this.w = 1);
     } else {
       const l = 1 / length;
       this.x = this.x * l;
@@ -162,6 +266,16 @@ export class Quaternion {
       this.z = this.z * l;
       this.w = this.w * l;
     }
+
+    return this;
+  }
+
+  /** Negate all components of this quaternion. */
+  negate(): Quaternion {
+    this.x = -this.x;
+    this.y = -this.y;
+    this.z = -this.z;
+    this.w = -this.w;
 
     return this;
   }
