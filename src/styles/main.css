@@ -14,13 +14,6 @@ html {
   grid-template-columns: repeat(4, 1fr);
 }
 
-.route-cont {
-  border: 1px solid;
-  border-radius: 6px;
-  width: 90%;
-  margin: 0 auto 1.6rem;
-}
-
 @media (max-width: 40rem) {
   .demo-list {
     display: block;
@@ -39,9 +32,19 @@ html {
   }
 }
 
+.route-cont {
+  border: 1px solid;
+  border-radius: 6px;
+  width: 90%;
+  margin: 0 auto 1.6rem;
+  background-color: white;
+  transition: transform 0.8s, background-color 0.8s;
+}
+
 .route-cont:hover {
   cursor: pointer;
   background-color: #c3c2ee;
+  transform: scale(1.08);
 }
 
 .route-cont * {
@@ -79,6 +82,12 @@ html {
   background-color: white;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  transition: transform 0.8s, background-color 0.8s;
+}
+
+.footer:hover {
+  background-color: #ededed;
+  transform: scale(1.01);
 }
 
 .footer svg {
