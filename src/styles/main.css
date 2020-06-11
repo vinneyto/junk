@@ -9,40 +9,33 @@ html {
 }
 
 .demo-list {
-  margin: 1.6rem 1rem 6rem 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  margin: 1.6rem 0 6rem;
+  display: grid;
+  grid-template-columns: 25% 25% 25% 25%;
 }
 
 .route-cont {
   border: 1px solid;
   border-radius: 6px;
-  width: 22%;
-  margin-bottom: 1.6rem;
-  margin-right: 3rem;
-  display: flex;
-  flex-direction: column;
+  width: 90%;
+  margin: 0 auto 1.6rem;
 }
 
 @media (max-width: 40rem) {
-  .route-cont {
-    width: 90%;
-    margin-right: 0;
+  .demo-list {
+    display: block;
   }
 }
 
 @media (min-width: 40rem) and (max-width: 60rem) {
-  .route-cont {
-    width: 45%;
-    margin-right: 2rem;
+  .demo-list {
+    grid-template-columns: 50% 50%;
   }
 }
 
 @media (min-width: 60rem) and (max-width: 80rem) {
-  .route-cont {
-    width: 30%;
-    margin-right: 2rem;
+  .demo-list {
+    grid-template-columns: 33% 33% 33%;
   }
 }
 
