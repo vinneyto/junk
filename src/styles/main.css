@@ -11,7 +11,7 @@ html {
 .demo-list {
   margin: 1.6rem 0 6rem;
   display: grid;
-  grid-template-columns: 25% 25% 25% 25%;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .route-cont {
@@ -29,13 +29,13 @@ html {
 
 @media (min-width: 40rem) and (max-width: 60rem) {
   .demo-list {
-    grid-template-columns: 50% 50%;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 60rem) and (max-width: 80rem) {
   .demo-list {
-    grid-template-columns: 33% 33% 33%;
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
