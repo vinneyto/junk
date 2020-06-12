@@ -4,10 +4,10 @@ use gltf::Gltf;
 use std::collections::HashMap;
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
-use super::renderer::{Attribute, Renderer};
+use super::renderer::{Attribute, Geometry, Material, Mesh, Renderer};
 use super::shader::AttributeOptions;
 
-pub fn create_gltf_attributes(renderer: &mut Renderer, gltf: &Gltf) -> Vec<Attribute> {
+pub fn create_gltf_attributes(gltf: &Gltf, renderer: &mut Renderer) -> Vec<Attribute> {
   let mut attributes: Vec<Attribute> = vec![];
   let mut buffer_indices: HashMap<usize, Index> = HashMap::new();
 
@@ -82,4 +82,12 @@ pub fn create_gltf_attributes(renderer: &mut Renderer, gltf: &Gltf) -> Vec<Attri
   }
 
   attributes
+}
+
+pub fn create_gltf_meshes(gltf: &Gltf) -> Vec<Mesh> {
+  let mut meshes: Vec<Mesh> = vec![];
+
+  for mesh_def in gltf.meshes() {}
+
+  meshes
 }

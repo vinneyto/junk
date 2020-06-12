@@ -24,7 +24,7 @@ impl GLTFRendererDemo {
     let mut renderer = Renderer::new(ctx);
     let gltf = Gltf::from_slice(gltf_data).unwrap();
 
-    let attributes = create_gltf_attributes(&mut renderer, &gltf);
+    let attributes = create_gltf_attributes(&gltf, &mut renderer);
 
     info!("{:#?}", attributes);
 

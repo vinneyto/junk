@@ -33,9 +33,15 @@ pub enum Material {
 }
 
 #[derive(Debug, Clone)]
-pub struct Mesh {
+pub struct Primitive {
   pub geometry: Geometry,
   pub material: Material,
+}
+
+#[derive(Debug, Clone)]
+pub struct Mesh {
+  pub primitives: Vec<Primitive>,
+  pub name: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -97,30 +103,32 @@ impl Renderer {
     for handle in visible_items {
       let node = scene.get_node(handle).unwrap();
       let mesh = meshes.get(node.mesh.unwrap()).unwrap();
-      let geometry = &mesh.geometry;
-      let material = &mesh.material;
 
-      match material {
-        Material::PBR(params) => self.setup_pbr_material(node, params, geometry, camera_state)?,
-      };
-
-      if let Some(index_handle) = &geometry.indices {
-        let indices = self.buffers.get(*index_handle).unwrap();
-        self
-          .ctx
-          .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
-        self.ctx.draw_elements(
-          DrawMode::Triangles,
-          geometry.count,
-          TypedArrayKind::Uint16,
-          0,
-        );
-      } else {
-        self.ctx.draw_arrays(DrawMode::Triangles, 0, geometry.count);
+      for primitive in &mesh.primitives {
+        let geometry = &primitive.geometry;
+        let material = &primitive.material;
+        match material {
+          Material::PBR(params) => self.setup_pbr_material(node, params, geometry, camera_state)?,
+        };
+        self.draw_geometry(DrawMode::Triangles, geometry);
       }
     }
 
     Ok(())
+  }
+
+  fn draw_geometry(&self, mode: DrawMode, geometry: &Geometry) {
+    if let Some(index_handle) = &geometry.indices {
+      let indices = self.buffers.get(*index_handle).unwrap();
+      self
+        .ctx
+        .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
+      self
+        .ctx
+        .draw_elements(mode, geometry.count, TypedArrayKind::Uint16, 0);
+    } else {
+      self.ctx.draw_arrays(mode, 0, geometry.count);
+    }
   }
 
   fn bind_geometry(&self, shader: &Shader, geometry: &Geometry) {
