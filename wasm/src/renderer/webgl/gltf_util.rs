@@ -1,10 +1,14 @@
 use generational_arena::Index;
 use gltf::accessor::DataType;
+use gltf::mesh::Semantic;
 use gltf::Gltf;
+use na::Vector3;
 use std::collections::HashMap;
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
-use super::renderer::{Attribute, Geometry, Material, Mesh, Renderer};
+use super::renderer::{
+  Attribute, AttributeName, Geometry, Material, Mesh, PBRMaterialParams, Primitive, Renderer,
+};
 use super::shader::AttributeOptions;
 
 pub fn create_gltf_attributes(gltf: &Gltf, renderer: &mut Renderer) -> Vec<Attribute> {
@@ -84,10 +88,58 @@ pub fn create_gltf_attributes(gltf: &Gltf, renderer: &mut Renderer) -> Vec<Attri
   attributes
 }
 
-pub fn create_gltf_meshes(gltf: &Gltf) -> Vec<Mesh> {
+pub fn create_gltf_meshes(gltf: &Gltf, all_attributes: &[Attribute]) -> Vec<Mesh> {
   let mut meshes: Vec<Mesh> = vec![];
 
-  for mesh_def in gltf.meshes() {}
+  for mesh_def in gltf.meshes() {
+    let mut primitives: Vec<Primitive> = vec![];
+
+    for primitive_def in mesh_def.primitives() {
+      let mut attributes: HashMap<AttributeName, Attribute> = HashMap::new();
+      let mut count = 0;
+
+      for (semantic_def, accessor_def) in primitive_def.attributes() {
+        let attr_name = match semantic_def {
+          Semantic::Positions => AttributeName::Position,
+          Semantic::Normals => AttributeName::Normal,
+          Semantic::TexCoords(value) => match value {
+            0 => AttributeName::Uv,
+            _ => AttributeName::Unknown(semantic_def.to_string()),
+          },
+          _ => AttributeName::Unknown(semantic_def.to_string()),
+        };
+        attributes.insert(attr_name, all_attributes[accessor_def.index()].clone());
+
+        count = accessor_def.count() as i32;
+      }
+
+      let indices;
+
+      if let Some(indices_accessor) = primitive_def.indices() {
+        indices = Some(all_attributes[indices_accessor.index()].clone());
+        count = indices_accessor.count() as i32;
+      } else {
+        indices = None;
+      }
+
+      let geometry = Geometry {
+        attributes,
+        indices,
+        count,
+      };
+
+      let material = Material::PBR(PBRMaterialParams {
+        color: Vector3::new(0.0, 0.0, 0.0),
+      });
+
+      primitives.push(Primitive { geometry, material });
+    }
+
+    meshes.push(Mesh {
+      primitives,
+      name: mesh_def.name().map(|n| n.to_string()),
+    });
+  }
 
   meshes
 }

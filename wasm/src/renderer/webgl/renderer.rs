@@ -15,10 +15,29 @@ pub struct Attribute {
   pub options: AttributeOptions,
 }
 
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub enum AttributeName {
+  Position,
+  Normal,
+  Uv,
+  Unknown(String),
+}
+
+impl AttributeName {
+  pub fn from_string(name: &str) -> Self {
+    match name {
+      "position" => AttributeName::Position,
+      "normal" => AttributeName::Normal,
+      "uv" => AttributeName::Uv,
+      _ => panic!("unknown attribute {}", name),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct Geometry {
-  pub attributes: HashMap<String, Attribute>,
-  pub indices: Option<Index>,
+  pub attributes: HashMap<AttributeName, Attribute>,
+  pub indices: Option<Attribute>,
   pub count: i32,
 }
 
@@ -118,8 +137,8 @@ impl Renderer {
   }
 
   fn draw_geometry(&self, mode: DrawMode, geometry: &Geometry) {
-    if let Some(index_handle) = &geometry.indices {
-      let indices = self.buffers.get(*index_handle).unwrap();
+    if let Some(index_attribute) = &geometry.indices {
+      let indices = self.buffers.get(index_attribute.buffer).unwrap();
       self
         .ctx
         .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
@@ -135,7 +154,8 @@ impl Renderer {
     self.ctx.switch_attributes(geometry.attributes.len() as u32);
 
     for name in shader.get_attribute_locations().keys() {
-      if let Some(attribute) = geometry.attributes.get(name) {
+      let attribute_name = AttributeName::from_string(name);
+      if let Some(attribute) = geometry.attributes.get(&attribute_name) {
         let buffer = self.buffers.get(attribute.buffer).unwrap();
         self
           .ctx

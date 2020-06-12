@@ -4,7 +4,7 @@ use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
 use crate::renderer::webgl::context::Context;
-use crate::renderer::webgl::gltf_util::create_gltf_attributes;
+use crate::renderer::webgl::gltf_util::{create_gltf_attributes, create_gltf_meshes};
 use crate::renderer::webgl::renderer::Renderer;
 
 use super::webgl_canvas::WebGlCanvas;
@@ -25,8 +25,9 @@ impl GLTFRendererDemo {
     let gltf = Gltf::from_slice(gltf_data).unwrap();
 
     let attributes = create_gltf_attributes(&gltf, &mut renderer);
+    let meshes = create_gltf_meshes(&gltf, &attributes);
 
-    info!("{:#?}", attributes);
+    info!("{:#?}", meshes);
 
     Ok(GLTFRendererDemo { renderer, canvas })
   }
