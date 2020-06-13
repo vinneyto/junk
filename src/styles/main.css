@@ -2,23 +2,102 @@
   user-select: none;
 }
 
+html {
+  font-family: Geneva, Verdana, sans-serif;
+  font-size: 10px;
+  box-sizing: border-box;
+}
+
 .demo-list {
-  margin: 16px auto;
-  width: 640px;
+  margin: 1.6rem 0 6rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
 }
 
-a {
-  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
-    'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-  font-size: 16px;
-  display: inline-block;
-  padding: 8px;
-  margin-bottom: 16px;
-  background-color: rgb(238, 238, 238);
-  border-radius: 8px;
+@media (max-width: 40rem) {
+  .demo-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 40rem) and (max-width: 60rem) {
+  .demo-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 60rem) and (max-width: 80rem) {
+  .demo-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.route-cont {
+  border: 1px solid black;
+  border-radius: 6px;
+  width: 90%;
+  margin: 0 auto 1.6rem;
   text-decoration: none;
+  background-color: white;
+  color: black;
+  transition: transform 0.8s, background-color 0.8s;
 }
 
-a:hover {
-  background-color: rgb(211, 211, 255);
+.route-cont:focus,
+.route-cont:hover {
+  outline: none;
+  background-color: #c3c2ee;
+  transform: scale(1.08);
+}
+
+.route-cont * {
+  padding: 1rem;
+}
+
+.route-title {
+  font-size: 1.6rem;
+  padding-bottom: 2rem;
+}
+
+.route-authors {
+  font-size: 1.4rem;
+}
+
+.route-tags * {
+  display: inline-block;
+  background-color: #466df9;
+  color: white;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+  border-radius: 0.4rem;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  transition: transform 0.8s, background-color 0.8s;
+}
+
+.footer:focus,
+.footer:hover {
+  outline: none;
+  background-color: #ededed;
+  transform: scale(1.01);
+}
+
+.footer svg {
+  width: 3rem;
+  height: 3rem;
+  margin-right: 1rem;
 }
