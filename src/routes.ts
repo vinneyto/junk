@@ -7,20 +7,76 @@ import { useScanner as natalyjScanner } from './demo/natalyj-demo/Scanner/useSca
 import { createPhysicsDemo } from './demo/vinneyto-demo/createPhysicsDemo';
 import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangle/drawTriangle';
 import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo/createWasmGltfDemo';
+import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
+
+interface RouteInfo {
+  demo: () => Promise<Demo>;
+  title: string;
+  authors: string;
+  tags?: string[];
+}
 
 const vinneytoWasmTriangleDemo = createWasmDemoFactory('TriangleDemo');
 const vinneytoWasmSkinningDemo = createWasmDemoFactory('SkinningDemo');
 
-export const routes = new Map<string, () => Promise<Demo>>();
-routes.set('box', createBoxDemo);
-routes.set(
-  'natalyj-singleColorShaderMaterial',
-  natalyjSingleColorShaderMaterial
-);
-routes.set('natalyj-splitColorShaderMaterial', natalyjSplitColorShaderMaterial);
-routes.set('vinneyto-wasm-webgl2-triangle', vinneytoWasmTriangleDemo);
-routes.set('vinneyto-wasm-skinning', vinneytoWasmSkinningDemo);
-routes.set('natalyj-scanner', natalyjScanner);
-routes.set('vinneyto-physics', createPhysicsDemo);
-routes.set('natalyj-triangle', natalyjDrawTriangle);
-routes.set('vinneyto-wasm-gltf-demo', vinneytoWasmGltfDemo);
+export const routes = new Map<string, RouteInfo>();
+routes.set('box', {
+  demo: createBoxDemo,
+  title: 'Box',
+  authors: 'vinneyto',
+  tags: ['threejs', 'typescript'],
+});
+routes.set('natalyj-singleColorShaderMaterial', {
+  demo: natalyjSingleColorShaderMaterial,
+  title: 'Single Color Shader Material',
+  authors: 'natalyj',
+  tags: ['threejs', 'typescript'],
+});
+routes.set('natalyj-splitColorShaderMaterial', {
+  demo: natalyjSplitColorShaderMaterial,
+  title: 'Split Color Shader Material',
+  authors: 'natalyj, vinneyto',
+  tags: ['threejs', 'typescript'],
+});
+routes.set('vinneyto-wasm-webgl2-triangle', {
+  demo: vinneytoWasmTriangleDemo,
+  title: 'WebGL2 Triangle',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'webgl2'],
+});
+routes.set('vinneyto-wasm-skinning', {
+  demo: vinneytoWasmSkinningDemo,
+  title: 'Skinning',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'webgl'],
+});
+routes.set('natalyj-scanner', {
+  demo: natalyjScanner,
+  title: 'Scanner',
+  authors: 'natalyj, vinneyto',
+  tags: ['threejs', 'typescript'],
+});
+routes.set('vinneyto-physics', {
+  demo: createPhysicsDemo,
+  title: 'Physics',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'threejs', 'typescript'],
+});
+routes.set('natalyj-triangle', {
+  demo: natalyjDrawTriangle,
+  title: 'Triangle',
+  authors: 'natalyj',
+  tags: ['typescript', 'webgl'],
+});
+routes.set('vinneyto-camera-demo', {
+  demo: vinneytoCreateCameraDemo,
+  title: 'Camera',
+  authors: 'vinneyto',
+  tags: ['threejs', 'typescript'],
+});
+routes.set('vinneyto-wasm-gltf-demo', {
+  demo: vinneytoWasmGltfDemo,
+  title: 'Wasm GLTF renderer',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'typescript'],
+});

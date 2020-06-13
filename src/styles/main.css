@@ -2,23 +2,110 @@
   user-select: none;
 }
 
+html {
+  font-family: Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
 .demo-list {
-  margin: 16px auto;
-  width: 640px;
+  margin: 16px 0 60px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
 }
 
-a {
-  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
-    'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-  font-size: 16px;
-  display: inline-block;
-  padding: 8px;
-  margin-bottom: 16px;
-  background-color: rgb(238, 238, 238);
-  border-radius: 8px;
+@media (max-width: 600px) {
+  .demo-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 900px) {
+  .demo-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1200px) {
+  .demo-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.route-cont {
+  border: 1px solid black;
+  border-radius: 6px;
+  width: 90%;
+  margin: 0 auto 16px;
   text-decoration: none;
+  background-color: white;
+  color: black;
+  transition: transform 0.8s, background-color 0.8s;
 }
 
-a:hover {
-  background-color: rgb(211, 211, 255);
+.route-cont:focus,
+.route-cont:hover {
+  outline: none;
+  background-color: #c3c2ee;
+  transform: scale(1.08);
+}
+
+.route-cont * {
+  padding: 10px;
+}
+
+.route-title {
+  font-size: 16px;
+  padding-bottom: 20px;
+}
+
+.route-authors {
+  font-size: 14px;
+}
+
+.route-tags {
+  padding-top: 5px;
+}
+
+.route-tags > div {
+  display: inline-block;
+  background-color: #466df9;
+  color: white;
+  padding: 6px;
+  margin-right: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.route-tags div:last-child {
+  margin-right: 0;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  transition: transform 0.8s, background-color 0.8s;
+}
+
+.footer:focus,
+.footer:hover {
+  outline: none;
+  background-color: #ededed;
+  transform: scale(1.01);
+}
+
+.footer svg {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
 }
