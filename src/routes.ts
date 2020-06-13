@@ -47,7 +47,7 @@ routes.set('vinneyto-wasm-skinning', {
   demo: vinneytoWasmSkinningDemo,
   title: 'Skinning',
   authors: 'vinneyto',
-  tags: ['wasm', 'rust'],
+  tags: ['wasm', 'rust', 'webgl'],
 });
 routes.set('natalyj-scanner', {
   demo: natalyjScanner,
@@ -59,13 +59,13 @@ routes.set('vinneyto-physics', {
   demo: createPhysicsDemo,
   title: 'Physics',
   authors: 'vinneyto',
-  tags: ['wasm', 'rust', 'typescript'],
+  tags: ['wasm', 'rust', 'threejs', 'typescript'],
 });
 routes.set('natalyj-triangle', {
   demo: natalyjDrawTriangle,
   title: 'Triangle',
   authors: 'natalyj',
-  tags: ['typescript'],
+  tags: ['typescript', 'webgl'],
 });
 routes.set('vinneyto-camera-demo', {
   demo: vinneytoCreateCameraDemo,

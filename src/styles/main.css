@@ -16,7 +16,7 @@ html {
 
 @media (max-width: 40rem) {
   .demo-list {
-    display: block;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -83,12 +83,15 @@ html {
   align-items: center;
   font-size: 1.4rem;
   background-color: white;
+  color: black;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
+  text-decoration: none;
   transition: transform 0.8s, background-color 0.8s;
 }
 
+.footer:focus,
 .footer:hover {
+  outline: none;
   background-color: #ededed;
   transform: scale(1.01);
 }
