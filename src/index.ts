@@ -44,11 +44,9 @@ function buildStartPage() {
   for (const [routeName, routeInfo] of routes) {
     const { title, authors, tags } = routeInfo;
 
-    const routeCont = document.createElement('div');
+    const routeCont = document.createElement('a');
     routeCont.className = 'route-cont';
-    routeCont.addEventListener('click', () => {
-      window.location.href = `/?demo=${routeName}`;
-    });
+    routeCont.href = `/?demo=${routeName}`;
     demosCont.appendChild(routeCont);
 
     const titleCont = document.createElement('div');

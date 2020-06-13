@@ -33,16 +33,19 @@ html {
 }
 
 .route-cont {
-  border: 1px solid;
+  border: 1px solid black;
   border-radius: 6px;
   width: 90%;
   margin: 0 auto 1.6rem;
+  text-decoration: none;
   background-color: white;
+  color: black;
   transition: transform 0.8s, background-color 0.8s;
 }
 
+.route-cont:focus,
 .route-cont:hover {
-  cursor: pointer;
+  outline: none;
   background-color: #c3c2ee;
   transform: scale(1.08);
 }
