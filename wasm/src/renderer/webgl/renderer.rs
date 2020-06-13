@@ -1,10 +1,13 @@
 use anyhow::Result;
 use generational_arena::{Arena, Index};
+use log::info;
 use na::{Matrix4, Vector3};
 use std::collections::HashMap;
 use web_sys::WebGlBuffer;
 
-use super::context::{BufferItem, BufferTarget, BufferUsage, Context, DrawMode, TypedArrayKind};
+use super::context::{
+  BufferItem, BufferTarget, BufferUsage, Context, DrawMode, Feature, TypedArrayKind,
+};
 use super::shader::{AttributeOptions, Shader};
 use crate::scene::node::Node;
 use crate::scene::scene::Scene;
@@ -65,8 +68,29 @@ pub struct Mesh {
 
 #[derive(Debug, Clone)]
 pub struct CameraState {
-  view: Matrix4<f32>,
-  projection: Matrix4<f32>,
+  pub view: Matrix4<f32>,
+  pub projection: Matrix4<f32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Meshes {
+  items: Arena<Mesh>,
+}
+
+impl Meshes {
+  pub fn new() -> Self {
+    Meshes {
+      items: Arena::new(),
+    }
+  }
+
+  pub fn insert(&mut self, mesh: Mesh) -> Index {
+    self.items.insert(mesh)
+  }
+
+  pub fn get(&self, index: Index) -> Option<&Mesh> {
+    self.items.get(index)
+  }
 }
 
 pub struct Renderer {
@@ -111,13 +135,14 @@ impl Renderer {
 
   pub fn render(
     &mut self,
+    root_handle: Index,
     scene: &mut Scene,
-    meshes: &Arena<Mesh>,
+    meshes: &Meshes,
     camera_state: &CameraState,
   ) -> Result<()> {
-    scene.update_world_isometry();
+    scene.update_matrix_world();
 
-    let visible_items = scene.collect_visible_items();
+    let visible_items = scene.collect_visible_sub_items(root_handle);
 
     for handle in visible_items {
       let node = scene.get_node(handle).unwrap();
@@ -151,7 +176,7 @@ impl Renderer {
   }
 
   fn bind_geometry(&self, shader: &Shader, geometry: &Geometry) {
-    self.ctx.switch_attributes(geometry.attributes.len() as u32);
+    let mut attr_amount = 0;
 
     for name in shader.get_attribute_locations().keys() {
       let attribute_name = AttributeName::from_string(name);
@@ -162,7 +187,11 @@ impl Renderer {
           .bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
         shader.bind_attribute(name, &attribute.options);
       }
+
+      attr_amount += 1;
     }
+
+    self.ctx.switch_attributes(attr_amount);
   }
 
   fn setup_pbr_material(
@@ -170,7 +199,7 @@ impl Renderer {
     node: &Node,
     params: &PBRMaterialParams,
     geometry: &Geometry,
-    _camera_state: &CameraState,
+    camera_state: &CameraState,
   ) -> Result<()> {
     let tag = "pbr";
 
@@ -189,9 +218,14 @@ impl Renderer {
     shader.bind();
 
     shader.set_vector3("color", &params.color);
-    shader.set_matrix4("modelMatrix", &node.isometry.to_homogeneous());
+    shader.set_matrix4("projectionMatrix", &camera_state.projection);
+    shader.set_matrix4("viewMatrix", &camera_state.view);
+    shader.set_matrix4("modelMatrix", &node.matrix_world);
 
     self.bind_geometry(shader, geometry);
+
+    self.ctx.enable(Feature::CullFace);
+    self.ctx.enable(Feature::DepthTest);
 
     Ok(())
   }

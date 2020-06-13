@@ -1,13 +1,18 @@
 use generational_arena::Index;
 use gltf::accessor::DataType;
 use gltf::mesh::Semantic;
+use gltf::scene::Transform;
 use gltf::Gltf;
-use na::Vector3;
+use na::{Quaternion, UnitQuaternion, Vector3, Vector4};
 use std::collections::HashMap;
+
+use crate::scene::node::Node;
+use crate::scene::scene::Scene;
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
 use super::renderer::{
-  Attribute, AttributeName, Geometry, Material, Mesh, PBRMaterialParams, Primitive, Renderer,
+  Attribute, AttributeName, Geometry, Material, Mesh, Meshes, PBRMaterialParams, Primitive,
+  Renderer,
 };
 use super::shader::AttributeOptions;
 
@@ -88,7 +93,7 @@ pub fn create_gltf_attributes(gltf: &Gltf, renderer: &mut Renderer) -> Vec<Attri
   attributes
 }
 
-pub fn create_gltf_meshes(gltf: &Gltf, all_attributes: &[Attribute]) -> Vec<Mesh> {
+pub fn create_gltf_meshes(gltf: &Gltf, attribute_list: &[Attribute]) -> Vec<Mesh> {
   let mut meshes: Vec<Mesh> = vec![];
 
   for mesh_def in gltf.meshes() {
@@ -108,7 +113,7 @@ pub fn create_gltf_meshes(gltf: &Gltf, all_attributes: &[Attribute]) -> Vec<Mesh
           },
           _ => AttributeName::Unknown(semantic_def.to_string()),
         };
-        attributes.insert(attr_name, all_attributes[accessor_def.index()].clone());
+        attributes.insert(attr_name, attribute_list[accessor_def.index()].clone());
 
         count = accessor_def.count() as i32;
       }
@@ -116,7 +121,7 @@ pub fn create_gltf_meshes(gltf: &Gltf, all_attributes: &[Attribute]) -> Vec<Mesh
       let indices;
 
       if let Some(indices_accessor) = primitive_def.indices() {
-        indices = Some(all_attributes[indices_accessor.index()].clone());
+        indices = Some(attribute_list[indices_accessor.index()].clone());
         count = indices_accessor.count() as i32;
       } else {
         indices = None;
@@ -142,4 +147,80 @@ pub fn create_gltf_meshes(gltf: &Gltf, all_attributes: &[Attribute]) -> Vec<Mesh
   }
 
   meshes
+}
+
+pub fn create_gltf_scenes(
+  gltf: &Gltf,
+  renderer: &mut Renderer,
+  scene: &mut Scene,
+  meshes: &mut Meshes,
+) -> Vec<Index> {
+  let attribute_list = create_gltf_attributes(gltf, renderer);
+  let meshes_list = create_gltf_meshes(gltf, &attribute_list);
+  let mut meshes_index: HashMap<usize, Index> = HashMap::new();
+  let mut nodes_index: HashMap<usize, Index> = HashMap::new();
+
+  for (index, mesh) in meshes_list.iter().enumerate() {
+    let mesh_handle = meshes.insert(mesh.clone());
+
+    meshes_index.insert(index, mesh_handle);
+  }
+
+  let nodes: Vec<Node> = gltf
+    .nodes()
+    .map(|node_def| {
+      let mut node = Node::new(None);
+
+      match node_def.transform() {
+        Transform::Decomposed {
+          translation,
+          rotation,
+          scale,
+        } => {
+          node.position = Vector3::from_vec(translation.to_vec());
+          node.rotation =
+            UnitQuaternion::from_quaternion(Quaternion::from(Vector4::from_vec(rotation.to_vec())));
+          node.scale = Vector3::from_vec(scale.to_vec());
+        }
+        Transform::Matrix { matrix: _ } => todo!("matrix transform"),
+      };
+
+      if let Some(mesh_def) = node_def.mesh() {
+        node.mesh = meshes_index.get(&mesh_def.index()).cloned();
+      }
+
+      node.name = node_def.name().map(|n| n.to_string());
+
+      node
+    })
+    .collect();
+
+  for (index, node) in nodes.iter().enumerate() {
+    let handle = scene.insert(node.clone());
+
+    nodes_index.insert(index, handle);
+  }
+
+  gltf.nodes().for_each(|node_def| {
+    for child_def in node_def.children() {
+      let child_handle = nodes_index.get(&child_def.index()).unwrap();
+      let parent_handle = nodes_index.get(&node_def.index()).unwrap();
+
+      scene.set_parent(*child_handle, *parent_handle);
+    }
+  });
+
+  gltf
+    .scenes()
+    .map(|scene_def| {
+      let scene_handle = scene.insert(Node::new(None));
+
+      for node_def in scene_def.nodes() {
+        let node_handle = *nodes_index.get(&node_def.index()).unwrap();
+        scene.set_parent(node_handle, scene_handle);
+      }
+
+      scene_handle
+    })
+    .collect()
 }
