@@ -78,5 +78,5 @@ routes.set('vinneyto-wasm-gltf-demo', {
   demo: vinneytoWasmGltfDemo,
   title: 'Wasm GLTF renderer',
   authors: 'vinneyto',
-  tags: ['wasm', 'rust', 'typescript'],
+  tags: ['wasm', 'rust', 'webgl', 'typescript'],
 });
