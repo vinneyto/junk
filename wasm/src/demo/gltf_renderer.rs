@@ -5,9 +5,11 @@ use na::{Isometry3, Perspective3, Translation3, UnitQuaternion};
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
+use crate::renderer::webgl::camera::CameraState;
 use crate::renderer::webgl::context::Context;
 use crate::renderer::webgl::gltf_util::create_gltf_scenes;
-use crate::renderer::webgl::renderer::{CameraState, Meshes, Renderer};
+use crate::renderer::webgl::mesh::Meshes;
+use crate::renderer::webgl::renderer::Renderer;
 use crate::scene::scene::Scene;
 
 use super::webgl_canvas::WebGlCanvas;
