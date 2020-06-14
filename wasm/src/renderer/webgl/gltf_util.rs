@@ -10,10 +10,10 @@ use crate::scene::node::Node;
 use crate::scene::scene::Scene;
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
-use super::renderer::{
-  Attribute, AttributeName, Geometry, Material, Mesh, Meshes, PBRMaterialParams, Primitive,
-  Renderer,
-};
+use super::geometry::{Attribute, AttributeName, Geometry};
+use super::material::{Material, PBRMaterialParams};
+use super::mesh::{Mesh, Meshes, Primitive};
+use super::renderer::Renderer;
 use super::shader::AttributeOptions;
 
 pub fn create_gltf_attributes(gltf: &Gltf, renderer: &mut Renderer) -> Vec<Attribute> {

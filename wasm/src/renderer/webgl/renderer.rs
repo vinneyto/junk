@@ -1,97 +1,19 @@
 use anyhow::Result;
 use generational_arena::{Arena, Index};
 use log::info;
-use na::{Matrix4, Vector3};
 use std::collections::HashMap;
 use web_sys::WebGlBuffer;
 
+use super::camera::CameraState;
 use super::context::{
   BufferItem, BufferTarget, BufferUsage, Context, DrawMode, Feature, TypedArrayKind,
 };
-use super::shader::{AttributeOptions, Shader};
+use super::geometry::{AttributeName, Geometry};
+use super::material::{Material, PBRMaterialParams};
+use super::mesh::Meshes;
+use super::shader::Shader;
 use crate::scene::node::Node;
 use crate::scene::scene::Scene;
-
-#[derive(Debug, Clone)]
-pub struct Attribute {
-  pub buffer: Index,
-  pub options: AttributeOptions,
-}
-
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub enum AttributeName {
-  Position,
-  Normal,
-  Uv,
-  Unknown(String),
-}
-
-impl AttributeName {
-  pub fn from_string(name: &str) -> Self {
-    match name {
-      "position" => AttributeName::Position,
-      "normal" => AttributeName::Normal,
-      "uv" => AttributeName::Uv,
-      _ => panic!("unknown attribute {}", name),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct Geometry {
-  pub attributes: HashMap<AttributeName, Attribute>,
-  pub indices: Option<Attribute>,
-  pub count: i32,
-}
-
-#[derive(Debug, Clone)]
-pub struct PBRMaterialParams {
-  pub color: Vector3<f32>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Material {
-  PBR(PBRMaterialParams),
-}
-
-#[derive(Debug, Clone)]
-pub struct Primitive {
-  pub geometry: Geometry,
-  pub material: Material,
-}
-
-#[derive(Debug, Clone)]
-pub struct Mesh {
-  pub primitives: Vec<Primitive>,
-  pub name: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct CameraState {
-  pub view: Matrix4<f32>,
-  pub projection: Matrix4<f32>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Meshes {
-  items: Arena<Mesh>,
-}
-
-impl Meshes {
-  pub fn new() -> Self {
-    Meshes {
-      items: Arena::new(),
-    }
-  }
-
-  pub fn insert(&mut self, mesh: Mesh) -> Index {
-    self.items.insert(mesh)
-  }
-
-  pub fn get(&self, index: Index) -> Option<&Mesh> {
-    self.items.get(index)
-  }
-}
 
 pub struct Renderer {
   ctx: Context,
