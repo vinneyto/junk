@@ -1,7 +1,9 @@
 use super::define::Define;
 use super::shader::Shader;
 use anyhow::{anyhow, Result};
-use js_sys::{Float32Array, Object, Uint16Array, Uint8Array, WebAssembly};
+use js_sys::{
+  Float32Array, Int16Array, Int8Array, Object, Uint16Array, Uint32Array, Uint8Array, WebAssembly,
+};
 use num_traits::Num;
 use std::cell::RefCell;
 use std::default::Default;
@@ -33,8 +35,18 @@ impl Context {
     self.gl.viewport(x, y, width, height);
   }
 
-  pub fn clear(&self, target: Cleaning) {
-    self.gl.clear(target.as_u32());
+  pub fn clear(&self, color: bool, depth: bool) {
+    let mut clear = 0;
+
+    if color {
+      clear |= Cleaning::Color.as_u32();
+    }
+
+    if depth {
+      clear |= Cleaning::Depth.as_u32();
+    }
+
+    self.gl.clear(clear);
   }
 
   pub fn clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
@@ -183,6 +195,7 @@ impl Cleaning {
   }
 }
 
+#[derive(Debug)]
 pub enum BufferTarget {
   ArrayBuffer,        // for generic data
   ElementArrayBuffer, // for indices only
@@ -309,10 +322,13 @@ impl TextureFormat {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TypedArrayKind {
+  Int8,
   Uint8,
+  Int16,
   Uint16,
+  Uint32,
   Float32,
 }
 
@@ -325,8 +341,11 @@ impl Default for TypedArrayKind {
 impl TypedArrayKind {
   pub fn as_u32(&self) -> u32 {
     match self {
+      TypedArrayKind::Int8 => WebGlRenderingContext::BYTE,
       TypedArrayKind::Uint8 => WebGlRenderingContext::UNSIGNED_BYTE,
+      TypedArrayKind::Int16 => WebGlRenderingContext::SHORT,
       TypedArrayKind::Uint16 => WebGlRenderingContext::UNSIGNED_SHORT,
+      TypedArrayKind::Uint32 => WebGlRenderingContext::INT,
       TypedArrayKind::Float32 => WebGlRenderingContext::FLOAT,
     }
   }
@@ -352,8 +371,11 @@ pub fn get_typed_array_from_slice<T: BufferItem>(data: &[T]) -> Object {
 fn get_typed_array<T: BufferItem>(start: u32, end: u32) -> Object {
   let buffer = get_memory_buffer();
   match T::array_kind() {
+    TypedArrayKind::Int8 => Int8Array::new(&buffer).subarray(start, end).into(),
     TypedArrayKind::Uint8 => Uint8Array::new(&buffer).subarray(start, end).into(),
+    TypedArrayKind::Int16 => Int16Array::new(&buffer).subarray(start, end).into(),
     TypedArrayKind::Uint16 => Uint16Array::new(&buffer).subarray(start, end).into(),
+    TypedArrayKind::Uint32 => Uint32Array::new(&buffer).subarray(start, end).into(),
     TypedArrayKind::Float32 => Float32Array::new(&buffer).subarray(start, end).into(),
   }
 }
@@ -366,9 +388,24 @@ impl BufferItem for u8 {
     TypedArrayKind::Uint8
   }
 }
+impl BufferItem for i8 {
+  fn array_kind() -> TypedArrayKind {
+    TypedArrayKind::Int8
+  }
+}
 impl BufferItem for u16 {
   fn array_kind() -> TypedArrayKind {
     TypedArrayKind::Uint16
+  }
+}
+impl BufferItem for i16 {
+  fn array_kind() -> TypedArrayKind {
+    TypedArrayKind::Int16
+  }
+}
+impl BufferItem for u32 {
+  fn array_kind() -> TypedArrayKind {
+    TypedArrayKind::Uint32
   }
 }
 impl BufferItem for f32 {

@@ -1,5 +1,5 @@
 use generational_arena::{Arena, Index};
-use na::Isometry3;
+use na::{Isometry3, Matrix4, Vector4};
 
 use super::node::Node;
 
@@ -28,6 +28,22 @@ impl Scene {
     }
 
     handle
+  }
+
+  pub fn set_parent(&mut self, child_handle: Index, parent_handle: Index) {
+    if let Some(current_parent_handle) = self.get_parent_handle(child_handle) {
+      let parent = self.get_node_mut(current_parent_handle).unwrap();
+
+      parent.children.retain(|ch| *ch != child_handle);
+    }
+
+    let child = self.get_node_mut(child_handle).unwrap();
+
+    child.parent = Some(parent_handle);
+
+    let parent = self.get_node_mut(parent_handle).unwrap();
+
+    parent.children.push(child_handle);
   }
 
   fn remove_subtree(&mut self, handle: Index) -> Option<()> {
@@ -60,27 +76,34 @@ impl Scene {
     Some(())
   }
 
-  pub fn update_world_isometry(&mut self) -> Option<()> {
+  pub fn update_matrix_world(&mut self) -> Option<()> {
     let root = self.get_node(self.root_handle)?;
-    let root_isometry = root.isometry;
-    self.update_world_isometry_subtree(self.root_handle, &root_isometry)
+    let matrix_world = root.matrix_world;
+    self.update_matrix_world_subtree(self.root_handle, &matrix_world)
   }
 
-  pub fn update_world_isometry_subtree(
+  pub fn update_matrix_world_subtree(
     &mut self,
     handle: Index,
-    parent_isometry: &Isometry3<f32>,
+    parent_matrix_world: &Matrix4<f32>,
   ) -> Option<()> {
     let node = self.get_node_mut(handle)?;
 
     let node_isometry = Isometry3::new(node.position, node.rotation.scaled_axis());
-    let world_isometry = parent_isometry * node_isometry;
+    let node_scale_matrix = Matrix4::from_diagonal(&Vector4::new(
+      node.scale[0],
+      node.scale[1],
+      node.scale[2],
+      1.0,
+    ));
+    let matrix_local = node_isometry.to_homogeneous() * node_scale_matrix;
+    let matrix_world = parent_matrix_world * matrix_local;
     let children = node.children.clone();
 
-    node.isometry = world_isometry;
+    node.matrix_world = matrix_world;
 
     for child_handle in children {
-      self.update_world_isometry_subtree(child_handle, &world_isometry)?;
+      self.update_matrix_world_subtree(child_handle, &matrix_world)?;
     }
 
     Some(())
@@ -94,11 +117,21 @@ impl Scene {
     items
   }
 
+  pub fn collect_visible_sub_items(&self, parent_handle: Index) -> Vec<Index> {
+    let mut items: Vec<Index> = vec![];
+
+    self.collect_visible_items_subtree(parent_handle, &mut items);
+
+    items
+  }
+
   pub fn collect_visible_items_subtree(&self, handle: Index, items: &mut Vec<Index>) -> Option<()> {
     let node = self.get_node(handle)?;
 
     if node.visible {
-      items.push(handle);
+      if node.mesh.is_some() {
+        items.push(handle);
+      }
 
       for child_handle in &node.children {
         self.collect_visible_items_subtree(*child_handle, items);

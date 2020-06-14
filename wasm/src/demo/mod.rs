@@ -1,3 +1,4 @@
+pub mod gltf_renderer;
 pub mod physics;
 pub mod skinning;
 pub mod triangle;

@@ -6,6 +6,7 @@ import { createWasmDemoFactory } from './demo/createWasmDemoFactory';
 import { useScanner as natalyjScanner } from './demo/natalyj-demo/Scanner/useScanner';
 import { createPhysicsDemo } from './demo/vinneyto-demo/createPhysicsDemo';
 import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangle/drawTriangle';
+import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo/createWasmGltfDemo';
 import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
 
 interface RouteInfo {
@@ -72,4 +73,10 @@ routes.set('vinneyto-camera-demo', {
   title: 'Camera',
   authors: 'vinneyto',
   tags: ['threejs', 'typescript'],
+});
+routes.set('vinneyto-wasm-gltf-demo', {
+  demo: vinneytoWasmGltfDemo,
+  title: 'Wasm GLTF renderer',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'webgl', 'typescript'],
 });
