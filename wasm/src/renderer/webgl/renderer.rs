@@ -8,7 +8,7 @@ use super::camera::CameraState;
 use super::context::{
   BufferItem, BufferTarget, BufferUsage, Context, DrawMode, Feature, TypedArrayKind,
 };
-use super::geometry::{AttributeName, Geometry};
+use super::geometry::Geometry;
 use super::material::{Material, PBRMaterialParams};
 use super::mesh::Meshes;
 use super::shader::Shader;
@@ -101,8 +101,7 @@ impl Renderer {
     let mut attr_amount = 0;
 
     for name in shader.get_attribute_locations().keys() {
-      let attribute_name = AttributeName::from_string(name);
-      if let Some(attribute) = geometry.attributes.get(&attribute_name) {
+      if let Some(attribute) = geometry.attributes.get(name) {
         let buffer = self.buffers.get(attribute.buffer).unwrap();
         self
           .ctx

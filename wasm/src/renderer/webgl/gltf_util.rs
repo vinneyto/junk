@@ -10,11 +10,11 @@ use crate::scene::node::Node;
 use crate::scene::scene::Scene;
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
-use super::geometry::{Attribute, AttributeName, Geometry};
+use super::geometry::{Attribute, Geometry};
 use super::material::{Material, PBRMaterialParams};
 use super::mesh::{Mesh, Meshes, Primitive};
 use super::renderer::Renderer;
-use super::shader::AttributeOptions;
+use super::shader::{AttributeName, AttributeOptions};
 
 pub fn create_gltf_attributes(gltf: &Gltf, renderer: &mut Renderer) -> Vec<Attribute> {
   let mut attributes: Vec<Attribute> = vec![];
@@ -109,9 +109,9 @@ pub fn create_gltf_meshes(gltf: &Gltf, attribute_list: &[Attribute]) -> Vec<Mesh
           Semantic::Normals => AttributeName::Normal,
           Semantic::TexCoords(value) => match value {
             0 => AttributeName::Uv,
-            _ => AttributeName::Unknown(semantic_def.to_string()),
+            _ => AttributeName::Custom(semantic_def.to_string()),
           },
-          _ => AttributeName::Unknown(semantic_def.to_string()),
+          _ => AttributeName::Custom(semantic_def.to_string()),
         };
         attributes.insert(attr_name, attribute_list[accessor_def.index()].clone());
 

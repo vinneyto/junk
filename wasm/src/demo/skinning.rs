@@ -11,7 +11,7 @@ use crate::renderer::webgl::context::{
   TypedArrayKind,
 };
 use crate::renderer::webgl::define::Define;
-use crate::renderer::webgl::shader::{AttributeOptions, Shader};
+use crate::renderer::webgl::shader::{AttributeName, AttributeOptions, Shader};
 
 #[wasm_bindgen]
 pub struct SkinningDemo {
@@ -240,18 +240,21 @@ fn create_skinning_stuff(ctx: &Context) -> Result<(Shader, Option<WebGlTexture>)
 
   ctx.bind_buffer(BufferTarget::ArrayBuffer, position_buffer.as_ref());
   shader.bind_attribute(
-    "position",
+    &AttributeName::Position,
     &AttributeOptions::new(TypedArrayKind::Float32, 2),
   );
 
   ctx.bind_buffer(BufferTarget::ArrayBuffer, bone_ndx_buffer.as_ref());
   shader.bind_attribute(
-    "boneNdx",
+    &AttributeName::from_string("boneNdx"),
     &AttributeOptions::new(TypedArrayKind::Float32, 4),
   );
 
   ctx.bind_buffer(BufferTarget::ArrayBuffer, weight_buffer.as_ref());
-  shader.bind_attribute("weight", &AttributeOptions::new(TypedArrayKind::Float32, 4));
+  shader.bind_attribute(
+    &AttributeName::from_string("weight"),
+    &AttributeOptions::new(TypedArrayKind::Float32, 4),
+  );
 
   ctx.bind_buffer(BufferTarget::ElementArrayBuffer, indices_buffer.as_ref());
 

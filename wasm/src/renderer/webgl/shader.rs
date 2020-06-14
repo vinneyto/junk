@@ -7,10 +7,29 @@ use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLoca
 use super::context::TypedArrayKind;
 use super::define::Define;
 
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub enum AttributeName {
+  Position,
+  Normal,
+  Uv,
+  Custom(String),
+}
+
+impl AttributeName {
+  pub fn from_string(name: &str) -> Self {
+    match name {
+      "position" => AttributeName::Position,
+      "normal" => AttributeName::Normal,
+      "uv" => AttributeName::Uv,
+      _ => AttributeName::Custom(name.to_string()),
+    }
+  }
+}
+
 pub struct Shader {
   gl: WebGlRenderingContext,
   program: WebGlProgram,
-  attribute_locations: HashMap<String, u32>,
+  attribute_locations: HashMap<AttributeName, u32>,
   uniform_locations: HashMap<String, WebGlUniformLocation>,
 }
 
@@ -44,7 +63,7 @@ impl Shader {
     self.gl.use_program(Some(&self.program));
   }
 
-  pub fn bind_attribute(&self, name: &str, attribute: &AttributeOptions) -> Option<()> {
+  pub fn bind_attribute(&self, name: &AttributeName, attribute: &AttributeOptions) -> Option<()> {
     let location = self.attribute_locations.get(name)?;
 
     self.gl.vertex_attrib_pointer_with_i32(
@@ -119,7 +138,7 @@ impl Shader {
     Some(())
   }
 
-  pub fn get_attribute_locations(&self) -> &HashMap<String, u32> {
+  pub fn get_attribute_locations(&self) -> &HashMap<AttributeName, u32> {
     &self.attribute_locations
   }
 }
@@ -205,19 +224,19 @@ pub fn link_program(
 pub fn collect_attributes(
   gl: &WebGlRenderingContext,
   program: &WebGlProgram,
-) -> HashMap<String, u32> {
+) -> HashMap<AttributeName, u32> {
   let num_attributes = gl
     .get_program_parameter(program, WebGlRenderingContext::ACTIVE_ATTRIBUTES)
     .as_f64()
     .unwrap_or(0.0) as u32;
 
-  let mut locations: HashMap<String, u32> = HashMap::new();
+  let mut locations: HashMap<AttributeName, u32> = HashMap::new();
 
   for i in 0..num_attributes {
     match gl.get_active_attrib(program, i) {
       Some(info) => {
         let loc = gl.get_attrib_location(program, &info.name());
-        locations.insert(info.name(), loc as u32);
+        locations.insert(AttributeName::from_string(&info.name()), loc as u32);
       }
       None => {}
     }
