@@ -7,7 +7,8 @@ export class CameraController {
   constructor(
     private readonly radius = 0.3,
     private readonly sensitivity = 0.01,
-    private readonly center = new Vector3(0, 0, 0)
+    private readonly center = new Vector3(0, 0, 0),
+    public startPredicate = (_coord: Vector2) => true
   ) {
     let lastCoords = new Vector2();
 
@@ -22,10 +23,12 @@ export class CameraController {
         lastCoords.set(e.clientX, e.clientY);
       }
 
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-      document.addEventListener('touchmove', onMouseMove);
-      document.addEventListener('touchend', onMouseUp);
+      if (this.startPredicate(lastCoords)) {
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('touchmove', onMouseMove);
+        document.addEventListener('touchend', onMouseUp);
+      }
     };
 
     const onMouseMove = (e: MouseEvent | TouchEvent) => {
