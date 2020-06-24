@@ -1,7 +1,7 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::{Isometry3, Perspective3, Translation3, UnitQuaternion};
+use na::Matrix4;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
@@ -50,7 +50,7 @@ impl GLTFRendererDemo {
     })
   }
 
-  pub fn update(&mut self) {
+  pub fn update(&mut self, view_data: &[f32], projection_data: &[f32]) {
     if self.canvas.check_size() {
       self
         .renderer
@@ -60,18 +60,9 @@ impl GLTFRendererDemo {
     self.renderer.set_clear_color(1.0, 1.0, 1.0, 1.0);
     self.renderer.clear(true, true);
 
-    let view = Isometry3::from_parts(
-      Translation3::new(0.0, 0.0, 10.0),
-      UnitQuaternion::identity(),
-    )
-    .inverse();
-
-    let aspect = (self.canvas.width as f32) / (self.canvas.height as f32);
-    let projection = Perspective3::new(aspect, 1.0, 0.1, 50.0);
-
     let camera_state = CameraState {
-      view: view.to_homogeneous(),
-      projection: projection.to_homogeneous(),
+      view: Matrix4::from_vec(view_data.to_vec()),
+      projection: Matrix4::from_vec(projection_data.to_vec()),
     };
 
     self

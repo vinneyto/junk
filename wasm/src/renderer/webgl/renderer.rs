@@ -1,6 +1,7 @@
 use anyhow::Result;
 use generational_arena::{Arena, Index};
 use log::info;
+use na::{Matrix4, U3};
 use std::collections::HashMap;
 use web_sys::WebGlBuffer;
 
@@ -142,6 +143,16 @@ impl Renderer {
     shader.set_matrix4("projectionMatrix", &camera_state.projection);
     shader.set_matrix4("viewMatrix", &camera_state.view);
     shader.set_matrix4("modelMatrix", &node.matrix_world);
+    shader.set_matrix3(
+      "normalMatrix",
+      &node
+        .matrix_world
+        .try_inverse()
+        .unwrap_or_else(|| Matrix4::identity())
+        .transpose()
+        .fixed_slice::<U3, U3>(0, 0)
+        .into(),
+    );
 
     self.bind_geometry(shader, geometry);
 
