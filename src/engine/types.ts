@@ -11,6 +11,14 @@ export enum Cleansing {
   Stencil = WebGLRenderingContext.STENCIL_BUFFER_BIT,
 }
 
+export interface AttributeOptions {
+  itemSize: number;
+  componentType: NumberType;
+  normalized: boolean;
+  stride: number;
+  offset: number;
+}
+
 export enum DrawMode {
   /** Draw a single squared dot */
   Points = WebGLRenderingContext.POINTS,

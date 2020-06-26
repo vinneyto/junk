@@ -7,7 +7,7 @@ import {
   DrawMode,
   NumberType,
   ContextFeature,
-} from './types';
+} from '../types';
 
 export class Context {
   private attribAmount: number = 0;

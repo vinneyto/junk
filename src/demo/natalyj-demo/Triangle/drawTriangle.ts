@@ -29,14 +29,13 @@ export async function drawTriangle(): Promise<Demo> {
   shader.bind();
   context.switchAttributes(shader.getAttributesAmount());
   context.bindBuffer(BindingTarget.ArrayBuffer, positionsBuffer);
-  shader.bindAttribute(
-    shader.getAttributesNames()[0],
-    2,
-    NumberType.Float,
-    false,
-    0,
-    0
-  );
+  shader.bindAttribute(shader.getAttributesNames()[0], {
+    itemSize: 2,
+    componentType: NumberType.Float,
+    normalized: false,
+    stride: 0,
+    offset: 0,
+  });
 
   const render = () => {
     if (canvas.resize()) {

@@ -411,6 +411,15 @@ export class Matrix4 {
     return this;
   }
 
+  /** Set components of this matrix to the values of passed matrix. */
+  copy(matrix: Matrix4): Matrix4 {
+    for (let i = 0; i < 16; i++) {
+      this.elements[i] = matrix.elements[i];
+    }
+
+    return this;
+  }
+
   ////////////////// MULTIPLICATION WITH THIS MATRIX /////////////////
 
   /** Make this matrix be the result of m1 * m2. */

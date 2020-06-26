@@ -1,4 +1,4 @@
-import { Defines } from '../types';
+import { Defines } from '../../types';
 
 export const createShader = (
   gl: WebGLRenderingContext,

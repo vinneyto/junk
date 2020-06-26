@@ -1,5 +1,4 @@
 import { Vector3 } from './Vector3';
-import { Matrix4 } from './Matrix4';
 
 export class Quaternion {
   constructor(public x = 0, public y = 0, public z = 0, public w = 1) {}
@@ -17,10 +16,13 @@ export class Quaternion {
     return new Quaternion(x * sin, y * sin, z * sin, Math.cos(halfAngle));
   }
 
-  /** Returns a quaternion, constructed from rotation component of matrix.
-   * Matrix should be a pure rotation matrix */
-  static setFromRotationMatrix(matrix: Matrix4): Quaternion {
-    const elements = matrix.getElements();
+  /** Returns a quaternion, constructed from rotation component of matrix elements.
+   * Matrix elements should construct a pure rotation matrix */
+  static setFromRotationMatrix(elements: number[]): Quaternion {
+    if (elements.length !== 16) {
+      throw new Error('Matrix4 elements shall be of length 16');
+    }
+
     const m11 = elements[0],
       m12 = elements[4],
       m13 = elements[8],
@@ -200,7 +202,10 @@ export class Quaternion {
     }
 
     if (cosHalfTheta >= 1) {
-      (this.x = x), (this.y = y), (this.z = z), (this.w = w);
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      this.w = w;
       return this;
     }
 
@@ -258,7 +263,10 @@ export class Quaternion {
     const length = this.length();
 
     if (length === 0) {
-      (this.x = 0), (this.y = 0), (this.z = 0), (this.w = 1);
+      this.x = 0;
+      this.y = 0;
+      this.z = 0;
+      this.w = 1;
     } else {
       const l = 1 / length;
       this.x = this.x * l;
