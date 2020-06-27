@@ -62,7 +62,7 @@ export class Context {
 
   createBuffer(
     target: BindingTarget,
-    data: Float32Array | Uint16Array,
+    data: ArrayBuffer | ArrayBufferView,
     usage: DataUsage
   ): WebGLBuffer | null {
     const buffer = this.gl.createBuffer();

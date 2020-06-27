@@ -1,10 +1,16 @@
-import { Shader } from '../renderer/Shader';
-import { Context } from '../renderer/Context';
-import { BindingTarget, NumberType, DrawMode, ContextFeature } from '../types';
-import { Node } from './Node';
-import { Geometry } from './Geometry';
-import { Material } from './Material';
-import { Camera } from './Camera';
+import { Shader } from './Shader';
+import { Context } from './Context';
+import {
+  BindingTarget,
+  NumberType,
+  DrawMode,
+  ContextFeature,
+  DataUsage,
+} from '../types';
+import { Node } from '../scene/Node';
+import { Geometry } from '../scene/Geometry';
+import { Material } from '../scene/Material';
+import { Camera } from '../scene/Camera';
 
 import defaultVertShader from './shaders/default_vert.glsl';
 import defaultFragShader from './shaders/default_frag.glsl';
@@ -17,7 +23,7 @@ export class Renderer {
 
   constructor(private readonly context: Context) {}
 
-  render(root: Node, camera: Camera) {
+  render(root: Node, camera: Camera): void {
     root.updateMatrixWorld();
 
     const visibleNodes = root.collectVisibleNodes();
@@ -33,7 +39,19 @@ export class Renderer {
     });
   }
 
-  private drawGeometry(geometry: Geometry) {
+  createBuffer(
+    id: string,
+    target: BindingTarget,
+    data: ArrayBuffer | ArrayBufferView,
+    usage: DataUsage
+  ): void {
+    const buffer = this.context.createBuffer(target, data, usage);
+    if (buffer !== null) {
+      this.buffers.set(id, buffer);
+    }
+  }
+
+  private drawGeometry(geometry: Geometry): void {
     this.bindGeometry(DEFAULT_TAG, geometry);
 
     if (geometry.indices !== undefined) {
@@ -49,7 +67,7 @@ export class Renderer {
     }
   }
 
-  private bindGeometry(shaderTag: string, geometry: Geometry) {
+  private bindGeometry(shaderTag: string, geometry: Geometry): void {
     let attributesAmount = 0;
     const shader = this.tryGetShaderByTag(shaderTag);
     const attributesNames = shader.getAttributesNames();
@@ -76,7 +94,7 @@ export class Renderer {
     node: Node,
     material: Material,
     camera: Camera
-  ) {
+  ): void {
     const shader = this.tryGetShaderByTag(shaderTag);
 
     shader.bind();

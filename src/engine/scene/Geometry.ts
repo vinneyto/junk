@@ -1,6 +1,6 @@
 import { DrawMode, AttributeOptions } from '../types';
 
-interface Attribute {
+export interface Attribute {
   buffer: string;
   options: AttributeOptions;
 }
