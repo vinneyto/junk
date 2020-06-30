@@ -40,7 +40,7 @@ export async function createPerlinNoiseDemo(): Promise<Demo> {
   const box = new Mesh(geometry, material);
   scene.add(box);
 
-  let ratio = 1;
+  let threshold = 1;
   let sign = -1;
 
   const clock = new Clock();
@@ -50,17 +50,17 @@ export async function createPerlinNoiseDemo(): Promise<Demo> {
 
     cameraController.update(camera);
 
-    ratio += clock.getDelta() * sign * 0.2;
+    threshold += clock.getDelta() * sign * 0.2;
 
-    if (ratio < 0.2) {
-      ratio = 0.2;
+    if (threshold < 0.2) {
+      threshold = 0.2;
       sign = 1;
-    } else if (ratio > 1) {
-      ratio = 1;
+    } else if (threshold > 1) {
+      threshold = 1;
       sign = -1;
     }
 
-    material.uniforms.ratio.value = ratio;
+    material.uniforms.threshold.value = threshold;
 
     renderer.render(scene, camera);
   };
@@ -81,14 +81,14 @@ export class StaticPerlinShaderMaterial extends ShaderMaterial {
       `,
       fragmentShader: `
         uniform sampler2D perlinMap;
-        uniform float ratio;
+        uniform float threshold;
 
         varying vec2 v_uv;
 
         void main() {
           vec4 noise = texture2D(perlinMap, v_uv);
 
-          if (noise.a > ratio) {
+          if (noise.a > threshold) {
             discard;
           }
 
@@ -101,7 +101,7 @@ export class StaticPerlinShaderMaterial extends ShaderMaterial {
         perlinMap: {
           value: perlinMap,
         },
-        ratio: {
+        threshold: {
           value: 1,
         },
       },
