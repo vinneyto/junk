@@ -8,6 +8,7 @@ import { createPhysicsDemo } from './demo/vinneyto-demo/createPhysicsDemo';
 import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangle/drawTriangle';
 import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo/createWasmGltfDemo';
 import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
+import { createPerlinNoiseDemo as vinneytoPerlinNoiseDemo } from './demo/vinneyto-demo/perlinNoiseDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo>;
@@ -77,6 +78,12 @@ routes.set('vinneyto-camera-demo', {
 routes.set('vinneyto-wasm-gltf-demo', {
   demo: vinneytoWasmGltfDemo,
   title: 'Wasm GLTF renderer',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'webgl', 'typescript'],
+});
+routes.set('vinneyto-perlin-noise-demo', {
+  demo: vinneytoPerlinNoiseDemo,
+  title: 'Perlin noise',
   authors: 'vinneyto',
   tags: ['wasm', 'rust', 'webgl', 'typescript'],
 });
