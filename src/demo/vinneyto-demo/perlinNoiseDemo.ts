@@ -12,6 +12,7 @@ import {
   Clock,
   LinearFilter,
   DoubleSide,
+  Color,
 } from 'three';
 import { CameraController } from '../../CameraController';
 
@@ -21,8 +22,10 @@ export async function createPerlinNoiseDemo(): Promise<Demo> {
   const perlin = new PerlinNoise();
 
   const renderer = createRenderer();
+  renderer.setClearColor(new Color('black'));
   const camera = new PerspectiveCamera(75, 1, 0.01, 0.8);
   const cameraController = new CameraController(0.2, 0.01);
+  cameraController.setRotation(Math.PI / 8, 0);
   const scene = new Scene();
 
   perlin.set_seed(Math.round(Math.random() * 100));
@@ -92,7 +95,9 @@ export class StaticPerlinShaderMaterial extends ShaderMaterial {
             discard;
           }
 
-          gl_FragColor = vec4(0.0, noise.a * 0.4, noise.a * 2.0, 1.0);
+          vec3 color = abs(noise.a - threshold) < 0.01 ? vec3(1.0, 1.0, 1.0) : vec3(0.0, noise.a * 0.4, noise.a * 2.0);
+
+          gl_FragColor = vec4(color, 1.0);
         }
       `,
       transparent: true,
