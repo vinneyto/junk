@@ -13,6 +13,12 @@ html {
   grid-template-columns: repeat(4, 1fr);
 }
 
+html,
+body,
+.demo-list {
+  overscroll-behavior: none;
+}
+
 @media (max-width: 600px) {
   .demo-list {
     grid-template-columns: 1fr;
