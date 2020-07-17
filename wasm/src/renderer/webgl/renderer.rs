@@ -1,126 +1,87 @@
 use anyhow::Result;
-use generational_arena::{Arena, Index};
+use generational_arena::Index;
 use log::info;
 use na::{Matrix4, U3};
 use std::collections::HashMap;
-use web_sys::WebGlBuffer;
 
 use super::camera::CameraState;
-use super::context::{
-  BufferItem, BufferTarget, BufferUsage, Context, DrawMode, Feature, TypedArrayKind,
+use super::context::{BufferTarget, Context, DrawMode, Feature, TypedArrayKind};
+use super::mesh::{
+  Accessors, Attributes, Buffers, Indices, Material, Materials, Meshes, PBRMaterialParams,
 };
-use super::geometry::Geometry;
-use super::material::{Material, PBRMaterialParams};
-use super::mesh::Meshes;
 use super::shader::Shader;
 use crate::scene::node::Node;
 use crate::scene::scene::Scene;
 
+#[derive(Debug, Default)]
+pub struct RenderDataBase {
+  pub buffers: Buffers,
+  pub accessors: Accessors,
+  pub materials: Materials,
+  pub meshes: Meshes,
+  pub scene: Scene,
+}
+
+impl RenderDataBase {
+  pub fn new() -> Self {
+    Self::default()
+  }
+}
+
 pub struct Renderer {
-  ctx: Context,
-  buffers: Arena<WebGlBuffer>,
   shaders: HashMap<String, Shader>,
 }
 
 impl Renderer {
-  pub fn new(ctx: Context) -> Renderer {
-    let buffers = Arena::new();
+  pub fn new() -> Renderer {
     let shaders = HashMap::new();
-    Renderer {
-      ctx,
-      buffers,
-      shaders,
-    }
-  }
 
-  pub fn set_size(&self, width: i32, height: i32) {
-    self.ctx.viewport(0, 0, width, height)
-  }
-
-  pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
-    self.ctx.clear_color(r, g, b, a);
-  }
-
-  pub fn clear(&self, color: bool, depth: bool) {
-    self.ctx.clear(color, depth);
-  }
-
-  pub fn create_buffer<T: BufferItem>(
-    &mut self,
-    target: BufferTarget,
-    usage: BufferUsage,
-    data: &[T],
-  ) -> Index {
-    let buffer = self.ctx.create_buffer(target, usage, data).unwrap();
-
-    self.buffers.insert(buffer)
+    Renderer { shaders }
   }
 
   pub fn render(
     &mut self,
+    ctx: &Context,
+    db: &RenderDataBase,
     root_handle: Index,
-    scene: &mut Scene,
-    meshes: &Meshes,
     camera_state: &CameraState,
   ) -> Result<()> {
-    scene.update_matrix_world();
-
-    let visible_items = scene.collect_visible_sub_items(root_handle);
+    let visible_items = db.scene.collect_visible_sub_items(root_handle);
 
     for handle in visible_items {
-      let node = scene.get_node(handle).unwrap();
-      let mesh = meshes.get(node.mesh.unwrap()).unwrap();
+      let node = db.scene.get_node(handle).unwrap();
+      let mesh = db.meshes.get(node.mesh.unwrap()).unwrap();
 
       for primitive in &mesh.primitives {
-        let geometry = &primitive.geometry;
-        let material = &primitive.material;
-        match material {
-          Material::PBR(params) => self.setup_pbr_material(node, params, geometry, camera_state)?,
-        };
-        self.draw_geometry(DrawMode::Triangles, geometry);
+        if let Some(material_handle) = primitive.material {
+          let material = db.materials.get(material_handle).unwrap();
+
+          match material {
+            Material::PBR(params) => self.draw_call_pbr(
+              ctx,
+              db,
+              node,
+              &params,
+              &primitive.attributes,
+              &primitive.indices,
+              camera_state,
+            )?,
+          };
+        }
       }
     }
 
     Ok(())
   }
 
-  fn draw_geometry(&self, mode: DrawMode, geometry: &Geometry) {
-    if let Some(index_attribute) = &geometry.indices {
-      let indices = self.buffers.get(index_attribute.buffer).unwrap();
-      self
-        .ctx
-        .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
-      self
-        .ctx
-        .draw_elements(mode, geometry.count, TypedArrayKind::Uint16, 0);
-    } else {
-      self.ctx.draw_arrays(mode, 0, geometry.count);
-    }
-  }
-
-  fn bind_geometry(&self, shader: &Shader, geometry: &Geometry) {
-    let mut attr_amount = 0;
-
-    for name in shader.get_attribute_locations().keys() {
-      if let Some(attribute) = geometry.attributes.get(name) {
-        let buffer = self.buffers.get(attribute.buffer).unwrap();
-        self
-          .ctx
-          .bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
-        shader.bind_attribute(name, &attribute.options);
-      }
-
-      attr_amount += 1;
-    }
-
-    self.ctx.switch_attributes(attr_amount);
-  }
-
-  fn setup_pbr_material(
+  fn draw_call_pbr(
     &mut self,
+    ctx: &Context,
+    db: &RenderDataBase,
     node: &Node,
-    params: &PBRMaterialParams,
-    geometry: &Geometry,
+    material_params: &PBRMaterialParams,
+    attributes: &Attributes,
+    indices: &Indices,
     camera_state: &CameraState,
   ) -> Result<()> {
     let tag = "pbr";
@@ -131,7 +92,7 @@ impl Renderer {
 
       self.shaders.insert(
         tag.to_string(),
-        self.ctx.create_shader(vert_src, frag_src, &vec![])?,
+        ctx.create_shader(vert_src, frag_src, &vec![])?,
       );
     };
 
@@ -139,7 +100,7 @@ impl Renderer {
 
     shader.bind();
 
-    shader.set_vector3("color", &params.color);
+    shader.set_vector3("color", &material_params.color);
     shader.set_matrix4("projectionMatrix", &camera_state.projection);
     shader.set_matrix4("viewMatrix", &camera_state.view);
     shader.set_matrix4("modelMatrix", &node.matrix_world);
@@ -154,11 +115,48 @@ impl Renderer {
         .into(),
     );
 
-    self.bind_geometry(shader, geometry);
+    ctx.enable(Feature::CullFace);
+    ctx.enable(Feature::DepthTest);
 
-    self.ctx.enable(Feature::CullFace);
-    self.ctx.enable(Feature::DepthTest);
+    draw_call(ctx, db, DrawMode::Triangles, shader, attributes, indices);
 
     Ok(())
+  }
+}
+
+fn draw_call(
+  ctx: &Context,
+  db: &RenderDataBase,
+  mode: DrawMode,
+  shader: &Shader,
+  attributes: &Attributes,
+  indices: &Indices,
+) {
+  let mut attr_amount = 0;
+  let mut count = 0;
+
+  for name in shader.get_attribute_locations().keys() {
+    if let Some(accessor_handle) = attributes.get(name) {
+      let accessor = db.accessors.get(*accessor_handle).unwrap();
+      let buffer = db.buffers.get(accessor.buffer).unwrap();
+      ctx.bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
+      shader.bind_attribute(name, &accessor.options);
+
+      count = accessor.count;
+    }
+
+    attr_amount += 1;
+  }
+
+  ctx.switch_attributes(attr_amount);
+
+  if let Some(accessor_handle) = indices {
+    let accessor = db.accessors.get(*accessor_handle).unwrap();
+    let indices = db.buffers.get(accessor.buffer).unwrap();
+    count = accessor.count;
+    ctx.bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
+    ctx.draw_elements(mode, count, TypedArrayKind::Uint16, 0);
+  } else {
+    ctx.draw_arrays(mode, 0, count);
   }
 }
