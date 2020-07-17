@@ -21,7 +21,7 @@ pub fn create_gltf_accessors(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase
 
   for accessor_def in gltf.accessors() {
     if accessor_def.sparse().is_some() {
-      panic!("sparse is not supported");
+      todo!("sparse");
     }
 
     let accessor_handle = if let Some(view_def) = accessor_def.view() {
@@ -127,7 +127,6 @@ pub fn create_gltf_meshes(
 
     for primitive_def in mesh_def.primitives() {
       let mut attributes: HashMap<AttributeName, Index> = HashMap::new();
-      let mut count = 0;
 
       for (semantic_def, accessor_def) in primitive_def.attributes() {
         let attr_name = match semantic_def {
@@ -143,15 +142,12 @@ pub fn create_gltf_meshes(
           attr_name,
           *accessor_index.get(&accessor_def.index()).unwrap(),
         );
-
-        count = accessor_def.count() as i32;
       }
 
       let indices;
 
       if let Some(indices_accessor) = primitive_def.indices() {
         indices = accessor_index.get(&indices_accessor.index()).cloned();
-        count = indices_accessor.count() as i32;
       } else {
         indices = None;
       }
