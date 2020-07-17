@@ -1,5 +1,6 @@
 use generational_arena::{Arena, Index};
 use na::{Isometry3, Matrix4, Vector4};
+use std::default::Default;
 
 use super::node::Node;
 
@@ -7,6 +8,12 @@ use super::node::Node;
 pub struct Scene {
   root_handle: Index,
   nodes: Arena<Node>,
+}
+
+impl Default for Scene {
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl Scene {
