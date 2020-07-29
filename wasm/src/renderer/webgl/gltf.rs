@@ -1,3 +1,4 @@
+use anyhow::Result;
 use generational_arena::Index;
 use gltf::accessor::DataType;
 use gltf::mesh::Semantic;
@@ -8,14 +9,15 @@ use std::collections::HashMap;
 
 use crate::scene::node::Node;
 
-use super::context::{BufferTarget, BufferUsage, Context, TypedArrayKind};
-use super::mesh::{Accessor, Material, Mesh, PBRMaterialParams, Primitive};
-use super::renderer::RenderDataBase;
+use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
+use super::render::checkup_shader;
 use super::shader::{AttributeName, AttributeOptions};
+use super::store::RenderStore;
+use super::store::{Accessor, Material, Mesh, PBRMaterialParams, Primitive};
 
 pub type IndexMap = HashMap<usize, Index>;
 
-pub fn create_gltf_accessors(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase) -> IndexMap {
+pub fn create_accessors(gltf: &Gltf, store: &mut RenderStore) -> IndexMap {
   let mut buffer_index = IndexMap::new();
   let mut accessor_index = IndexMap::new();
 
@@ -52,8 +54,9 @@ pub fn create_gltf_accessors(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase
         } else {
           BufferTarget::ArrayBuffer
         };
-        let handle = db.buffers.insert(
-          ctx
+        let handle = store.buffers.insert(
+          store
+            .ctx
             .create_buffer(buffer_target, BufferUsage::StaticDraw, data)
             .unwrap(),
         );
@@ -62,7 +65,7 @@ pub fn create_gltf_accessors(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase
         handle
       };
 
-      db.accessors.insert(Accessor {
+      store.accessors.insert(Accessor {
         buffer: buffer_handle,
         count: accessor_def.count() as i32,
         options: AttributeOptions {
@@ -81,7 +84,7 @@ pub fn create_gltf_accessors(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase
         },
       })
     } else {
-      db.accessors.insert(Accessor {
+      store.accessors.insert(Accessor {
         buffer: Index::from_raw_parts(0, 0),
         count: 0,
         options: AttributeOptions {
@@ -100,23 +103,27 @@ pub fn create_gltf_accessors(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase
   accessor_index
 }
 
-pub fn create_gltf_materials(gltf: &Gltf, db: &mut RenderDataBase) -> IndexMap {
+pub fn create_materials(gltf: &Gltf, store: &mut RenderStore) -> Result<IndexMap> {
   let mut material_index = IndexMap::new();
 
   for material_def in gltf.materials() {
-    let material_handle = db.materials.insert(Material::PBR(PBRMaterialParams {
+    let material = Material::PBR(PBRMaterialParams {
       color: Vector3::new(0.0, 0.0, 0.0),
-    }));
+    });
+
+    checkup_shader(store, &material)?;
+
+    let material_handle = store.materials.insert(material);
 
     material_index.insert(material_def.index().unwrap(), material_handle);
   }
 
-  material_index
+  Ok(material_index)
 }
 
-pub fn create_gltf_meshes(
+pub fn create_meshes(
   gltf: &Gltf,
-  db: &mut RenderDataBase,
+  store: &mut RenderStore,
   accessor_index: &IndexMap,
   materials_index: &IndexMap,
 ) -> IndexMap {
@@ -167,7 +174,7 @@ pub fn create_gltf_meshes(
       });
     }
 
-    let mesh_handle = db.meshes.insert(Mesh {
+    let mesh_handle = store.meshes.insert(Mesh {
       primitives,
       name: mesh_def.name().map(|n| n.to_string()),
     });
@@ -178,7 +185,7 @@ pub fn create_gltf_meshes(
   mesh_index
 }
 
-pub fn create_gltf_nodes(gltf: &Gltf, db: &mut RenderDataBase, mesh_index: &IndexMap) -> IndexMap {
+pub fn create_nodes(gltf: &Gltf, store: &mut RenderStore, mesh_index: &IndexMap) -> IndexMap {
   let mut node_index = IndexMap::new();
 
   let nodes: Vec<Node> = gltf
@@ -211,7 +218,7 @@ pub fn create_gltf_nodes(gltf: &Gltf, db: &mut RenderDataBase, mesh_index: &Inde
     .collect();
 
   for (index, node) in nodes.iter().enumerate() {
-    let handle = db.scene.insert(node.clone());
+    let handle = store.scene.insert(node.clone());
 
     node_index.insert(index, handle);
   }
@@ -221,26 +228,22 @@ pub fn create_gltf_nodes(gltf: &Gltf, db: &mut RenderDataBase, mesh_index: &Inde
       let child_handle = node_index.get(&child_def.index()).unwrap();
       let parent_handle = node_index.get(&node_def.index()).unwrap();
 
-      db.scene.set_parent(*child_handle, *parent_handle);
+      store.scene.set_parent(*child_handle, *parent_handle);
     }
   }
 
   node_index
 }
 
-pub fn create_gltf_scenes(
-  gltf: &Gltf,
-  db: &mut RenderDataBase,
-  node_index: &IndexMap,
-) -> Vec<Index> {
+pub fn create_scenes(gltf: &Gltf, store: &mut RenderStore, node_index: &IndexMap) -> Vec<Index> {
   gltf
     .scenes()
     .map(|scene_def| {
-      let scene_handle = db.scene.insert(Node::new(None));
+      let scene_handle = store.scene.insert(Node::new(None));
 
       for node_def in scene_def.nodes() {
         let node_handle = *node_index.get(&node_def.index()).unwrap();
-        db.scene.set_parent(node_handle, scene_handle);
+        store.scene.set_parent(node_handle, scene_handle);
       }
 
       scene_handle
@@ -248,11 +251,11 @@ pub fn create_gltf_scenes(
     .collect()
 }
 
-pub fn bake_gltf(gltf: &Gltf, ctx: &Context, db: &mut RenderDataBase) -> Vec<Index> {
-  let accessor_index = create_gltf_accessors(gltf, ctx, db);
-  let material_index = create_gltf_materials(gltf, db);
-  let mesh_index = create_gltf_meshes(gltf, db, &accessor_index, &material_index);
-  let node_index = create_gltf_nodes(gltf, db, &mesh_index);
+pub fn bake_gltf(gltf: &Gltf, store: &mut RenderStore) -> Result<Vec<Index>> {
+  let accessor_index = create_accessors(gltf, store);
+  let material_index = create_materials(gltf, store)?;
+  let mesh_index = create_meshes(gltf, store, &accessor_index, &material_index);
+  let node_index = create_nodes(gltf, store, &mesh_index);
 
-  create_gltf_scenes(gltf, db, &node_index)
+  Ok(create_scenes(gltf, store, &node_index))
 }

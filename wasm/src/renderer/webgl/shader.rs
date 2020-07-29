@@ -26,6 +26,7 @@ impl AttributeName {
   }
 }
 
+#[derive(Debug)]
 pub struct Shader {
   gl: WebGlRenderingContext,
   program: WebGlProgram,
