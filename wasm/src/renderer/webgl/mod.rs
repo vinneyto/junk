@@ -1,7 +1,6 @@
-pub mod camera;
 pub mod context;
 pub mod define;
-pub mod gltf_util;
-pub mod mesh;
-pub mod renderer;
+pub mod gltf;
+pub mod render;
 pub mod shader;
+pub mod store;

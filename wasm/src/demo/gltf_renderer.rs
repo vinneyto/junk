@@ -5,19 +5,18 @@ use na::Matrix4;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
-use crate::renderer::webgl::camera::CameraState;
 use crate::renderer::webgl::context::Context;
-use crate::renderer::webgl::gltf_util::bake_gltf;
-use crate::renderer::webgl::renderer::{RenderDataBase, Renderer};
+use crate::renderer::webgl::gltf::bake_gltf;
+use crate::renderer::webgl::render::render_scene;
+use crate::renderer::webgl::store::{Camera, RenderStore};
 
 use super::webgl_canvas::WebGlCanvas;
 
 #[wasm_bindgen]
 pub struct GLTFRendererDemo {
-  ctx: Context,
-  renderer: Renderer,
-  db: RenderDataBase,
+  store: RenderStore,
   root_handle: Index,
+  camera_handle: Index,
   canvas: WebGlCanvas,
 }
 
@@ -27,45 +26,43 @@ impl GLTFRendererDemo {
   pub fn new(gltf_data: &[u8]) -> StdResult<GLTFRendererDemo, JsValue> {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
-    let renderer = Renderer::new();
     let gltf = Gltf::from_slice(gltf_data).unwrap();
 
-    let mut db = RenderDataBase::new();
+    let mut store = RenderStore::new(ctx);
 
-    let handles = bake_gltf(&gltf, &ctx, &mut db);
+    let camera_handle = store.cameras.insert(Camera::default());
+
+    let handles = bake_gltf(&gltf, &mut store).unwrap();
 
     // info!("handles {:#?}", handles);
-    // info!("db {:#?}", db);
+    // info!("store {:#?}", store);
 
     Ok(GLTFRendererDemo {
       root_handle: handles[0],
-      renderer,
+      camera_handle,
       canvas,
-      ctx,
-      db,
+      store,
     })
   }
 
   pub fn update(&mut self, view_data: &[f32], projection_data: &[f32]) {
     if self.canvas.check_size() {
       self
+        .store
         .ctx
         .viewport(0, 0, self.canvas.width as i32, self.canvas.height as i32);
     }
 
-    self.ctx.clear_color(1.0, 1.0, 1.0, 1.0);
-    self.ctx.clear(true, true);
+    self.store.ctx.clear_color(1.0, 1.0, 1.0, 1.0);
+    self.store.ctx.clear(true, true);
 
-    let camera_state = CameraState {
-      view: Matrix4::from_vec(view_data.to_vec()),
-      projection: Matrix4::from_vec(projection_data.to_vec()),
-    };
+    let camera = self.store.cameras.get_mut(self.camera_handle).unwrap();
 
-    self.db.scene.update_matrix_world();
+    camera.view = Matrix4::from_vec(view_data.to_vec());
+    camera.projection = Matrix4::from_vec(projection_data.to_vec());
 
-    self
-      .renderer
-      .render(&self.ctx, &self.db, self.root_handle, &camera_state)
-      .unwrap();
+    self.store.scene.update_matrix_world();
+
+    render_scene(&self.store, self.root_handle, self.camera_handle);
   }
 }

@@ -10,6 +10,7 @@ use std::default::Default;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{WebGlBuffer, WebGlRenderingContext, WebGlTexture};
 
+#[derive(Debug)]
 pub struct Context {
   gl: WebGlRenderingContext,
   attrib_amount: RefCell<u32>,
