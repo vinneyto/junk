@@ -1,6 +1,7 @@
+pub mod camera;
 pub mod context;
 pub mod define;
 pub mod gltf;
-pub mod render;
+pub mod renderer;
 pub mod shader;
-pub mod store;
+pub mod turntable;

@@ -1,23 +1,24 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::Matrix4;
+use na::Point2;
+use std::f32::consts::PI;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
 use crate::renderer::webgl::context::Context;
-use crate::renderer::webgl::gltf::bake_gltf;
-use crate::renderer::webgl::render::render_scene;
-use crate::renderer::webgl::store::{Camera, RenderStore};
+use crate::renderer::webgl::renderer::{Camera, Renderer};
+use crate::renderer::webgl::turntable::Turntable;
 
 use super::webgl_canvas::WebGlCanvas;
 
 #[wasm_bindgen]
 pub struct GLTFRendererDemo {
-  store: RenderStore,
+  renderer: Renderer,
   root_handle: Index,
   camera_handle: Index,
   canvas: WebGlCanvas,
+  turntable: Turntable,
 }
 
 #[wasm_bindgen]
@@ -27,42 +28,62 @@ impl GLTFRendererDemo {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let gltf = Gltf::from_slice(gltf_data).unwrap();
+    let turntable = Turntable::new(10.0, 0.01);
 
-    let mut store = RenderStore::new(ctx);
+    let mut renderer = Renderer::new(ctx);
 
-    let camera_handle = store.cameras.insert(Camera::default());
+    let camera_handle = renderer.cameras.insert(Camera::default());
 
-    let handles = bake_gltf(&gltf, &mut store).unwrap();
+    let handles = renderer.bake_gltf(&gltf);
 
     // info!("handles {:#?}", handles);
-    // info!("store {:#?}", store);
+    // info!("renderer {:#?}", renderer);
 
     Ok(GLTFRendererDemo {
       root_handle: handles[0],
       camera_handle,
       canvas,
-      store,
+      renderer,
+      turntable,
     })
   }
 
-  pub fn update(&mut self, view_data: &[f32], projection_data: &[f32]) {
+  pub fn start_interaction(&mut self, x: f32, y: f32) {
+    self.turntable.start(Point2::new(x, y));
+  }
+
+  pub fn interact(&mut self, x: f32, y: f32) {
+    self.turntable.rotate(Point2::new(x, y));
+  }
+
+  pub fn update(&mut self) {
     if self.canvas.check_size() {
       self
-        .store
+        .renderer
         .ctx
         .viewport(0, 0, self.canvas.width as i32, self.canvas.height as i32);
     }
 
-    self.store.ctx.clear_color(1.0, 1.0, 1.0, 1.0);
-    self.store.ctx.clear(true, true);
+    self.renderer.ctx.clear_color(1.0, 1.0, 1.0, 1.0);
+    self.renderer.ctx.clear(true, true);
 
-    let camera = self.store.cameras.get_mut(self.camera_handle).unwrap();
+    self.renderer.scene.update_matrix_world();
 
-    camera.view = Matrix4::from_vec(view_data.to_vec());
-    camera.projection = Matrix4::from_vec(projection_data.to_vec());
+    let aspect = self.canvas.width as f32 / self.canvas.height as f32;
+    let fovy = 75.0 / 180.0 * PI;
+    let near = 0.01;
+    let far = 30.0;
 
-    self.store.scene.update_matrix_world();
+    self
+      .renderer
+      .make_perspective_camera(self.camera_handle, aspect, fovy, near, far);
 
-    render_scene(&self.store, self.root_handle, self.camera_handle);
+    self
+      .turntable
+      .update_camera(&mut self.renderer, self.camera_handle);
+
+    self
+      .renderer
+      .render_scene(self.root_handle, self.camera_handle);
   }
 }
