@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::default::Default;
 use web_sys::WebGlBuffer;
 
-use super::context::{BufferTarget, Context, DrawMode, Feature, TypedArrayKind};
+use super::context::{BufferItem, BufferTarget, BufferUsage, Context, DrawMode, Feature};
 use super::shader::Shader;
 
 use super::shader::{AttributeName, AttributeOptions};
@@ -87,6 +87,8 @@ pub struct Renderer {
 
 impl Renderer {
   pub fn new(ctx: Context) -> Self {
+    ctx.get_extension("OES_element_index_uint").unwrap();
+
     Renderer {
       ctx,
       buffers: Buffers::default(),
@@ -107,6 +109,31 @@ impl Renderer {
         .shaders
         .insert(tag.clone(), get_shader(&self.ctx, material).unwrap());
     };
+  }
+
+  pub fn insert_buffer<T: BufferItem>(
+    &mut self,
+    target: BufferTarget,
+    usage: BufferUsage,
+    data: &[T],
+  ) -> Index {
+    self
+      .buffers
+      .insert(self.ctx.create_buffer(target, usage, data).unwrap())
+  }
+
+  pub fn insert_material(&mut self, material: Material) -> Index {
+    self.checkup_shader(&material);
+
+    self.materials.insert(material)
+  }
+
+  pub fn insert_node(&mut self, node: Node) -> Index {
+    self.scene.insert(node)
+  }
+
+  pub fn insert_accessor(&mut self, accessor: Accessor) -> Index {
+    self.accessors.insert(accessor)
   }
 
   pub fn render_scene(&self, root_handle: Index, camera_handle: Index) {
@@ -206,7 +233,7 @@ impl Renderer {
         .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
       self
         .ctx
-        .draw_elements(mode, count, TypedArrayKind::Uint16, 0);
+        .draw_elements(mode, count, accessor.options.component_type, 0);
     } else {
       self.ctx.draw_arrays(mode, 0, count);
     }

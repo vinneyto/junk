@@ -52,12 +52,7 @@ impl Renderer {
           } else {
             BufferTarget::ArrayBuffer
           };
-          let handle = self.buffers.insert(
-            self
-              .ctx
-              .create_buffer(buffer_target, BufferUsage::StaticDraw, data)
-              .unwrap(),
-          );
+          let handle = self.insert_buffer(buffer_target, BufferUsage::StaticDraw, data);
           buffer_index.insert(view_index, handle);
 
           handle
@@ -105,13 +100,9 @@ impl Renderer {
     let mut material_index = IndexMap::new();
 
     for material_def in gltf.materials() {
-      let material = Material::PBR(PBRMaterialParams {
+      let material_handle = self.insert_material(Material::PBR(PBRMaterialParams {
         color: Vector3::new(0.0, 0.0, 0.0),
-      });
-
-      self.checkup_shader(&material);
-
-      let material_handle = self.materials.insert(material);
+      }));
 
       material_index.insert(material_def.index().unwrap(), material_handle);
     }

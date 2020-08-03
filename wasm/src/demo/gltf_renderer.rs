@@ -1,21 +1,21 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::Point2;
+use na::{Point2, UnitQuaternion, Vector3};
 use std::f32::consts::PI;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
 use crate::renderer::webgl::context::Context;
-use crate::renderer::webgl::renderer::{Camera, Renderer};
+use crate::renderer::webgl::renderer::{Camera, Material, PBRMaterialParams, Renderer};
 use crate::renderer::webgl::turntable::Turntable;
+use crate::scene::node::Node;
 
 use super::webgl_canvas::WebGlCanvas;
 
 #[wasm_bindgen]
 pub struct GLTFRendererDemo {
   renderer: Renderer,
-  root_handle: Index,
   camera_handle: Index,
   canvas: WebGlCanvas,
   turntable: Turntable,
@@ -34,13 +34,39 @@ impl GLTFRendererDemo {
 
     let camera_handle = renderer.cameras.insert(Camera::default());
 
-    let handles = renderer.bake_gltf(&gltf);
+    let whale_handles = renderer.bake_gltf(&gltf);
 
-    // info!("handles {:#?}", handles);
+    renderer
+      .scene
+      .set_parent(whale_handles[0], renderer.scene.get_root_handle());
+
+    let whale_node = renderer.scene.get_node_mut(whale_handles[0]).unwrap();
+
+    whale_node.scale = Vector3::new(0.4, 0.4, 0.4);
+    whale_node.rotation = UnitQuaternion::from_euler_angles(PI / 2.0, 0.0, 0.0);
+
+    // info!("whale_handles {:#?}", whale_handles);
     // info!("renderer {:#?}", renderer);
 
+    let blue_material_handle = renderer.insert_material(Material::PBR(PBRMaterialParams {
+      color: Vector3::new(0.0, 1.0, 0.0),
+    }));
+
+    let cuboid_mesh_handle = renderer.bake_cuboid_mesh(
+      Vector3::new(1.0, 1.0, 1.0),
+      Some(blue_material_handle),
+      None,
+    );
+
+    let mut cuboid_node = Node::new(Some(renderer.scene.get_root_handle()));
+
+    cuboid_node.position.x = -5.0;
+    cuboid_node.mesh = Some(cuboid_mesh_handle);
+    cuboid_node.name = Some(String::from("cuboid"));
+
+    renderer.insert_node(cuboid_node);
+
     Ok(GLTFRendererDemo {
-      root_handle: handles[0],
       camera_handle,
       canvas,
       renderer,
@@ -84,6 +110,6 @@ impl GLTFRendererDemo {
 
     self
       .renderer
-      .render_scene(self.root_handle, self.camera_handle);
+      .render_scene(self.renderer.scene.get_root_handle(), self.camera_handle);
   }
 }
