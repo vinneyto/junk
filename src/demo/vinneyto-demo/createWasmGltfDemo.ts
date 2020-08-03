@@ -1,5 +1,5 @@
 import { Demo } from '../Demo';
-import whaleGltfSrc from './models/whale.CYCLES.glb';
+import whaleGltfSrc from './models/Duck.glb';
 import { Vector2 } from 'three';
 
 export async function createWasmGltfDemo(): Promise<Demo> {

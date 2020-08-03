@@ -1,5 +1,5 @@
 use generational_arena::{Arena, Index};
-use na::{Isometry3, Matrix4, Vector4};
+use na::Matrix4;
 
 use super::node::Node;
 
@@ -87,15 +87,7 @@ impl Scene {
     };
 
     let node = self.get_node_mut(handle).unwrap();
-    let node_isometry = Isometry3::new(node.position, node.rotation.scaled_axis());
-    let node_scale_matrix = Matrix4::from_diagonal(&Vector4::new(
-      node.scale[0],
-      node.scale[1],
-      node.scale[2],
-      1.0,
-    ));
-    let matrix_local = node_isometry.to_homogeneous() * node_scale_matrix;
-    let matrix_world = parent_matrix_world * matrix_local;
+    let matrix_world = parent_matrix_world * node.matrix_local;
     let children = node.children.clone();
 
     node.matrix_world = matrix_world;

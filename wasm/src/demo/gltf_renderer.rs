@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 use crate::renderer::webgl::context::Context;
 use crate::renderer::webgl::renderer::{Camera, Material, PBRMaterialParams, Renderer};
 use crate::renderer::webgl::turntable::Turntable;
-use crate::scene::node::Node;
+use crate::scene::node::{compose_matrix, Node};
 
 use super::webgl_canvas::WebGlCanvas;
 
@@ -42,8 +42,11 @@ impl GLTFRendererDemo {
 
     let whale_node = renderer.scene.get_node_mut(whale_handles[0]).unwrap();
 
-    whale_node.scale = Vector3::new(0.4, 0.4, 0.4);
-    whale_node.rotation = UnitQuaternion::from_euler_angles(PI / 2.0, 0.0, 0.0);
+    whale_node.matrix_local = compose_matrix(
+      None,
+      Some(UnitQuaternion::from_euler_angles(PI / 2.0, 0.0, 0.0)),
+      Some(Vector3::new(1.4, 1.4, 1.4)),
+    );
 
     // info!("whale_handles {:#?}", whale_handles);
     // info!("renderer {:#?}", renderer);
@@ -60,7 +63,7 @@ impl GLTFRendererDemo {
 
     let mut cuboid_node = Node::new(Some(renderer.scene.get_root_handle()));
 
-    cuboid_node.position.x = -5.0;
+    cuboid_node.matrix_local = compose_matrix(Some(Vector3::new(-5.0, 0.0, 0.0)), None, None);
     cuboid_node.mesh = Some(cuboid_mesh_handle);
     cuboid_node.name = Some(String::from("cuboid"));
 

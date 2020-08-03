@@ -3,10 +3,10 @@ use gltf::accessor::DataType;
 use gltf::mesh::Semantic;
 use gltf::scene::Transform;
 use gltf::Gltf;
-use na::{Quaternion, UnitQuaternion, Vector3, Vector4};
+use na::{Matrix4, Quaternion, UnitQuaternion, Vector3, Vector4};
 use std::collections::HashMap;
 
-use crate::scene::node::Node;
+use crate::scene::node::{compose_matrix, Node};
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
 use super::renderer::{Accessor, Material, Mesh, PBRMaterialParams, Primitive, Renderer};
@@ -188,13 +188,22 @@ impl Renderer {
             rotation,
             scale,
           } => {
-            node.position = Vector3::from_vec(translation.to_vec());
-            node.rotation = UnitQuaternion::from_quaternion(Quaternion::from(Vector4::from_vec(
-              rotation.to_vec(),
-            )));
-            node.scale = Vector3::from_vec(scale.to_vec());
+            node.matrix_local = compose_matrix(
+              Some(Vector3::from_vec(translation.to_vec())),
+              Some(UnitQuaternion::from_quaternion(Quaternion::from(
+                Vector4::from_vec(rotation.to_vec()),
+              ))),
+              Some(Vector3::from_vec(scale.to_vec())),
+            )
           }
-          Transform::Matrix { matrix: _ } => todo!("matrix transform"),
+          Transform::Matrix { matrix: m } => {
+            node.matrix_local = Matrix4::new(
+              m[0][0], m[0][1], m[0][2], m[0][3], //
+              m[1][0], m[1][1], m[1][2], m[1][3], //
+              m[2][0], m[2][1], m[2][2], m[2][3], //
+              m[3][0], m[3][1], m[3][2], m[3][3], //
+            );
+          }
         };
 
         if let Some(mesh_def) = node_def.mesh() {
