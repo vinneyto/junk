@@ -2,7 +2,7 @@ use generational_arena::Index;
 use log::info;
 use na::{Point2, Point3, Vector3};
 use ncollide3d::procedural::{IndexBuffer, TriMesh};
-use ncollide3d::shape::Cuboid;
+use ncollide3d::shape::{Ball, Cuboid};
 use ncollide3d::transformation::ToTriMesh;
 use std::slice;
 
@@ -31,9 +31,11 @@ impl Renderer {
 
   pub fn bake_tri_mesh_primitive(
     &mut self,
-    tri_mesh: TriMesh<f32>,
+    mut tri_mesh: TriMesh<f32>,
     material_handle: Option<Index>,
   ) -> Primitive {
+    tri_mesh.unify_index_buffer();
+
     let mut attributes = Attributes::new();
 
     attributes.insert(
@@ -108,12 +110,20 @@ impl Renderer {
     material_handle: Option<Index>,
     name: Option<String>,
   ) -> Index {
-    let mut cuboid: TriMesh<f32> = Cuboid::new(half_extents).to_trimesh(());
-
-    cuboid.unify_index_buffer();
-    cuboid.recompute_normals();
+    let cuboid: TriMesh<f32> = Cuboid::new(half_extents).to_trimesh(());
 
     self.bake_tri_mesh(cuboid, material_handle, name)
+  }
+
+  pub fn bake_ball_mesh(
+    &mut self,
+    radius: f32,
+    material_handle: Option<Index>,
+    name: Option<String>,
+  ) -> Index {
+    let ball: TriMesh<f32> = Ball::new(radius).to_trimesh((32, 32));
+
+    self.bake_tri_mesh(ball, material_handle, name)
   }
 }
 

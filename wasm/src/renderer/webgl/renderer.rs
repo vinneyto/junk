@@ -87,7 +87,9 @@ pub struct Renderer {
 
 impl Renderer {
   pub fn new(ctx: Context) -> Self {
-    ctx.get_extension("OES_element_index_uint").unwrap();
+    ctx
+      .get_extension("OES_element_index_uint")
+      .expect("u32 indices extension exists");
 
     Renderer {
       ctx,
@@ -105,9 +107,10 @@ impl Renderer {
     let tag = get_material_tag(material);
 
     if self.shaders.get(&tag).is_none() {
-      self
-        .shaders
-        .insert(tag.clone(), get_shader(&self.ctx, material).unwrap());
+      self.shaders.insert(
+        tag.clone(),
+        get_shader(&self.ctx, material).expect("shader compiled"),
+      );
     };
   }
 
@@ -117,9 +120,12 @@ impl Renderer {
     usage: BufferUsage,
     data: &[T],
   ) -> Index {
-    self
-      .buffers
-      .insert(self.ctx.create_buffer(target, usage, data).unwrap())
+    self.buffers.insert(
+      self
+        .ctx
+        .create_buffer(target, usage, data)
+        .expect("buffer has created"),
+    )
   }
 
   pub fn insert_material(&mut self, material: Material) -> Index {
@@ -138,15 +144,27 @@ impl Renderer {
 
   pub fn render_scene(&self, root_handle: Index, camera_handle: Index) {
     let visible_items = self.scene.collect_visible_sub_items(root_handle);
-    let camera = self.cameras.get(camera_handle).unwrap();
+    let camera = self
+      .cameras
+      .get(camera_handle)
+      .expect("camera to render has found");
 
     for handle in visible_items {
-      let node = self.scene.get_node(handle).unwrap();
-      let mesh = self.meshes.get(node.mesh.unwrap()).unwrap();
+      let node = self
+        .scene
+        .get_node(handle)
+        .expect("node to render has found");
+      let mesh = self
+        .meshes
+        .get(node.mesh.expect("node has mesh to render"))
+        .expect("mesh to render exists");
 
       for primitive in &mesh.primitives {
         if let Some(material_handle) = primitive.material {
-          let material = self.materials.get(material_handle).unwrap();
+          let material = self
+            .materials
+            .get(material_handle)
+            .expect("material to render exists");
 
           match material {
             Material::PBR(params) => self.draw_call_pbr(
@@ -172,7 +190,10 @@ impl Renderer {
   ) {
     let tag = get_pbr_material_tag(material_params);
 
-    let shader = self.shaders.get(&tag).unwrap();
+    let shader = self
+      .shaders
+      .get(&tag)
+      .expect("shader has found by tag to render");
 
     shader.bind();
 
@@ -209,8 +230,14 @@ impl Renderer {
 
     for name in shader.get_attribute_locations().keys() {
       if let Some(accessor_handle) = attributes.get(name) {
-        let accessor = self.accessors.get(*accessor_handle).unwrap();
-        let buffer = self.buffers.get(accessor.buffer).unwrap();
+        let accessor = self
+          .accessors
+          .get(*accessor_handle)
+          .expect("accessor for shader attribute exists to render");
+        let buffer = self
+          .buffers
+          .get(accessor.buffer)
+          .expect("buffer for accessor exists to render");
         self
           .ctx
           .bind_buffer(BufferTarget::ArrayBuffer, Some(buffer));
@@ -225,8 +252,14 @@ impl Renderer {
     self.ctx.switch_attributes(attr_amount);
 
     if let Some(accessor_handle) = indices {
-      let accessor = self.accessors.get(*accessor_handle).unwrap();
-      let indices = self.buffers.get(accessor.buffer).unwrap();
+      let accessor = self
+        .accessors
+        .get(*accessor_handle)
+        .expect("indices accessor for shader attribute exists to render");
+      let indices = self
+        .buffers
+        .get(accessor.buffer)
+        .expect("indices buffer for accessor exists to render");
       count = accessor.count;
       self
         .ctx

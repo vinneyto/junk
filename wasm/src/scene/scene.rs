@@ -23,7 +23,10 @@ impl Scene {
     let handle = self.nodes.insert(object);
 
     if let Some(parent_handle) = parent_handle_option {
-      let parent = self.nodes.get_mut(parent_handle).unwrap();
+      let parent = self
+        .nodes
+        .get_mut(parent_handle)
+        .expect("parent exists to append child");
       parent.children.push(handle);
     }
 
@@ -32,16 +35,22 @@ impl Scene {
 
   pub fn set_parent(&mut self, child_handle: Index, parent_handle: Index) {
     if let Some(current_parent_handle) = self.get_parent_handle(child_handle) {
-      let parent = self.get_node_mut(current_parent_handle).unwrap();
+      let parent = self
+        .get_node_mut(current_parent_handle)
+        .expect("parent exists to remove child");
 
       parent.children.retain(|ch| *ch != child_handle);
     }
 
-    let child = self.get_node_mut(child_handle).unwrap();
+    let child = self
+      .get_node_mut(child_handle)
+      .expect("node exists to assign parent");
 
     child.parent = Some(parent_handle);
 
-    let parent = self.get_node_mut(parent_handle).unwrap();
+    let parent = self
+      .get_node_mut(parent_handle)
+      .expect("parent exists to append child");
 
     parent.children.push(child_handle);
   }
@@ -67,7 +76,10 @@ impl Scene {
     self.remove_subtree(handle);
 
     let parent_handle = self.get_parent_handle(handle)?;
-    let parent = self.nodes.get_mut(parent_handle).unwrap();
+    let parent = self
+      .nodes
+      .get_mut(parent_handle)
+      .expect("parent exists to remove child");
 
     parent
       .children
@@ -82,11 +94,18 @@ impl Scene {
 
   pub fn update_matrix_world_subtree(&mut self, handle: Index) {
     let parent_matrix_world = match self.get_parent_handle(handle) {
-      Some(parent_handle) => self.get_node(parent_handle).unwrap().matrix_world,
+      Some(parent_handle) => {
+        self
+          .get_node(parent_handle)
+          .expect("parent exists to get matrix world")
+          .matrix_world
+      }
       None => Matrix4::identity(),
     };
 
-    let node = self.get_node_mut(handle).unwrap();
+    let node = self
+      .get_node_mut(handle)
+      .expect("node exists to calculate matrix_world");
     let matrix_world = parent_matrix_world * node.matrix_local;
     let children = node.children.clone();
 

@@ -10,7 +10,10 @@ impl Renderer {
     view: Option<Matrix4<f32>>,
     projection: Option<Matrix4<f32>>,
   ) {
-    let camera = self.cameras.get_mut(handle).unwrap();
+    let camera = self
+      .cameras
+      .get_mut(handle)
+      .expect("camera exists to update");
 
     if let Some(v) = view {
       camera.view = v;

@@ -40,7 +40,10 @@ impl GLTFRendererDemo {
       .scene
       .set_parent(whale_handles[0], renderer.scene.get_root_handle());
 
-    let whale_node = renderer.scene.get_node_mut(whale_handles[0]).unwrap();
+    let whale_node = renderer
+      .scene
+      .get_node_mut(whale_handles[0])
+      .expect("whale_node_exists");
 
     whale_node.matrix_local = compose_matrix(
       None,
