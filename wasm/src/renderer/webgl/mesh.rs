@@ -84,15 +84,11 @@ impl Renderer {
     })
   }
 
-  pub fn bake_tri_mesh(
-    &mut self,
-    tri_mesh: TriMesh<f32>,
-    material: Option<Index>,
-    name: Option<String>,
-  ) -> Index {
-    let geometry = self.bake_tri_mesh_geometry(tri_mesh);
-
-    let primitive = Primitive { geometry, material };
+  pub fn compose_mesh(&mut self, geometry: Index, material: Index, name: Option<String>) -> Index {
+    let primitive = Primitive {
+      geometry,
+      material: Some(material),
+    };
 
     self.insert_mesh(Mesh {
       primitives: vec![primitive],
@@ -100,26 +96,16 @@ impl Renderer {
     })
   }
 
-  pub fn bake_cuboid_mesh(
-    &mut self,
-    half_extents: Vector3<f32>,
-    material_handle: Option<Index>,
-    name: Option<String>,
-  ) -> Index {
+  pub fn bake_cuboid_geometry(&mut self, half_extents: Vector3<f32>) -> Index {
     let cuboid: TriMesh<f32> = Cuboid::new(half_extents).to_trimesh(());
 
-    self.bake_tri_mesh(cuboid, material_handle, name)
+    self.bake_tri_mesh_geometry(cuboid)
   }
 
-  pub fn bake_ball_mesh(
-    &mut self,
-    radius: f32,
-    material_handle: Option<Index>,
-    name: Option<String>,
-  ) -> Index {
+  pub fn bake_ball_geometry(&mut self, radius: f32) -> Index {
     let ball: TriMesh<f32> = Ball::new(radius).to_trimesh((32, 32));
 
-    self.bake_tri_mesh(ball, material_handle, name)
+    self.bake_tri_mesh_geometry(ball)
   }
 }
 

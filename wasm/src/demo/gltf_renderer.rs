@@ -59,10 +59,12 @@ impl GLTFRendererDemo {
 
     //
 
-    let cuboid_mesh_handle = renderer.bake_cuboid_mesh(
-      Vector3::new(1.0, 1.0, 1.0),
-      Some(blue_material_handle),
-      None,
+    let cuboid_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
+
+    let cuboid_mesh_handle = renderer.compose_mesh(
+      cuboid_geometry_handle,
+      blue_material_handle,
+      Some(String::from("cuboid")),
     );
 
     let mut cuboid_node = Node::new(Some(renderer.scene.get_root_handle()));
@@ -77,9 +79,11 @@ impl GLTFRendererDemo {
 
     let ground_mesh = get_ground_surface_tri_mesh(&Vector3::new(20.0, 20.0, 20.0), seed);
 
-    let ground_mesh_handle = renderer.bake_tri_mesh(
-      ground_mesh,
-      Some(blue_material_handle),
+    let ground_geometry_handle = renderer.bake_tri_mesh_geometry(ground_mesh);
+
+    let ground_mesh_handle = renderer.compose_mesh(
+      ground_geometry_handle,
+      blue_material_handle,
       Some(String::from("ground")),
     );
 
