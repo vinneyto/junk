@@ -1,7 +1,9 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::{Point2, UnitQuaternion, Vector3};
+use na::{Point2, Point3, UnitQuaternion, Vector3};
+use ncollide3d::procedural::{bezier_surface, TriMesh};
+use noise::{NoiseFn, Perlin, Seedable};
 use std::f32::consts::PI;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
@@ -55,8 +57,10 @@ impl GLTFRendererDemo {
     // info!("renderer {:#?}", renderer);
 
     let blue_material_handle = renderer.insert_material(Material::PBR(PBRMaterialParams {
-      color: Vector3::new(0.0, 1.0, 0.0),
+      color: Vector3::new(0.0, 0.0, 1.0),
     }));
+
+    //
 
     let cuboid_mesh_handle = renderer.bake_cuboid_mesh(
       Vector3::new(1.0, 1.0, 1.0),
@@ -71,6 +75,24 @@ impl GLTFRendererDemo {
     cuboid_node.name = Some(String::from("cuboid"));
 
     renderer.insert_node(cuboid_node);
+
+    //
+
+    let ground_mesh = get_ground_surface_tri_mesh(&Vector3::new(4.0, 2.0, 4.0), 0);
+
+    let ground_mesh_handle = renderer.bake_tri_mesh(
+      ground_mesh,
+      Some(blue_material_handle),
+      Some(String::from("ground")),
+    );
+
+    let mut ground_node = Node::new(Some(renderer.scene.get_root_handle()));
+
+    // ground_node.matrix_local = compose_matrix(Some(Vector3::new(-5.0, 0.0, 0.0)), None, None);
+    ground_node.mesh = Some(ground_mesh_handle);
+    ground_node.name = Some(String::from("ground"));
+
+    renderer.insert_node(ground_node);
 
     Ok(GLTFRendererDemo {
       camera_handle,
@@ -118,4 +140,59 @@ impl GLTFRendererDemo {
       .renderer
       .render_scene(self.renderer.scene.get_root_handle(), self.camera_handle);
   }
+}
+
+fn get_perlin_data(width: usize, height: usize, a: f64, b: f64, seed: u32) -> Vec<f32> {
+  let perlin = Perlin::new();
+  perlin.set_seed(seed);
+
+  let mut data = vec![0.0; width * height * 4];
+
+  let x_factor = 1.0 / (width - 1) as f64;
+  let y_factor = 1.0 / (height - 1) as f64;
+
+  for row in 0..height {
+    for col in 0..width {
+      let x = x_factor * col as f64;
+      let y = y_factor * row as f64;
+      let mut sum = 0.0;
+      let mut freq = a;
+      let mut scale = b;
+
+      for oct in 0..4 {
+        let val = perlin.get([x * freq, y * freq]) / scale;
+        sum += val;
+        let result = (sum + 1.0) / 2.0;
+
+        data[((row * width + col) * 4) + oct] = result as f32;
+        freq *= 2.0;
+        scale *= b;
+      }
+    }
+  }
+
+  data
+}
+
+pub fn get_ground_surface_tri_mesh(size: &Vector3<f32>, seed: u32) -> TriMesh<f32> {
+  let width = 32;
+  let height = 32;
+
+  let data = get_perlin_data(width, height, 2.0, 2.0, seed);
+  let mut points = vec![];
+
+  let wf = width as f32;
+  let hf = height as f32;
+
+  for row in 0..height {
+    for col in 0..width {
+      let x = -wf / 2.0 + (row as f32 / wf) * size.x;
+      let z = -hf / 2.0 + (col as f32 / hf) * size.z;
+      let y = data[((row * width + col) * 4)] * size.y;
+
+      points.push(Point3::new(x, y, z));
+    }
+  }
+
+  bezier_surface(&points, 32, 32, 16, 16)
 }

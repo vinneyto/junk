@@ -101,7 +101,7 @@ impl Renderer {
 
     for material_def in gltf.materials() {
       let material_handle = self.insert_material(Material::PBR(PBRMaterialParams {
-        color: Vector3::new(0.0, 0.0, 0.0),
+        color: Vector3::new(1.0, 0.0, 0.0),
       }));
 
       material_index.insert(
