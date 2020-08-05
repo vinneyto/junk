@@ -26,11 +26,11 @@ pub struct GLTFRendererDemo {
 #[wasm_bindgen]
 impl GLTFRendererDemo {
   #[wasm_bindgen(constructor)]
-  pub fn new(gltf_data: &[u8]) -> StdResult<GLTFRendererDemo, JsValue> {
+  pub fn new(gltf_data: &[u8], seed: u32) -> StdResult<GLTFRendererDemo, JsValue> {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let gltf = Gltf::from_slice(gltf_data).unwrap();
-    let turntable = Turntable::new(10.0, 0.01);
+    let turntable = Turntable::new(20.0, 0.01);
 
     let mut renderer = Renderer::new(ctx);
 
@@ -42,10 +42,7 @@ impl GLTFRendererDemo {
       .scene
       .set_parent(whale_handles[0], renderer.scene.get_root_handle());
 
-    let whale_node = renderer
-      .scene
-      .get_node_mut(whale_handles[0])
-      .expect("whale_node_exists");
+    let whale_node = renderer.scene.get_node_mut(whale_handles[0]).unwrap();
 
     whale_node.matrix_local = compose_matrix(
       None,
@@ -78,7 +75,7 @@ impl GLTFRendererDemo {
 
     //
 
-    let ground_mesh = get_ground_surface_tri_mesh(&Vector3::new(4.0, 2.0, 4.0), 0);
+    let ground_mesh = get_ground_surface_tri_mesh(&Vector3::new(20.0, 20.0, 20.0), seed);
 
     let ground_mesh_handle = renderer.bake_tri_mesh(
       ground_mesh,
@@ -88,7 +85,7 @@ impl GLTFRendererDemo {
 
     let mut ground_node = Node::new(Some(renderer.scene.get_root_handle()));
 
-    // ground_node.matrix_local = compose_matrix(Some(Vector3::new(-5.0, 0.0, 0.0)), None, None);
+    ground_node.matrix_local = compose_matrix(Some(Vector3::new(0.0, -15.0, 0.0)), None, None);
     ground_node.mesh = Some(ground_mesh_handle);
     ground_node.name = Some(String::from("ground"));
 
@@ -126,7 +123,7 @@ impl GLTFRendererDemo {
     let aspect = self.canvas.width as f32 / self.canvas.height as f32;
     let fovy = 75.0 / 180.0 * PI;
     let near = 0.01;
-    let far = 30.0;
+    let far = 100.0;
 
     self
       .renderer
@@ -143,8 +140,7 @@ impl GLTFRendererDemo {
 }
 
 fn get_perlin_data(width: usize, height: usize, a: f64, b: f64, seed: u32) -> Vec<f32> {
-  let perlin = Perlin::new();
-  perlin.set_seed(seed);
+  let perlin = Perlin::new().set_seed(seed);
 
   let mut data = vec![0.0; width * height * 4];
 
@@ -186,13 +182,17 @@ pub fn get_ground_surface_tri_mesh(size: &Vector3<f32>, seed: u32) -> TriMesh<f3
 
   for row in 0..height {
     for col in 0..width {
-      let x = -wf / 2.0 + (row as f32 / wf) * size.x;
-      let z = -hf / 2.0 + (col as f32 / hf) * size.z;
+      let x = -size.x / 2.0 + (row as f32 / wf) * size.x;
+      let z = -size.z / 2.0 + (col as f32 / hf) * size.z;
       let y = data[((row * width + col) * 4)] * size.y;
 
       points.push(Point3::new(x, y, z));
     }
   }
 
-  bezier_surface(&points, 32, 32, 16, 16)
+  let mut surface = bezier_surface(&points, width, height, 64, 64);
+
+  surface.recompute_normals();
+
+  surface
 }

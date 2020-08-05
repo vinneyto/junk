@@ -7,7 +7,7 @@ use ncollide3d::transformation::ToTriMesh;
 use std::slice;
 
 use super::context::{BufferItem, BufferTarget, BufferUsage};
-use super::renderer::{Accessor, Attributes, Mesh, Primitive, Renderer};
+use super::renderer::{Accessor, Attributes, Geometry, Mesh, Primitive, Renderer};
 use super::shader::{AttributeName, AttributeOptions};
 
 impl Renderer {
@@ -29,11 +29,7 @@ impl Renderer {
     self.insert_accessor(accessor)
   }
 
-  pub fn bake_tri_mesh_primitive(
-    &mut self,
-    mut tri_mesh: TriMesh<f32>,
-    material_handle: Option<Index>,
-  ) -> Primitive {
+  pub fn bake_tri_mesh_geometry(&mut self, mut tri_mesh: TriMesh<f32>) -> Index {
     tri_mesh.unify_index_buffer();
 
     let mut attributes = Attributes::new();
@@ -82,26 +78,26 @@ impl Renderer {
       IndexBuffer::Split(_) => panic!("unable to render split indices"),
     };
 
-    Primitive {
+    self.insert_geometry(Geometry {
       attributes,
       indices: Some(indices),
-      material: material_handle,
-    }
-  }
-
-  pub fn insert_mesh(&mut self, primitives: Vec<Primitive>, name: Option<String>) -> Index {
-    self.meshes.insert(Mesh { primitives, name })
+    })
   }
 
   pub fn bake_tri_mesh(
     &mut self,
     tri_mesh: TriMesh<f32>,
-    material_handle: Option<Index>,
+    material: Option<Index>,
     name: Option<String>,
   ) -> Index {
-    let primitive = self.bake_tri_mesh_primitive(tri_mesh, material_handle);
+    let geometry = self.bake_tri_mesh_geometry(tri_mesh);
 
-    self.insert_mesh(vec![primitive], name)
+    let primitive = Primitive { geometry, material };
+
+    self.insert_mesh(Mesh {
+      primitives: vec![primitive],
+      name,
+    })
   }
 
   pub fn bake_cuboid_mesh(

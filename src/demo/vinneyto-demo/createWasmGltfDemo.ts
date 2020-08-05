@@ -7,7 +7,10 @@ export async function createWasmGltfDemo(): Promise<Demo> {
 
   const gltfData = await (await fetch(whaleGltfSrc)).arrayBuffer();
 
-  const demo = new GLTFRendererDemo(new Uint8Array(gltfData));
+  const demo = new GLTFRendererDemo(
+    new Uint8Array(gltfData),
+    Math.round(Math.random() * 100)
+  );
 
   const onMouseDown = (e: MouseEvent | TouchEvent) => {
     const coords = new Vector2();

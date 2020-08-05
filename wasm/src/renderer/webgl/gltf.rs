@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use crate::scene::node::{compose_matrix, Node};
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
-use super::renderer::{Accessor, Material, Mesh, PBRMaterialParams, Primitive, Renderer};
+use super::renderer::{Accessor, Geometry, Material, Mesh, PBRMaterialParams, Primitive, Renderer};
 use super::shader::{AttributeName, AttributeOptions};
 
 pub type IndexMap = HashMap<usize, Index>;
@@ -26,7 +26,7 @@ impl Renderer {
 
       let accessor_handle = if let Some(view_def) = accessor_def.view() {
         let view_index = view_def.index();
-        let blob = gltf.blob.as_ref().expect("gltf contains blob buffer");
+        let blob = gltf.blob.as_ref().unwrap();
 
         let buffer_handle = if let Some(handle) = buffer_index.get(&view_index) {
           *handle
@@ -104,10 +104,7 @@ impl Renderer {
         color: Vector3::new(1.0, 0.0, 0.0),
       }));
 
-      material_index.insert(
-        material_def.index().expect("material index exists"),
-        material_handle,
-      );
+      material_index.insert(material_def.index().unwrap(), material_handle);
     }
 
     material_index
@@ -139,9 +136,7 @@ impl Renderer {
           };
           attributes.insert(
             attr_name,
-            *accessor_index
-              .get(&accessor_def.index())
-              .expect("accessor handle has found by gltf index"),
+            *accessor_index.get(&accessor_def.index()).unwrap(),
           );
         }
 
@@ -161,11 +156,12 @@ impl Renderer {
           material = None;
         }
 
-        primitives.push(Primitive {
+        let geometry = self.insert_geometry(Geometry {
           attributes,
           indices,
-          material,
         });
+
+        primitives.push(Primitive { geometry, material });
       }
 
       let mesh_handle = self.meshes.insert(Mesh {
@@ -229,12 +225,8 @@ impl Renderer {
 
     for node_def in gltf.nodes() {
       for child_def in node_def.children() {
-        let child_handle = node_index
-          .get(&child_def.index())
-          .expect("child handle has found by gltf index");
-        let parent_handle = node_index
-          .get(&node_def.index())
-          .expect("parent handle has found be gltf index");
+        let child_handle = node_index.get(&child_def.index()).unwrap();
+        let parent_handle = node_index.get(&node_def.index()).unwrap();
 
         self.scene.set_parent(*child_handle, *parent_handle);
       }
@@ -250,9 +242,7 @@ impl Renderer {
         let scene_handle = self.scene.insert(Node::new(None));
 
         for node_def in scene_def.nodes() {
-          let node_handle = *node_index
-            .get(&node_def.index())
-            .expect("node handle found by gltf index");
+          let node_handle = *node_index.get(&node_def.index()).unwrap();
           self.scene.set_parent(node_handle, scene_handle);
         }
 
