@@ -323,7 +323,7 @@ impl TextureFormat {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum TypedArrayKind {
   Int8,
   Uint8,
@@ -346,7 +346,7 @@ impl TypedArrayKind {
       TypedArrayKind::Uint8 => WebGlRenderingContext::UNSIGNED_BYTE,
       TypedArrayKind::Int16 => WebGlRenderingContext::SHORT,
       TypedArrayKind::Uint16 => WebGlRenderingContext::UNSIGNED_SHORT,
-      TypedArrayKind::Uint32 => WebGlRenderingContext::INT,
+      TypedArrayKind::Uint32 => WebGlRenderingContext::UNSIGNED_INT,
       TypedArrayKind::Float32 => WebGlRenderingContext::FLOAT,
     }
   }

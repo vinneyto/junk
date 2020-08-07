@@ -1,5 +1,5 @@
 use generational_arena::{Arena, Index};
-use na::{Isometry3, Matrix4, Vector4};
+use na::Matrix4;
 
 use super::node::Node;
 
@@ -19,10 +19,10 @@ impl Scene {
   }
 
   pub fn insert(&mut self, object: Node) -> Index {
-    let parent_handle_options = object.parent;
+    let parent_handle_option = object.parent;
     let handle = self.nodes.insert(object);
 
-    if let Some(parent_handle) = parent_handle_options {
+    if let Some(parent_handle) = parent_handle_option {
       let parent = self.nodes.get_mut(parent_handle).unwrap();
       parent.children.push(handle);
     }
@@ -76,37 +76,25 @@ impl Scene {
     Some(())
   }
 
-  pub fn update_matrix_world(&mut self) -> Option<()> {
-    let root = self.get_node(self.root_handle)?;
-    let matrix_world = root.matrix_world;
-    self.update_matrix_world_subtree(self.root_handle, &matrix_world)
+  pub fn update_matrix_world(&mut self) {
+    self.update_matrix_world_subtree(self.root_handle);
   }
 
-  pub fn update_matrix_world_subtree(
-    &mut self,
-    handle: Index,
-    parent_matrix_world: &Matrix4<f32>,
-  ) -> Option<()> {
-    let node = self.get_node_mut(handle)?;
+  pub fn update_matrix_world_subtree(&mut self, handle: Index) {
+    let parent_matrix_world = match self.get_parent_handle(handle) {
+      Some(parent_handle) => self.get_node(parent_handle).unwrap().matrix_world,
+      None => Matrix4::identity(),
+    };
 
-    let node_isometry = Isometry3::new(node.position, node.rotation.scaled_axis());
-    let node_scale_matrix = Matrix4::from_diagonal(&Vector4::new(
-      node.scale[0],
-      node.scale[1],
-      node.scale[2],
-      1.0,
-    ));
-    let matrix_local = node_isometry.to_homogeneous() * node_scale_matrix;
-    let matrix_world = parent_matrix_world * matrix_local;
+    let node = self.get_node_mut(handle).unwrap();
+    let matrix_world = parent_matrix_world * node.matrix_local;
     let children = node.children.clone();
 
     node.matrix_world = matrix_world;
 
     for child_handle in children {
-      self.update_matrix_world_subtree(child_handle, &matrix_world)?;
+      self.update_matrix_world_subtree(child_handle);
     }
-
-    Some(())
   }
 
   pub fn collect_visible_items(&self) -> Vec<Index> {
