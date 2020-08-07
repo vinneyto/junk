@@ -11,11 +11,32 @@ use crate::scene::node::Node;
 #[derive(Debug)]
 pub struct PbrMaterial {
   color: Vector3<f32>,
+  cull_face: bool,
+  depth_test: bool,
 }
 
 impl PbrMaterial {
-  pub fn new(color: Vector3<f32>) -> Self {
-    PbrMaterial { color }
+  pub fn new() -> Self {
+    PbrMaterial {
+      color: Vector3::new(0.0, 0.0, 0.0),
+      cull_face: true,
+      depth_test: true,
+    }
+  }
+
+  pub fn set_color(mut self, color: Vector3<f32>) -> Self {
+    self.color = color;
+    self
+  }
+
+  pub fn set_cull_face(mut self, cull_face: bool) -> Self {
+    self.cull_face = cull_face;
+    self
+  }
+
+  pub fn set_depth_test(mut self, depth_test: bool) -> Self {
+    self.depth_test = depth_test;
+    self
   }
 
   pub fn boxed(self) -> Box<Self> {
@@ -57,10 +78,10 @@ impl Material for PbrMaterial {
   }
 
   fn cull_face(&self) -> bool {
-    true
+    self.cull_face
   }
 
   fn depth_test(&self) -> bool {
-    true
+    self.depth_test
   }
 }

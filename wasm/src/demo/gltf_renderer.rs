@@ -2,7 +2,7 @@ use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
 use na::{Point2, Point3, UnitQuaternion, Vector3};
-use ncollide3d::procedural::{bezier_surface, TriMesh};
+use ncollide3d::procedural::{unit_quad, TriMesh};
 use noise::{NoiseFn, Perlin, Seedable};
 use std::f32::consts::PI;
 use std::result::Result as StdResult;
@@ -31,7 +31,9 @@ impl GLTFRendererDemo {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let gltf = Gltf::from_slice(gltf_data).unwrap();
-    let turntable = Turntable::new(20.0, 0.01);
+    let mut turntable = Turntable::new(20.0, 0.01);
+
+    turntable.roll = PI / 4.0;
 
     let mut renderer = Renderer::new(ctx);
 
@@ -54,16 +56,18 @@ impl GLTFRendererDemo {
     // info!("whale_handles {:#?}", whale_handles);
     // info!("renderer {:#?}", renderer);
 
-    let blue_material_handle =
-      renderer.insert_material(PbrMaterial::new(Vector3::new(0.0, 0.0, 1.0)).boxed());
-
     //
+    let cuboid_material_handle = renderer.insert_material(
+      PbrMaterial::new()
+        .set_color(Vector3::new(0.0, 0.0, 1.0))
+        .boxed(),
+    );
 
     let cuboid_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
 
     let cuboid_mesh_handle = renderer.compose_mesh(
       cuboid_geometry_handle,
-      blue_material_handle,
+      cuboid_material_handle,
       Some(String::from("cuboid")),
     );
 
@@ -77,13 +81,20 @@ impl GLTFRendererDemo {
 
     //
 
-    let ground_mesh = get_ground_surface_tri_mesh(&Vector3::new(20.0, 20.0, 20.0), seed);
+    let ground_material_handle = renderer.insert_material(
+      PbrMaterial::new()
+        .set_color(Vector3::new(0.0, 0.8, 0.2))
+        .set_cull_face(false)
+        .boxed(),
+    );
+
+    let ground_mesh = get_ground_surface_tri_mesh(&Vector3::new(60.0, 20.0, 60.0), seed);
 
     let ground_geometry_handle = renderer.bake_tri_mesh_geometry(ground_mesh);
 
     let ground_mesh_handle = renderer.compose_mesh(
       ground_geometry_handle,
-      blue_material_handle,
+      ground_material_handle,
       Some(String::from("ground")),
     );
 
@@ -175,26 +186,29 @@ fn get_perlin_data(width: usize, height: usize, a: f64, b: f64, seed: u32) -> Ve
 }
 
 pub fn get_ground_surface_tri_mesh(size: &Vector3<f32>, seed: u32) -> TriMesh<f32> {
-  let width = 32;
-  let height = 32;
+  let width = 128;
+  let height = 128;
 
   let data = get_perlin_data(width, height, 2.0, 2.0, seed);
-  let mut points = vec![];
 
   let wf = width as f32;
   let hf = height as f32;
 
-  for row in 0..height {
-    for col in 0..width {
-      let x = -size.x / 2.0 + (row as f32 / wf) * size.x;
-      let z = -size.z / 2.0 + (col as f32 / hf) * size.z;
-      let y = data[((row * width + col) * 4)] * size.y;
+  let mut surface = unit_quad(width - 1, height - 1);
 
-      points.push(Point3::new(x, y, z));
+  let coords = &mut surface.coords[..];
+
+  for col in 0..height {
+    for row in 0..width {
+      let id = row + col * width;
+      let x = -size.x / 2.0 + (col as f32 / wf) * size.x;
+      let z = -size.z / 2.0 + (row as f32 / hf) * size.z;
+      let y =
+        (data[id * 4] + data[id * 4 + 1] + data[id * 4 + 2] + data[id * 4 + 3]) / 3.0 * size.y;
+
+      coords[id] = Point3::new(x, y, z);
     }
   }
-
-  let mut surface = bezier_surface(&points, width, height, 64, 64);
 
   surface.recompute_normals();
 

@@ -21,10 +21,7 @@ const plugins = [
   new MiniCssExtractPlugin({
     filename: debug ? '[name].css' : '[name].[chunkhash].css',
   }),
-  new WasmPackPlugin({
-    crateDirectory: path.join(__dirname, 'wasm'),
-    forceMode: 'production',
-  }),
+  new WasmPackPlugin({ crateDirectory: path.join(__dirname, 'wasm') }),
 ];
 
 if (!debug) {
