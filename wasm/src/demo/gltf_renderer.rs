@@ -9,7 +9,8 @@ use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 
 use crate::renderer::webgl::context::Context;
-use crate::renderer::webgl::renderer::{Camera, Material, PBRMaterialParams, Renderer};
+use crate::renderer::webgl::material::PbrMaterial;
+use crate::renderer::webgl::renderer::{Camera, Renderer};
 use crate::renderer::webgl::turntable::Turntable;
 use crate::scene::node::{compose_matrix, Node};
 
@@ -53,9 +54,8 @@ impl GLTFRendererDemo {
     // info!("whale_handles {:#?}", whale_handles);
     // info!("renderer {:#?}", renderer);
 
-    let blue_material_handle = renderer.insert_material(Material::PBR(PBRMaterialParams {
-      color: Vector3::new(0.0, 0.0, 1.0),
-    }));
+    let blue_material_handle =
+      renderer.insert_material(PbrMaterial::new(Vector3::new(0.0, 0.0, 1.0)).boxed());
 
     //
 

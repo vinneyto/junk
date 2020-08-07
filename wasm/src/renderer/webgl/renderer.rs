@@ -1,12 +1,12 @@
-use anyhow::Result;
 use generational_arena::{Arena, Index};
 use log::info;
-use na::{Matrix4, Vector3, U3};
+use na::Matrix4;
 use std::collections::HashMap;
 use std::default::Default;
 use web_sys::WebGlBuffer;
 
-use super::context::{BufferItem, BufferTarget, BufferUsage, Context, DrawMode, Feature};
+use super::context::{BufferItem, BufferTarget, BufferUsage, Context, Feature};
+use super::material::Material;
 use super::shader::Shader;
 
 use super::shader::{AttributeName, AttributeOptions};
@@ -42,16 +42,6 @@ pub struct Mesh {
 }
 
 #[derive(Debug, Clone)]
-pub struct PBRMaterialParams {
-  pub color: Vector3<f32>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Material {
-  PBR(PBRMaterialParams),
-}
-
-#[derive(Debug, Clone)]
 pub struct Camera {
   pub view: Matrix4<f32>,
   pub projection: Matrix4<f32>,
@@ -75,7 +65,7 @@ impl Camera {
 pub type Buffers = Arena<WebGlBuffer>;
 pub type Accessors = Arena<Accessor>;
 pub type Geometries = Arena<Geometry>;
-pub type Materials = Arena<Material>;
+pub type Materials = Arena<Box<dyn Material>>;
 pub type Meshes = Arena<Mesh>;
 pub type Cameras = Arena<Camera>;
 pub type Shaders = HashMap<String, Shader>;
@@ -109,13 +99,13 @@ impl Renderer {
     }
   }
 
-  pub fn checkup_shader(&mut self, material: &Material) {
-    let tag = get_material_tag(material);
+  pub fn checkup_shader(&mut self, material: &Box<dyn Material>) {
+    let tag = material.get_tag();
 
     if self.shaders.get(&tag).is_none() {
       self
         .shaders
-        .insert(tag.clone(), get_shader(&self.ctx, material).unwrap());
+        .insert(tag.clone(), material.create_shader(&self.ctx).unwrap());
     };
   }
 
@@ -130,7 +120,7 @@ impl Renderer {
       .insert(self.ctx.create_buffer(target, usage, data).unwrap())
   }
 
-  pub fn insert_material(&mut self, material: Material) -> Index {
+  pub fn insert_material(&mut self, material: Box<dyn Material>) -> Index {
     self.checkup_shader(&material);
 
     self.materials.insert(material)
@@ -165,67 +155,36 @@ impl Renderer {
           let geometry = self.geometries.get(primitive.geometry).unwrap();
           let material = self.materials.get(material_handle).unwrap();
 
-          match material {
-            Material::PBR(params) => self.draw_call_pbr(
-              node,
-              &params,
-              &geometry.attributes,
-              &geometry.indices,
-              camera,
-            ),
-          };
+          self.draw_call(geometry, material, node, camera);
         }
       }
     }
   }
 
-  pub fn draw_call_pbr(
+  pub fn draw_call(
     &self,
+    geometry: &Geometry,
+    material: &Box<dyn Material>,
     node: &Node,
-    material_params: &PBRMaterialParams,
-    attributes: &Attributes,
-    indices: &Indices,
     camera: &Camera,
   ) {
-    let tag = get_pbr_material_tag(material_params);
+    let tag = material.get_tag();
 
     let shader = self.shaders.get(&tag).unwrap();
 
     shader.bind();
 
-    shader.set_vector3("color", &material_params.color);
-    shader.set_matrix4("projectionMatrix", &camera.projection);
-    shader.set_matrix4("viewMatrix", &camera.view);
-    shader.set_matrix4("modelMatrix", &node.matrix_world);
-    shader.set_matrix3(
-      "normalMatrix",
-      &node
-        .matrix_world
-        .try_inverse()
-        .unwrap_or_else(|| Matrix4::identity())
-        .transpose()
-        .fixed_slice::<U3, U3>(0, 0)
-        .into(),
-    );
+    material.set_uniforms(shader, node, camera);
 
-    self.ctx.enable(Feature::CullFace);
-    self.ctx.enable(Feature::DepthTest);
+    self.ctx.set(Feature::CullFace, material.cull_face());
+    self.ctx.set(Feature::DepthTest, material.depth_test());
 
-    self.draw_call(DrawMode::Triangles, shader, attributes, indices);
-  }
-
-  pub fn draw_call(
-    &self,
-    mode: DrawMode,
-    shader: &Shader,
-    attributes: &Attributes,
-    indices: &Indices,
-  ) {
     let mut attr_amount = 0;
     let mut count = 0;
+    let mode = material.draw_mode();
 
     for name in shader.get_attribute_locations().keys() {
-      if let Some(accessor_handle) = attributes.get(name) {
+      if let Some(accessor_handle) = geometry.attributes.get(name) {
         let accessor = self.accessors.get(*accessor_handle).unwrap();
         let buffer = self.buffers.get(accessor.buffer).unwrap();
         self
@@ -241,8 +200,8 @@ impl Renderer {
 
     self.ctx.switch_attributes(attr_amount);
 
-    if let Some(accessor_handle) = indices {
-      let accessor = self.accessors.get(*accessor_handle).unwrap();
+    if let Some(accessor_handle) = geometry.indices {
+      let accessor = self.accessors.get(accessor_handle).unwrap();
       let indices = self.buffers.get(accessor.buffer).unwrap();
       count = accessor.count;
       self
@@ -253,27 +212,6 @@ impl Renderer {
         .draw_elements(mode, count, accessor.options.component_type, 0);
     } else {
       self.ctx.draw_arrays(mode, 0, count);
-    }
-  }
-}
-
-pub fn get_pbr_material_tag(_params: &PBRMaterialParams) -> String {
-  String::from("pbr")
-}
-
-pub fn get_material_tag(material: &Material) -> String {
-  match material {
-    Material::PBR(params) => get_pbr_material_tag(params),
-  }
-}
-
-pub fn get_shader(ctx: &Context, material: &Material) -> Result<Shader> {
-  match material {
-    Material::PBR(_params) => {
-      let vert_src = include_str!("./shaders/pbr_vert.glsl");
-      let frag_src = include_str!("./shaders/pbr_frag.glsl");
-
-      ctx.create_shader(vert_src, frag_src, &vec![])
     }
   }
 }
