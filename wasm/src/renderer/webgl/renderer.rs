@@ -3,9 +3,9 @@ use log::info;
 use na::Matrix4;
 use std::collections::HashMap;
 use std::default::Default;
-use web_sys::WebGlBuffer;
+use web_sys::{WebGlBuffer, WebGlTexture};
 
-use super::context::{BufferItem, BufferTarget, BufferUsage, Context, Feature};
+use super::context::{BufferItem, BufferTarget, BufferUsage, Context, Feature, TexParam};
 use super::material::Material;
 use super::shader::Shader;
 
@@ -42,6 +42,20 @@ pub struct Mesh {
 }
 
 #[derive(Debug, Clone)]
+pub struct Sampler {
+  pub mag_filter: TexParam,
+  pub min_filter: TexParam,
+  pub wrap_s: TexParam,
+  pub wrap_t: TexParam,
+}
+
+#[derive(Debug, Clone)]
+pub struct Texture {
+  pub source: Index,
+  pub sampler: Index,
+}
+
+#[derive(Debug, Clone)]
 pub struct Camera {
   pub view: Matrix4<f32>,
   pub projection: Matrix4<f32>,
@@ -63,9 +77,12 @@ impl Camera {
 }
 
 pub type Buffers = Arena<WebGlBuffer>;
+pub type Images = Arena<WebGlTexture>;
 pub type Accessors = Arena<Accessor>;
 pub type Geometries = Arena<Geometry>;
 pub type Materials = Arena<Box<dyn Material>>;
+pub type Samplers = Arena<Sampler>;
+pub type Textures = Arena<Texture>;
 pub type Meshes = Arena<Mesh>;
 pub type Cameras = Arena<Camera>;
 pub type Shaders = HashMap<String, Shader>;
@@ -73,9 +90,12 @@ pub type Shaders = HashMap<String, Shader>;
 pub struct Renderer {
   pub ctx: Context,
   pub buffers: Buffers,
+  pub images: Images,
   pub accessors: Accessors,
   pub geometries: Geometries,
   pub materials: Materials,
+  pub samplers: Samplers,
+  pub textures: Textures,
   pub meshes: Meshes,
   pub cameras: Cameras,
   pub scene: Scene,
@@ -89,9 +109,12 @@ impl Renderer {
     Renderer {
       ctx,
       buffers: Buffers::default(),
+      images: Images::default(),
       accessors: Accessors::default(),
       geometries: Geometries::default(),
       materials: Materials::default(),
+      samplers: Samplers::default(),
+      textures: Textures::default(),
       meshes: Meshes::default(),
       cameras: Cameras::default(),
       scene: Scene::new(),
@@ -142,6 +165,18 @@ impl Renderer {
     self.geometries.insert(geometry)
   }
 
+  pub fn insert_image(&mut self, image: WebGlTexture) -> Index {
+    self.images.insert(image)
+  }
+
+  pub fn insert_sampler(&mut self, sampler: Sampler) -> Index {
+    self.samplers.insert(sampler)
+  }
+
+  pub fn insert_texture(&mut self, texture: Texture) -> Index {
+    self.textures.insert(texture)
+  }
+
   pub fn render_scene(&self, root_handle: Index, camera_handle: Index) {
     let visible_items = self.scene.collect_visible_sub_items(root_handle);
     let camera = self.cameras.get(camera_handle).unwrap();
@@ -174,10 +209,7 @@ impl Renderer {
 
     shader.bind();
 
-    material.set_uniforms(shader, node, camera);
-
-    self.ctx.set(Feature::CullFace, material.cull_face());
-    self.ctx.set(Feature::DepthTest, material.depth_test());
+    material.setup_context(&self.ctx, shader, node, camera);
 
     let mut attr_amount = 0;
     let mut count = 0;

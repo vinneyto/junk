@@ -3,7 +3,7 @@ use na::{Matrix4, Vector3, U3};
 use anyhow::Result;
 
 use super::material::Material;
-use crate::renderer::webgl::context::{Context, DrawMode};
+use crate::renderer::webgl::context::{Context, DrawMode, Feature};
 use crate::renderer::webgl::renderer::Camera;
 use crate::renderer::webgl::shader::Shader;
 use crate::scene::node::Node;
@@ -13,6 +13,7 @@ pub struct PbrMaterial {
   color: Vector3<f32>,
   cull_face: bool,
   depth_test: bool,
+  draw_mode: DrawMode,
 }
 
 impl PbrMaterial {
@@ -21,6 +22,7 @@ impl PbrMaterial {
       color: Vector3::new(0.0, 0.0, 0.0),
       cull_face: true,
       depth_test: true,
+      draw_mode: DrawMode::Triangles,
     }
   }
 
@@ -36,6 +38,11 @@ impl PbrMaterial {
 
   pub fn set_depth_test(mut self, depth_test: bool) -> Self {
     self.depth_test = depth_test;
+    self
+  }
+
+  pub fn set_draw_mode(mut self, draw_mode: DrawMode) -> Self {
+    self.draw_mode = draw_mode;
     self
   }
 
@@ -56,7 +63,7 @@ impl Material for PbrMaterial {
     ctx.create_shader(vert_src, frag_src, &vec![])
   }
 
-  fn set_uniforms(&self, shader: &Shader, node: &Node, camera: &Camera) {
+  fn setup_context(&self, ctx: &Context, shader: &Shader, node: &Node, camera: &Camera) {
     shader.set_vector3("color", &self.color);
     shader.set_matrix4("projectionMatrix", &camera.projection);
     shader.set_matrix4("viewMatrix", &camera.view);
@@ -71,17 +78,12 @@ impl Material for PbrMaterial {
         .fixed_slice::<U3, U3>(0, 0)
         .into(),
     );
+
+    ctx.set(Feature::CullFace, self.cull_face);
+    ctx.set(Feature::DepthTest, self.depth_test);
   }
 
   fn draw_mode(&self) -> DrawMode {
-    DrawMode::Triangles
-  }
-
-  fn cull_face(&self) -> bool {
-    self.cull_face
-  }
-
-  fn depth_test(&self) -> bool {
-    self.depth_test
+    self.draw_mode
   }
 }

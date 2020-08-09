@@ -227,6 +227,7 @@ impl BufferUsage {
   }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum DrawMode {
   Triangles,
   Lines,
@@ -285,6 +286,7 @@ impl TexParamName {
   }
 }
 
+#[derive(Debug, Clone)]
 pub enum TexParam {
   Linear,
   Nearest,
