@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use log::error;
-use na::{Matrix3, Matrix4, Vector3, Vector4};
+use na::{Matrix3, Matrix4, Vector2, Vector3, Vector4};
 use std::collections::HashMap;
 use web_sys::{WebGlProgram, WebGlRenderingContext, WebGlShader, WebGlUniformLocation};
 
@@ -115,6 +115,14 @@ impl Shader {
     let location = self.uniform_locations.get(name)?;
 
     self.gl.uniform3f(Some(location), v.x, v.y, v.z);
+
+    Some(())
+  }
+
+  pub fn set_vector2(&self, name: &str, v: &Vector2<f32>) -> Option<()> {
+    let location = self.uniform_locations.get(name)?;
+
+    self.gl.uniform2f(Some(location), v.x, v.y);
 
     Some(())
   }

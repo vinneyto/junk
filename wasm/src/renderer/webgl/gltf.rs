@@ -9,7 +9,8 @@ use std::collections::HashMap;
 use crate::scene::node::{compose_matrix, Node};
 
 use super::context::{BufferTarget, BufferUsage, TypedArrayKind};
-use super::renderer::{Accessor, Geometry, Material, Mesh, PBRMaterialParams, Primitive, Renderer};
+use super::material::PbrMaterial;
+use super::renderer::{Accessor, Geometry, Mesh, Primitive, Renderer};
 use super::shader::{AttributeName, AttributeOptions};
 
 pub type IndexMap = HashMap<usize, Index>;
@@ -100,9 +101,11 @@ impl Renderer {
     let mut material_index = IndexMap::new();
 
     for material_def in gltf.materials() {
-      let material_handle = self.insert_material(Material::PBR(PBRMaterialParams {
-        color: Vector3::new(1.0, 0.0, 0.0),
-      }));
+      let material_handle = self.insert_material(
+        PbrMaterial::new()
+          .set_color(Vector3::new(1.0, 0.0, 0.0))
+          .boxed(),
+      );
 
       material_index.insert(material_def.index().unwrap(), material_handle);
     }

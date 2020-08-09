@@ -1,14 +1,17 @@
 import { Demo } from '../Demo';
 import whaleGltfSrc from './models/Duck.glb';
+import grassTextureSrc from './textures/grass_texture.jpg';
 import { Vector2 } from 'three';
 
 export async function createWasmGltfDemo(): Promise<Demo> {
   const { GLTFRendererDemo } = await import('../../../wasm/pkg');
 
   const gltfData = await (await fetch(whaleGltfSrc)).arrayBuffer();
+  const grassImage = await fetchImage(grassTextureSrc);
 
   const demo = new GLTFRendererDemo(
     new Uint8Array(gltfData),
+    grassImage,
     Math.round(Math.random() * 100)
   );
 
@@ -54,4 +57,14 @@ export async function createWasmGltfDemo(): Promise<Demo> {
   };
 
   return { render };
+}
+
+async function fetchImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((result) => {
+    const image = new Image();
+    image.src = src;
+    image.onload = () => {
+      result(image);
+    };
+  });
 }
