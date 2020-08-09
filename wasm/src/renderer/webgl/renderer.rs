@@ -5,7 +5,9 @@ use std::collections::HashMap;
 use std::default::Default;
 use web_sys::{WebGlBuffer, WebGlTexture};
 
-use super::context::{BufferItem, BufferTarget, BufferUsage, Context, Feature, TexParam};
+use super::context::{
+  BufferItem, BufferTarget, BufferUsage, Context, TexParam, TexParamName, TextureKind,
+};
 use super::material::Material;
 use super::shader::Shader;
 
@@ -47,6 +49,42 @@ pub struct Sampler {
   pub min_filter: TexParam,
   pub wrap_s: TexParam,
   pub wrap_t: TexParam,
+}
+
+impl Default for Sampler {
+  fn default() -> Self {
+    Sampler {
+      wrap_s: TexParam::ClampToEdge,
+      wrap_t: TexParam::ClampToEdge,
+      min_filter: TexParam::LinearMipMapLinear,
+      mag_filter: TexParam::Linear,
+    }
+  }
+}
+
+impl Sampler {
+  pub fn set_params(&self, ctx: &Context) {
+    ctx.texture_parameter(
+      TextureKind::Texture2d,
+      TexParamName::TextureMinFilter,
+      self.min_filter,
+    );
+    ctx.texture_parameter(
+      TextureKind::Texture2d,
+      TexParamName::TextureMagFilter,
+      self.mag_filter,
+    );
+    ctx.texture_parameter(
+      TextureKind::Texture2d,
+      TexParamName::TextureWrapS,
+      self.wrap_s,
+    );
+    ctx.texture_parameter(
+      TextureKind::Texture2d,
+      TexParamName::TextureWrapT,
+      self.wrap_t,
+    );
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -126,6 +164,8 @@ impl Renderer {
     let tag = material.get_tag();
 
     if self.shaders.get(&tag).is_none() {
+      info!("compile shader: {}", tag);
+
       self
         .shaders
         .insert(tag.clone(), material.create_shader(&self.ctx).unwrap());
@@ -209,7 +249,7 @@ impl Renderer {
 
     shader.bind();
 
-    material.setup_context(&self.ctx, shader, node, camera);
+    material.setup_shader(&self, shader, node, camera);
 
     let mut attr_amount = 0;
     let mut count = 0;

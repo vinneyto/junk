@@ -1,16 +1,17 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::{Point2, Point3, UnitQuaternion, Vector3};
+use na::{Point2, Point3, UnitQuaternion, Vector2, Vector3};
 use ncollide3d::procedural::{unit_quad, TriMesh};
 use noise::{NoiseFn, Perlin, Seedable};
 use std::f32::consts::PI;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
+use web_sys::HtmlImageElement;
 
-use crate::renderer::webgl::context::Context;
+use crate::renderer::webgl::context::{Context, TexParam};
 use crate::renderer::webgl::material::PbrMaterial;
-use crate::renderer::webgl::renderer::{Camera, Renderer};
+use crate::renderer::webgl::renderer::{Camera, Renderer, Sampler};
 use crate::renderer::webgl::turntable::Turntable;
 use crate::scene::node::{compose_matrix, Node};
 
@@ -27,7 +28,11 @@ pub struct GLTFRendererDemo {
 #[wasm_bindgen]
 impl GLTFRendererDemo {
   #[wasm_bindgen(constructor)]
-  pub fn new(gltf_data: &[u8], seed: u32) -> StdResult<GLTFRendererDemo, JsValue> {
+  pub fn new(
+    gltf_data: &[u8],
+    ground_image: &HtmlImageElement,
+    seed: u32,
+  ) -> StdResult<GLTFRendererDemo, JsValue> {
     let canvas = WebGlCanvas::new()?;
     let ctx = Context::new(canvas.gl.clone());
     let gltf = Gltf::from_slice(gltf_data).unwrap();
@@ -81,10 +86,19 @@ impl GLTFRendererDemo {
 
     //
 
+    let mut sampler = Sampler::default();
+
+    sampler.wrap_s = TexParam::Repeat;
+    sampler.wrap_t = TexParam::Repeat;
+
+    let ground_texture_handle = renderer.bake_2d_rgb_texture(sampler, ground_image);
+
     let ground_material_handle = renderer.insert_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.8, 0.2))
         .set_cull_face(false)
+        .set_color_map(Some(ground_texture_handle))
+        .set_uv_repeating(Vector2::new(8.0, 8.0))
         .boxed(),
     );
 

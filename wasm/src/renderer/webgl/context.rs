@@ -8,7 +8,7 @@ use num_traits::Num;
 use std::cell::RefCell;
 use std::default::Default;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{WebGlBuffer, WebGlRenderingContext, WebGlTexture};
+use web_sys::{HtmlImageElement, WebGlBuffer, WebGlRenderingContext, WebGlTexture};
 
 #[derive(Debug)]
 pub struct Context {
@@ -137,6 +137,32 @@ impl Context {
         Some(array).as_ref(),
       )
       .map_err(|e| anyhow!("{:?}", e))
+  }
+
+  pub fn texture_image_data(
+    &self,
+    target: TextureKind,
+    level: i32,
+    internal_format: TextureFormat,
+    format: TextureFormat,
+    array_kind: TypedArrayKind,
+    image: &HtmlImageElement,
+  ) -> Result<()> {
+    self
+      .gl
+      .tex_image_2d_with_u32_and_u32_and_image(
+        target.as_u32(),
+        level,
+        internal_format.as_u32() as i32,
+        format.as_u32(),
+        array_kind.as_u32(),
+        image,
+      )
+      .map_err(|e| anyhow!("{:?}", e))
+  }
+
+  pub fn generate_mipmap(&self, target: TextureKind) {
+    self.gl.generate_mipmap(target.as_u32())
   }
 
   pub fn switch_attributes(&self, amount: u32) {
@@ -286,7 +312,7 @@ impl TexParamName {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum TexParam {
   Linear,
   Nearest,
@@ -295,6 +321,7 @@ pub enum TexParam {
   NearestMimMapLinear,
   LinearMipMapLinear,
   ClampToEdge,
+  Repeat,
 }
 
 impl TexParam {
@@ -307,10 +334,12 @@ impl TexParam {
       Self::NearestMimMapLinear => WebGlRenderingContext::NEAREST_MIPMAP_LINEAR,
       Self::LinearMipMapLinear => WebGlRenderingContext::LINEAR_MIPMAP_LINEAR,
       Self::ClampToEdge => WebGlRenderingContext::CLAMP_TO_EDGE,
+      Self::Repeat => WebGlRenderingContext::REPEAT,
     }
   }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum TextureFormat {
   RGBA,
   RGB,
