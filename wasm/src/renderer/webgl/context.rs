@@ -282,14 +282,29 @@ impl Feature {
   }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum TextureKind {
   Texture2d,
+  CubeMap,
+  CubeMapNX,
+  CubeMapPX,
+  CubeMapNY,
+  CubeMapPY,
+  CubeMapNZ,
+  CubeMapPZ,
 }
 
 impl TextureKind {
   pub fn as_u32(&self) -> u32 {
     match self {
       Self::Texture2d => WebGlRenderingContext::TEXTURE_2D,
+      Self::CubeMap => WebGlRenderingContext::TEXTURE_CUBE_MAP,
+      Self::CubeMapNX => WebGlRenderingContext::TEXTURE_CUBE_MAP_NEGATIVE_X,
+      Self::CubeMapPX => WebGlRenderingContext::TEXTURE_CUBE_MAP_POSITIVE_X,
+      Self::CubeMapNY => WebGlRenderingContext::TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      Self::CubeMapPY => WebGlRenderingContext::TEXTURE_CUBE_MAP_POSITIVE_Y,
+      Self::CubeMapNZ => WebGlRenderingContext::TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      Self::CubeMapPZ => WebGlRenderingContext::TEXTURE_CUBE_MAP_POSITIVE_Z,
     }
   }
 }

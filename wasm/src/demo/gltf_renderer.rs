@@ -9,7 +9,7 @@ use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlImageElement;
 
-use crate::renderer::webgl::context::{Context, TexParam};
+use crate::renderer::webgl::context::{Context, TexParam, TextureFormat, TextureKind};
 use crate::renderer::webgl::material::PbrMaterial;
 use crate::renderer::webgl::renderer::{Camera, Renderer, Sampler};
 use crate::renderer::webgl::turntable::Turntable;
@@ -31,6 +31,12 @@ impl GLTFRendererDemo {
   pub fn new(
     gltf_data: &[u8],
     ground_image: &HtmlImageElement,
+    skybox_nx_image: &HtmlImageElement,
+    skybox_px_image: &HtmlImageElement,
+    skybox_ny_image: &HtmlImageElement,
+    skybox_py_image: &HtmlImageElement,
+    skybox_nz_image: &HtmlImageElement,
+    skybox_pz_image: &HtmlImageElement,
     seed: u32,
   ) -> StdResult<GLTFRendererDemo, JsValue> {
     let canvas = WebGlCanvas::new()?;
@@ -61,14 +67,28 @@ impl GLTFRendererDemo {
     // info!("whale_handles {:#?}", whale_handles);
     // info!("renderer {:#?}", renderer);
 
+    let skybox_texture = renderer.bake_cube_map_texture(
+      TextureFormat::RGB,
+      Sampler::default(),
+      &[
+        (TextureKind::CubeMapNX, skybox_nx_image),
+        (TextureKind::CubeMapPX, skybox_px_image),
+        (TextureKind::CubeMapNY, skybox_ny_image),
+        (TextureKind::CubeMapPY, skybox_py_image),
+        (TextureKind::CubeMapNZ, skybox_nz_image),
+        (TextureKind::CubeMapPZ, skybox_pz_image),
+      ],
+    );
+
     //
     let cuboid_material_handle = renderer.insert_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.0, 1.0))
+        .set_debug_cube_map(Some(skybox_texture))
         .boxed(),
     );
 
-    let cuboid_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
+    let cuboid_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(2.0, 2.0, 2.0));
 
     let cuboid_mesh_handle = renderer.compose_mesh(
       cuboid_geometry_handle,
@@ -91,7 +111,7 @@ impl GLTFRendererDemo {
     sampler.wrap_s = TexParam::Repeat;
     sampler.wrap_t = TexParam::Repeat;
 
-    let ground_texture_handle = renderer.bake_2d_rgb_texture(sampler, ground_image);
+    let ground_texture_handle = renderer.bake_2d_texture(TextureFormat::RGB, sampler, ground_image);
 
     let ground_material_handle = renderer.insert_material(
       PbrMaterial::new()

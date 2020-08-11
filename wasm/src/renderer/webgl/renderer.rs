@@ -63,27 +63,11 @@ impl Default for Sampler {
 }
 
 impl Sampler {
-  pub fn set_params(&self, ctx: &Context) {
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureMinFilter,
-      self.min_filter,
-    );
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureMagFilter,
-      self.mag_filter,
-    );
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureWrapS,
-      self.wrap_s,
-    );
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureWrapT,
-      self.wrap_t,
-    );
+  pub fn set_params(&self, kind: TextureKind, ctx: &Context) {
+    ctx.texture_parameter(kind, TexParamName::TextureMinFilter, self.min_filter);
+    ctx.texture_parameter(kind, TexParamName::TextureMagFilter, self.mag_filter);
+    ctx.texture_parameter(kind, TexParamName::TextureWrapS, self.wrap_s);
+    ctx.texture_parameter(kind, TexParamName::TextureWrapT, self.wrap_t);
   }
 }
 
@@ -249,7 +233,15 @@ impl Renderer {
 
     shader.bind();
 
-    material.setup_shader(&self, shader, node, camera);
+    material.setup_shader(
+      &self.ctx,
+      &self.images,
+      &self.textures,
+      &self.samplers,
+      shader,
+      node,
+      camera,
+    );
 
     let mut attr_amount = 0;
     let mut count = 0;

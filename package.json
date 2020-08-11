@@ -8,7 +8,8 @@
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
     "deploy": "cross-env NODE_ENV=production webpack && firebase deploy",
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
+    "cut-skybox": "ts-node ./cut-skybox.ts"
   },
   "husky": {
     "hooks": {
@@ -26,6 +27,7 @@
     "@types/friendly-errors-webpack-plugin": "0.1.2",
     "@types/html-webpack-plugin": "3.2.2",
     "@types/mini-css-extract-plugin": "0.9.1",
+    "@types/sharp": "^0.25.1",
     "@wasm-tool/wasm-pack-plugin": "^1.3.1",
     "clean-webpack-plugin": "3.0.0",
     "compression-webpack-plugin": "3.1.0",
@@ -38,6 +40,7 @@
     "html-webpack-plugin": "4.2.0",
     "mini-css-extract-plugin": "0.9.0",
     "raw-loader": "4.0.1",
+    "sharp": "^0.25.4",
     "three": "0.115.0",
     "ts-loader": "7.0.0",
     "ts-node": "8.8.2",
