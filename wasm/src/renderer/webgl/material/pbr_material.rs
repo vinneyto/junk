@@ -3,8 +3,8 @@ use na::{Matrix4, Vector2, Vector3, U3};
 
 use anyhow::Result;
 
-use super::material::Material;
-use crate::renderer::webgl::context::{Context, DrawMode, Feature, TextureKind};
+use super::material::{bind_several_maps, Material, MaterialParams};
+use crate::renderer::webgl::context::{Context, DepthFunc, DrawMode, TextureKind};
 use crate::renderer::webgl::define::Define;
 use crate::renderer::webgl::renderer::{Camera, Images, Samplers, Textures};
 use crate::renderer::webgl::shader::Shader;
@@ -132,47 +132,25 @@ impl Material for PbrMaterial {
         .into(),
     );
 
-    let maps = [
-      (self.color_map, TextureKind::Texture2d, "colorMap"),
-      (self.debug_cube_map, TextureKind::CubeMap, "debugCubeMap"),
-    ];
+    bind_several_maps(
+      ctx,
+      images,
+      textures,
+      samplers,
+      shader,
+      &[
+        (self.color_map, TextureKind::Texture2d, "colorMap"),
+        (self.debug_cube_map, TextureKind::CubeMap, "debugCubeMap"),
+      ],
+    );
+  }
 
-    for (i, map) in maps.iter().enumerate() {
-      if let Some(map_handle) = map.0 {
-        bind_texture(
-          ctx, images, textures, samplers, shader, map_handle, map.1, map.2, i as u32,
-        );
-      }
+  fn params(&self) -> MaterialParams {
+    MaterialParams {
+      cull_face: self.cull_face,
+      depth_test: self.depth_test,
+      depth_func: DepthFunc::Less,
+      draw_mode: DrawMode::Triangles,
     }
-
-    ctx.set(Feature::CullFace, self.cull_face);
-    ctx.set(Feature::DepthTest, self.depth_test);
   }
-
-  fn draw_mode(&self) -> DrawMode {
-    self.draw_mode
-  }
-}
-
-fn bind_texture(
-  ctx: &Context,
-  images: &Images,
-  textures: &Textures,
-  samplers: &Samplers,
-  shader: &Shader,
-  texture_handle: Index,
-  texture_kind: TextureKind,
-  uniform_name: &str,
-  unit: u32,
-) {
-  let texture = textures.get(texture_handle).unwrap();
-  let image = images.get(texture.source).unwrap();
-  let sampler = samplers.get(texture.sampler).unwrap();
-
-  ctx.active_texture(unit);
-  ctx.bind_texture(texture_kind, Some(&image));
-
-  sampler.set_params(texture_kind, ctx);
-
-  shader.set_integer(uniform_name, unit as i32);
 }

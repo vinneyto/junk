@@ -197,6 +197,10 @@ impl Context {
     }
   }
 
+  pub fn depth_func(&self, func: DepthFunc) {
+    self.gl.depth_func(func.as_u32());
+  }
+
   pub fn draw_arrays(&self, mode: DrawMode, first: i32, count: i32) {
     self.gl.draw_arrays(mode.as_u32(), first, count);
   }
@@ -278,6 +282,20 @@ impl Feature {
     match self {
       Self::CullFace => WebGlRenderingContext::CULL_FACE,
       Self::DepthTest => WebGlRenderingContext::DEPTH_TEST,
+    }
+  }
+}
+
+pub enum DepthFunc {
+  Less,
+  Lequal,
+}
+
+impl DepthFunc {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::Less => WebGlRenderingContext::LESS,
+      Self::Lequal => WebGlRenderingContext::LEQUAL,
     }
   }
 }

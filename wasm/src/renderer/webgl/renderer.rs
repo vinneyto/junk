@@ -6,7 +6,7 @@ use std::default::Default;
 use web_sys::{WebGlBuffer, WebGlTexture};
 
 use super::context::{
-  BufferItem, BufferTarget, BufferUsage, Context, TexParam, TexParamName, TextureKind,
+  BufferItem, BufferTarget, BufferUsage, Context, Feature, TexParam, TexParamName, TextureKind,
 };
 use super::material::Material;
 use super::shader::Shader;
@@ -243,9 +243,14 @@ impl Renderer {
       camera,
     );
 
+    let params = material.params();
+
+    self.ctx.set(Feature::CullFace, params.cull_face);
+    self.ctx.set(Feature::DepthTest, params.depth_test);
+    self.ctx.depth_func(params.depth_func);
+
     let mut attr_amount = 0;
     let mut count = 0;
-    let mode = material.draw_mode();
 
     for name in shader.get_attribute_locations().keys() {
       if let Some(accessor_handle) = geometry.attributes.get(name) {
@@ -273,9 +278,9 @@ impl Renderer {
         .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
       self
         .ctx
-        .draw_elements(mode, count, accessor.options.component_type, 0);
+        .draw_elements(params.draw_mode, count, accessor.options.component_type, 0);
     } else {
-      self.ctx.draw_arrays(mode, 0, count);
+      self.ctx.draw_arrays(params.draw_mode, 0, count);
     }
   }
 }

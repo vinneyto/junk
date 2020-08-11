@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::HtmlImageElement;
 
 use crate::renderer::webgl::context::{Context, TexParam, TextureFormat, TextureKind};
-use crate::renderer::webgl::material::PbrMaterial;
+use crate::renderer::webgl::material::{PbrMaterial, SkyboxMaterial};
 use crate::renderer::webgl::renderer::{Camera, Renderer, Sampler};
 use crate::renderer::webgl::turntable::Turntable;
 use crate::scene::node::{compose_matrix, Node};
@@ -79,6 +79,22 @@ impl GLTFRendererDemo {
         (TextureKind::CubeMapPZ, skybox_pz_image),
       ],
     );
+
+    let skybox_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
+    let skybox_material_handle =
+      renderer.insert_material(SkyboxMaterial::new(skybox_texture).boxed());
+
+    let skybox_mesh_handle = renderer.compose_mesh(
+      skybox_geometry_handle,
+      skybox_material_handle,
+      Some(String::from("skybox")),
+    );
+
+    let mut skybox_node = Node::new(Some(renderer.scene.get_root_handle()));
+
+    skybox_node.mesh = Some(skybox_mesh_handle);
+
+    renderer.insert_node(skybox_node);
 
     //
     let cuboid_material_handle = renderer.insert_material(
