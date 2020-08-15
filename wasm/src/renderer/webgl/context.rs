@@ -8,7 +8,9 @@ use num_traits::Num;
 use std::cell::RefCell;
 use std::default::Default;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{HtmlImageElement, WebGlBuffer, WebGlRenderingContext, WebGlTexture};
+use web_sys::{
+  HtmlImageElement, WebGlBuffer, WebGlFramebuffer, WebGlRenderingContext, WebGlTexture,
+};
 
 #[derive(Debug)]
 pub struct Context {
@@ -163,6 +165,10 @@ impl Context {
 
   pub fn generate_mipmap(&self, target: TextureKind) {
     self.gl.generate_mipmap(target.as_u32())
+  }
+
+  pub fn create_framebuffer(&self) -> Option<WebGlFramebuffer> {
+    self.gl.create_framebuffer()
   }
 
   pub fn switch_attributes(&self, amount: u32) {
