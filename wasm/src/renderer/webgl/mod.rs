@@ -1,6 +1,7 @@
 pub mod camera;
 pub mod context;
 pub mod define;
+pub mod framebuffer;
 pub mod gltf;
 pub mod material;
 pub mod mesh;

@@ -82,7 +82,7 @@ impl GLTFRendererDemo {
 
     let skybox_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
     let skybox_material_handle =
-      renderer.insert_material(SkyboxMaterial::new(skybox_texture).boxed());
+      renderer.bake_material(SkyboxMaterial::new(skybox_texture).boxed());
 
     let skybox_mesh_handle = renderer.compose_mesh(
       skybox_geometry_handle,
@@ -97,7 +97,7 @@ impl GLTFRendererDemo {
     renderer.insert_node(skybox_node);
 
     //
-    let cuboid_material_handle = renderer.insert_material(
+    let cuboid_material_handle = renderer.bake_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.0, 1.0))
         .set_debug_cube_map(Some(skybox_texture))
@@ -129,7 +129,7 @@ impl GLTFRendererDemo {
 
     let ground_texture_handle = renderer.bake_2d_texture(TextureFormat::RGB, sampler, ground_image);
 
-    let ground_material_handle = renderer.insert_material(
+    let ground_material_handle = renderer.bake_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.8, 0.2))
         .set_cull_face(false)

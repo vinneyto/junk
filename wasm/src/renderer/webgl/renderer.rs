@@ -3,7 +3,7 @@ use log::info;
 use na::Matrix4;
 use std::collections::HashMap;
 use std::default::Default;
-use web_sys::{WebGlBuffer, WebGlTexture};
+use web_sys::{WebGlBuffer, WebGlFramebuffer, WebGlTexture};
 
 use super::context::{
   BufferItem, BufferTarget, BufferUsage, Context, Feature, TexParam, TexParamName, TextureKind,
@@ -78,6 +78,13 @@ pub struct Texture {
 }
 
 #[derive(Debug, Clone)]
+pub struct RenderTarget {
+  pub fb: Index,
+  pub color: Index,
+  pub depth: Option<Index>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Camera {
   pub view: Matrix4<f32>,
   pub projection: Matrix4<f32>,
@@ -100,6 +107,8 @@ impl Camera {
 
 pub type Buffers = Arena<WebGlBuffer>;
 pub type Images = Arena<WebGlTexture>;
+pub type Framebuffers = Arena<WebGlFramebuffer>;
+pub type Targets = Arena<RenderTarget>;
 pub type Accessors = Arena<Accessor>;
 pub type Geometries = Arena<Geometry>;
 pub type Materials = Arena<Box<dyn Material>>;
@@ -113,6 +122,8 @@ pub struct Renderer {
   pub ctx: Context,
   pub buffers: Buffers,
   pub images: Images,
+  pub framebuffers: Framebuffers,
+  pub targets: Targets,
   pub accessors: Accessors,
   pub geometries: Geometries,
   pub materials: Materials,
@@ -127,11 +138,14 @@ pub struct Renderer {
 impl Renderer {
   pub fn new(ctx: Context) -> Self {
     ctx.get_extension("OES_element_index_uint").unwrap();
+    ctx.get_extension("WEBGL_depth_texture").unwrap();
 
     Renderer {
       ctx,
       buffers: Buffers::default(),
       images: Images::default(),
+      framebuffers: Framebuffers::default(),
+      targets: Targets::default(),
       accessors: Accessors::default(),
       geometries: Geometries::default(),
       materials: Materials::default(),
@@ -167,7 +181,7 @@ impl Renderer {
       .insert(self.ctx.create_buffer(target, usage, data).unwrap())
   }
 
-  pub fn insert_material(&mut self, material: Box<dyn Material>) -> Index {
+  pub fn bake_material(&mut self, material: Box<dyn Material>) -> Index {
     self.checkup_shader(&material);
 
     self.materials.insert(material)

@@ -101,7 +101,7 @@ impl Renderer {
     let mut material_index = IndexMap::new();
 
     for material_def in gltf.materials() {
-      let material_handle = self.insert_material(
+      let material_handle = self.bake_material(
         PbrMaterial::new()
           .set_color(Vector3::new(1.0, 0.0, 0.0))
           .boxed(),

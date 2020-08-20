@@ -141,6 +141,33 @@ impl Context {
       .map_err(|e| anyhow!("{:?}", e))
   }
 
+  pub fn empty_texture_data(
+    &self,
+    target: TextureKind,
+    level: i32,
+    internal_format: TextureFormat,
+    width: i32,
+    height: i32,
+    border: i32,
+    format: TextureFormat,
+    kind: TypedArrayKind,
+  ) -> Result<()> {
+    self
+      .gl
+      .tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+        target.as_u32(),
+        level,
+        internal_format.as_u32() as i32,
+        width,
+        height,
+        border,
+        format.as_u32(),
+        kind.as_u32(),
+        None,
+      )
+      .map_err(|e| anyhow!("{:?}", e))
+  }
+
   pub fn texture_image_data(
     &self,
     target: TextureKind,
@@ -169,6 +196,26 @@ impl Context {
 
   pub fn create_framebuffer(&self) -> Option<WebGlFramebuffer> {
     self.gl.create_framebuffer()
+  }
+
+  pub fn bind_framebuffer(&self, fb: Option<&WebGlFramebuffer>) {
+    self
+      .gl
+      .bind_framebuffer(WebGlRenderingContext::FRAMEBUFFER, fb);
+  }
+
+  pub fn framebuffer_texture_2d(
+    &self,
+    attachment: FramebufferAttachment,
+    texture: Option<&WebGlTexture>,
+  ) {
+    self.gl.framebuffer_texture_2d(
+      WebGlRenderingContext::FRAMEBUFFER,
+      attachment.as_u32(),
+      TextureKind::Texture2d.as_u32(),
+      texture,
+      0,
+    );
   }
 
   pub fn switch_attributes(&self, amount: u32) {
@@ -389,6 +436,19 @@ impl TextureFormat {
     match self {
       Self::RGBA => WebGlRenderingContext::RGBA,
       Self::RGB => WebGlRenderingContext::RGB,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FramebufferAttachment {
+  ColorAttachment0,
+}
+
+impl FramebufferAttachment {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::ColorAttachment0 => WebGlRenderingContext::COLOR_ATTACHMENT0,
     }
   }
 }
