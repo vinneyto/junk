@@ -63,6 +63,15 @@ impl Default for Sampler {
 }
 
 impl Sampler {
+  pub fn framebuffer() -> Self {
+    Sampler {
+      wrap_s: TexParam::ClampToEdge,
+      wrap_t: TexParam::ClampToEdge,
+      min_filter: TexParam::Linear,
+      mag_filter: TexParam::Linear,
+    }
+  }
+
   pub fn set_params(&self, kind: TextureKind, ctx: &Context) {
     ctx.texture_parameter(kind, TexParamName::TextureMinFilter, self.min_filter);
     ctx.texture_parameter(kind, TexParamName::TextureMagFilter, self.mag_filter);
@@ -80,8 +89,8 @@ pub struct Texture {
 #[derive(Debug, Clone)]
 pub struct RenderTarget {
   pub fb: Index,
-  pub color: Index,
-  pub depth: Option<Index>,
+  pub color_texture: Index,
+  pub depth_texture: Option<Index>,
 }
 
 #[derive(Debug, Clone)]
@@ -139,6 +148,7 @@ impl Renderer {
   pub fn new(ctx: Context) -> Self {
     ctx.get_extension("OES_element_index_uint").unwrap();
     ctx.get_extension("WEBGL_depth_texture").unwrap();
+    ctx.get_extension("OES_texture_float").unwrap();
 
     Renderer {
       ctx,
@@ -213,6 +223,14 @@ impl Renderer {
 
   pub fn insert_texture(&mut self, texture: Texture) -> Index {
     self.textures.insert(texture)
+  }
+
+  pub fn insert_framebuffer(&mut self, fb: WebGlFramebuffer) -> Index {
+    self.framebuffers.insert(fb)
+  }
+
+  pub fn insert_render_target(&mut self, target: RenderTarget) -> Index {
+    self.targets.insert(target)
   }
 
   pub fn render_scene(&self, root_handle: Index, camera_handle: Index) {

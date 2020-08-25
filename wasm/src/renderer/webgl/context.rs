@@ -218,6 +218,14 @@ impl Context {
     );
   }
 
+  pub fn check_framebuffer_complete(&self) -> bool {
+    let status = self
+      .gl
+      .check_framebuffer_status(WebGlRenderingContext::FRAMEBUFFER);
+
+    status == WebGlRenderingContext::FRAMEBUFFER_COMPLETE
+  }
+
   pub fn switch_attributes(&self, amount: u32) {
     let current_amount = *self.attrib_amount.borrow();
 
@@ -429,6 +437,7 @@ impl TexParam {
 pub enum TextureFormat {
   RGBA,
   RGB,
+  Depth,
 }
 
 impl TextureFormat {
@@ -436,6 +445,7 @@ impl TextureFormat {
     match self {
       Self::RGBA => WebGlRenderingContext::RGBA,
       Self::RGB => WebGlRenderingContext::RGB,
+      Self::Depth => WebGlRenderingContext::DEPTH_COMPONENT,
     }
   }
 }
@@ -443,12 +453,14 @@ impl TextureFormat {
 #[derive(Debug, Clone, Copy)]
 pub enum FramebufferAttachment {
   ColorAttachment0,
+  DepthAttachment,
 }
 
 impl FramebufferAttachment {
   pub fn as_u32(&self) -> u32 {
     match self {
       Self::ColorAttachment0 => WebGlRenderingContext::COLOR_ATTACHMENT0,
+      Self::DepthAttachment => WebGlRenderingContext::DEPTH_ATTACHMENT,
     }
   }
 }

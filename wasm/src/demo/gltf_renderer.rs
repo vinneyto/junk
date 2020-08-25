@@ -97,6 +97,13 @@ impl GLTFRendererDemo {
     renderer.insert_node(skybox_node);
 
     //
+
+    let shadow_render_target =
+      renderer.bake_render_target(1024, 1024, Sampler::framebuffer(), true);
+
+    info!("render_target {:#?}", shadow_render_target);
+
+    //
     let cuboid_material_handle = renderer.bake_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.0, 1.0))
