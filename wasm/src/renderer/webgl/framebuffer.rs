@@ -1,5 +1,5 @@
 use super::context::{FramebufferAttachment, TexParam, TextureFormat, TextureKind, TypedArrayKind};
-use super::renderer::{RenderTarget, Renderer, Sampler, Texture};
+use super::renderer::{RenderTarget, Renderer, Sampler};
 use generational_arena::Index;
 
 impl Renderer {
@@ -80,28 +80,19 @@ impl Renderer {
     let fb_handle = self.insert_framebuffer(fb);
 
     // color texture
-    let color_image_handle = self.insert_image(color_image);
-    let color_sampler_handle = self.insert_sampler(sampler);
-    let color_texture = Texture {
-      source: color_image_handle,
-      sampler: color_sampler_handle,
-    };
-    let color_texture_handle = self.insert_texture(color_texture);
+    let color_texture_handle = self.compose_texture(color_image, sampler);
 
     // depth texture
     let depth_texture_handle = if let Some(depth_image) = depth_image_option {
-      let depth_image_handle = self.insert_image(depth_image);
-      let depth_sampler_handle = self.insert_sampler(Sampler {
-        wrap_s: TexParam::ClampToEdge,
-        wrap_t: TexParam::ClampToEdge,
-        min_filter: TexParam::Nearest,
-        mag_filter: TexParam::Nearest,
-      });
-      let depth_texture = Texture {
-        source: depth_image_handle,
-        sampler: depth_sampler_handle,
-      };
-      Some(self.insert_texture(depth_texture))
+      Some(self.compose_texture(
+        depth_image,
+        Sampler {
+          wrap_s: TexParam::ClampToEdge,
+          wrap_t: TexParam::ClampToEdge,
+          min_filter: TexParam::Nearest,
+          mag_filter: TexParam::Nearest,
+        },
+      ))
     } else {
       None
     };

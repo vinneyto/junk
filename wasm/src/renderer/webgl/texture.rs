@@ -1,5 +1,5 @@
 use generational_arena::Index;
-use web_sys::HtmlImageElement;
+use web_sys::{HtmlImageElement, WebGlTexture};
 
 use super::context::{TextureFormat, TextureKind, TypedArrayKind};
 use super::renderer::{Renderer, Sampler, Texture};
@@ -33,15 +33,7 @@ impl Renderer {
 
     self.ctx.bind_texture(TextureKind::Texture2d, None);
 
-    let image_handle = self.insert_image(webgl_texture);
-    let sampler_handle = self.insert_sampler(sampler);
-
-    let texture = Texture {
-      source: image_handle,
-      sampler: sampler_handle,
-    };
-
-    self.insert_texture(texture)
+    self.compose_texture(webgl_texture, sampler)
   }
 
   pub fn bake_cube_map_texture(
@@ -67,7 +59,11 @@ impl Renderer {
 
     self.ctx.bind_texture(TextureKind::CubeMap, None);
 
-    let image_handle = self.insert_image(webgl_texture);
+    self.compose_texture(webgl_texture, sampler)
+  }
+
+  pub fn compose_texture(&mut self, image: WebGlTexture, sampler: Sampler) -> Index {
+    let image_handle = self.insert_image(image);
     let sampler_handle = self.insert_sampler(sampler);
 
     let texture = Texture {

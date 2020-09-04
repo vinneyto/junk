@@ -1,7 +1,7 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::{Point2, Point3, UnitQuaternion, Vector2, Vector3};
+use na::{Point2, Point3, UnitQuaternion, Vector2, Vector3, Vector4};
 use ncollide3d::procedural::{unit_quad, TriMesh};
 use noise::{NoiseFn, Perlin, Seedable};
 use std::f32::consts::PI;
@@ -11,6 +11,7 @@ use web_sys::HtmlImageElement;
 
 use crate::renderer::webgl::context::{Context, TexParam, TextureFormat, TextureKind};
 use crate::renderer::webgl::material::{PbrMaterial, SkyboxMaterial};
+use crate::renderer::webgl::pass::Pass;
 use crate::renderer::webgl::renderer::{Camera, Renderer, Sampler};
 use crate::renderer::webgl::turntable::Turntable;
 use crate::scene::node::{compose_matrix, Node};
@@ -23,6 +24,7 @@ pub struct GLTFRendererDemo {
   camera_handle: Index,
   canvas: WebGlCanvas,
   turntable: Turntable,
+  passes: Vec<Pass>,
 }
 
 #[wasm_bindgen]
@@ -97,17 +99,11 @@ impl GLTFRendererDemo {
     renderer.insert_node(skybox_node);
 
     //
-
-    let shadow_render_target =
-      renderer.bake_render_target(1024, 1024, Sampler::framebuffer(), true);
-
-    info!("render_target {:#?}", shadow_render_target);
-
-    //
     let cuboid_material_handle = renderer.bake_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.0, 1.0))
         .set_debug_cube_map(Some(skybox_texture))
+        // .set_color_map(Some(render_target_texture))
         .boxed(),
     );
 
@@ -163,11 +159,20 @@ impl GLTFRendererDemo {
 
     renderer.insert_node(ground_node);
 
+    let passes = vec![Pass::new()
+      .set_clean_color(true)
+      .set_clean_depth(true)
+      .set_background_color(Vector4::new(1.0, 1.0, 1.0, 1.0))
+      .set_handler(move |renderer| {
+        renderer.render_scene(renderer.scene.get_root_handle(), camera_handle);
+      })];
+
     Ok(GLTFRendererDemo {
       camera_handle,
       canvas,
       renderer,
       turntable,
+      passes,
     })
   }
 
@@ -205,9 +210,9 @@ impl GLTFRendererDemo {
       .turntable
       .update_camera(&mut self.renderer, self.camera_handle);
 
-    self
-      .renderer
-      .render_scene(self.renderer.scene.get_root_handle(), self.camera_handle);
+    for pass in &self.passes {
+      pass.render(&mut self.renderer);
+    }
   }
 }
 
