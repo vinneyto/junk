@@ -17,9 +17,7 @@ import {
 import { CameraController } from '../../CameraController';
 
 export async function createPerlinNoiseDemo(): Promise<Demo> {
-  const { PerlinNoise } = await import('../../../wasm/pkg');
-
-  const perlin = new PerlinNoise();
+  const { get_perlin_data } = await import('../../../wasm/pkg');
 
   const renderer = createRenderer();
   renderer.setClearColor(new Color('black'));
@@ -28,13 +26,14 @@ export async function createPerlinNoiseDemo(): Promise<Demo> {
   cameraController.setRotation(Math.PI / 8, 0);
   const scene = new Scene();
 
-  perlin.set_seed(Math.round(Math.random() * 100));
-  const perlinMap = new DataTexture(
-    perlin.get_data(128, 128, 2, 2),
+  const data = get_perlin_data(
     128,
     128,
-    RGBAFormat
-  );
+    2,
+    2,
+    Math.round(Math.random() * 100)
+  ).map((v) => v * 255);
+  const perlinMap = new DataTexture(new Uint8Array(data), 128, 128, RGBAFormat);
   perlinMap.magFilter = LinearFilter;
   perlinMap.minFilter = LinearFilter;
 

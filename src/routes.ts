@@ -9,6 +9,7 @@ import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangl
 import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo/createWasmGltfDemo';
 import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
 import { createPerlinNoiseDemo as vinneytoPerlinNoiseDemo } from './demo/vinneyto-demo/perlinNoiseDemo';
+import { createWaterSurfaceDemo as createVinneytoWaterSurfaceDemo } from './demo/vinneyto-demo/waterSurfaceDemo/createWaterSurfaceDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo>;
@@ -86,4 +87,10 @@ routes.set('vinneyto-perlin-noise-demo', {
   title: 'Perlin noise',
   authors: 'vinneyto',
   tags: ['wasm', 'rust', 'webgl', 'typescript'],
+});
+routes.set('vinneyto-water-surface-demo', {
+  demo: createVinneytoWaterSurfaceDemo,
+  title: 'Water surface',
+  authors: 'vinneyto',
+  tags: ['wasm', 'rust', 'webgl', 'threejs', 'typescript'],
 });
