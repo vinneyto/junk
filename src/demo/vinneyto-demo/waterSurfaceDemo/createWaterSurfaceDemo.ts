@@ -26,12 +26,34 @@ import skyboxNYSrc from '../textures/skybox/ny.jpg';
 import skyboxPYSrc from '../textures/skybox/py.jpg';
 import skyboxNZSrc from '../textures/skybox/nz.jpg';
 import skyboxPZSrc from '../textures/skybox/pz.jpg';
+import { WaterSurface } from './WaterSurface';
 
 export async function createWaterSurfaceDemo(): Promise<Demo> {
   const renderer = createRenderer();
   const camera = new PerspectiveCamera(75, 1, 0.01, 100);
   const cameraController = new CameraController(15, 0.01);
   cameraController.setRotation(Math.PI / 4, 0);
+
+  const width = 20;
+  const height = 20;
+
+  const scene = await createScene(width, height);
+
+  const waterSurface = new WaterSurface(width, height);
+  scene.add(waterSurface);
+
+  const render = () => {
+    resizeRenderer(renderer, camera);
+
+    cameraController.update(camera);
+
+    renderer.render(scene, camera);
+  };
+
+  return { render };
+}
+
+async function createScene(width: number, height: number) {
   const scene = new Scene();
 
   const groundTexture = await fetchTexture(groundTextureSrc);
@@ -51,7 +73,7 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   groundTexture.wrapT = RepeatWrapping;
 
   const geometry = await buildPerlinSurfaceGeometry(
-    new Vector3(20, 10, 20),
+    new Vector3(width, 10, height),
     new Vector2(64, 64)
   );
   const material = new MeshLambertMaterial({
@@ -72,13 +94,5 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   ambient.intensity = 0.3;
   scene.add(ambient);
 
-  const render = () => {
-    resizeRenderer(renderer, camera);
-
-    cameraController.update(camera);
-
-    renderer.render(scene, camera);
-  };
-
-  return { render };
+  return scene;
 }
