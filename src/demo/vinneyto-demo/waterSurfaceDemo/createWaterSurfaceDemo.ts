@@ -10,11 +10,8 @@ import {
   DoubleSide,
   AmbientLight,
   RepeatWrapping,
-  PlaneBufferGeometry,
-  MeshBasicMaterial,
-  OrthographicCamera,
   WebGLRenderTarget,
-  Texture,
+  Plane,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import {
@@ -23,7 +20,7 @@ import {
   fetchTexture,
   resizeRenderer,
 } from '../../../util';
-import { buildPerlinSurfaceGeometry } from './util';
+import { buildPerlinSurfaceGeometry, Preview } from './util';
 import groundTextureSrc from '../textures/grass_texture.jpg';
 import skyboxNXSrc from '../textures/skybox/nx.jpg';
 import skyboxPXSrc from '../textures/skybox/px.jpg';
@@ -39,12 +36,11 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const cameraController = new CameraController(15, 0.01);
   cameraController.setRotation(Math.PI / 4, 0);
 
-  const waterlessRenderTarget = new WebGLRenderTarget(1024, 1024);
+  const reflectionRenderTarget = new WebGLRenderTarget(1024, 1024);
+  const refractionRenderTarget = new WebGLRenderTarget(1024, 1024);
 
-  const orthoCamera = new OrthographicCamera(0, 0, 0, 0, -10, 10);
-  const debugScreen = createDebugScreen(waterlessRenderTarget.texture);
-  const debugScene = new Scene();
-  debugScene.add(debugScreen);
+  const reflectionPreview = new Preview(reflectionRenderTarget.texture);
+  const refractionPreview = new Preview(refractionRenderTarget.texture);
 
   const groundSize = new Vector2(20, 20);
 
@@ -53,48 +49,38 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const waterSurface = new WaterSurface(groundSize.x, groundSize.y);
   scene.add(waterSurface);
 
+  const reflectionPlane = new Plane(new Vector3(0, 1, 0), 0);
+  const refractionPlane = new Plane(new Vector3(0, -1, 0), 0);
+
   const render = () => {
     if (resizeRenderer(renderer, camera)) {
-      const { width, height } = renderer.domElement;
-      orthoCamera.right = width;
-      orthoCamera.top = height;
-      orthoCamera.updateProjectionMatrix();
-
-      const aspect = width / height;
-      const size = 200 * window.devicePixelRatio;
-
-      debugScreen.scale.set(size * aspect, size, 1);
-      debugScreen.position.set(
-        debugScreen.scale.x / 2 + 40 * window.devicePixelRatio,
-        height - debugScreen.scale.y / 2 - 40 * window.devicePixelRatio,
-        0
-      );
+      reflectionPreview.resize(renderer, 0);
+      refractionPreview.resize(renderer, 1);
     }
 
     cameraController.update(camera);
 
     waterSurface.visible = false;
 
-    renderer.setRenderTarget(waterlessRenderTarget);
+    renderer.clippingPlanes.push(reflectionPlane);
+    renderer.setRenderTarget(reflectionRenderTarget);
     renderer.render(scene, camera);
+    renderer.clippingPlanes.length = 0;
+
+    renderer.clippingPlanes.push(refractionPlane);
+    renderer.setRenderTarget(refractionRenderTarget);
+    renderer.render(scene, camera);
+    renderer.clippingPlanes.length = 0;
 
     waterSurface.visible = true;
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
 
-    renderer.autoClearColor = false;
-    renderer.render(debugScene, orthoCamera);
-    renderer.autoClearColor = true;
+    reflectionPreview.render(renderer);
+    refractionPreview.render(renderer);
   };
 
   return { render };
-}
-
-export function createDebugScreen(texture: Texture) {
-  const g = new PlaneBufferGeometry(1, 1);
-  const m = new MeshBasicMaterial({ map: texture });
-  const mesh = new Mesh(g, m);
-  return mesh;
 }
 
 async function createScene(width: number, height: number) {
