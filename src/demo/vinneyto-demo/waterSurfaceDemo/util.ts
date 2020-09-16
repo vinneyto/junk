@@ -28,7 +28,7 @@ export async function buildPerlinSurfaceGeometry(
 
   for (let col = 0; col < width; col++) {
     for (let row = 0; row < height; row++) {
-      const id = row + col * width;
+      const id = col + row * height;
       point.x = -size.x / 2.0 + (col / width) * size.x;
       point.z = -size.z / 2.0 + (row / height) * size.z;
       point.y =

@@ -5,6 +5,10 @@ import {
   Scene,
   Camera,
   Vector2,
+  CubeTextureLoader,
+  TextureLoader,
+  Texture,
+  CubeTexture,
 } from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
@@ -77,5 +81,17 @@ export async function fetchGLTF(url: string) {
       undefined,
       (e) => reject(e)
     );
+  });
+}
+
+export async function fetchTexture(url: string): Promise<Texture> {
+  return new Promise((resolve, reject) => {
+    new TextureLoader().load(url, resolve, undefined, reject);
+  });
+}
+
+export async function fetchCubeTexture(urls: string[]): Promise<CubeTexture> {
+  return new Promise((resolve, reject) => {
+    new CubeTextureLoader().load(urls, resolve, undefined, reject);
   });
 }
