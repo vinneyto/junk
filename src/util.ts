@@ -69,7 +69,9 @@ export function resizeRenderer(
 ) {
   if (resizeRendererToDisplaySize(renderer)) {
     resizePerspectiveCamera(renderer, camera);
+    return true;
   }
+  return false;
 }
 
 export async function fetchGLTF(url: string) {

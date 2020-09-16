@@ -10,6 +10,11 @@ import {
   DoubleSide,
   AmbientLight,
   RepeatWrapping,
+  PlaneBufferGeometry,
+  MeshBasicMaterial,
+  OrthographicCamera,
+  WebGLRenderTarget,
+  Texture,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import {
@@ -34,23 +39,62 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const cameraController = new CameraController(15, 0.01);
   cameraController.setRotation(Math.PI / 4, 0);
 
-  const width = 20;
-  const height = 20;
+  const waterlessRenderTarget = new WebGLRenderTarget(1024, 1024);
 
-  const scene = await createScene(width, height);
+  const orthoCamera = new OrthographicCamera(0, 0, 0, 0, -10, 10);
+  const debugScreen = createDebugScreen(waterlessRenderTarget.texture);
+  const debugScene = new Scene();
+  debugScene.add(debugScreen);
 
-  const waterSurface = new WaterSurface(width, height);
+  const groundSize = new Vector2(20, 20);
+
+  const scene = await createScene(groundSize.x, groundSize.y);
+
+  const waterSurface = new WaterSurface(groundSize.x, groundSize.y);
   scene.add(waterSurface);
 
   const render = () => {
-    resizeRenderer(renderer, camera);
+    if (resizeRenderer(renderer, camera)) {
+      const { width, height } = renderer.domElement;
+      orthoCamera.right = width;
+      orthoCamera.top = height;
+      orthoCamera.updateProjectionMatrix();
+
+      const aspect = width / height;
+      const size = 200 * window.devicePixelRatio;
+
+      debugScreen.scale.set(size * aspect, size, 1);
+      debugScreen.position.set(
+        debugScreen.scale.x / 2 + 40 * window.devicePixelRatio,
+        height - debugScreen.scale.y / 2 - 40 * window.devicePixelRatio,
+        0
+      );
+    }
 
     cameraController.update(camera);
 
+    waterSurface.visible = false;
+
+    renderer.setRenderTarget(waterlessRenderTarget);
     renderer.render(scene, camera);
+
+    waterSurface.visible = true;
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
+
+    renderer.autoClearColor = false;
+    renderer.render(debugScene, orthoCamera);
+    renderer.autoClearColor = true;
   };
 
   return { render };
+}
+
+export function createDebugScreen(texture: Texture) {
+  const g = new PlaneBufferGeometry(1, 1);
+  const m = new MeshBasicMaterial({ map: texture });
+  const mesh = new Mesh(g, m);
+  return mesh;
 }
 
 async function createScene(width: number, height: number) {
