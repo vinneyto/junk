@@ -12,6 +12,8 @@ import {
   RepeatWrapping,
   WebGLRenderTarget,
   Plane,
+  Material,
+  Object3D,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import {
@@ -35,6 +37,7 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const camera = new PerspectiveCamera(75, 1, 0.01, 100);
   const cameraController = new CameraController(15, 0.01);
   cameraController.setRotation(Math.PI / 4, 0);
+  renderer.localClippingEnabled = true;
 
   const reflectionRenderTarget = new WebGLRenderTarget(1024, 1024);
   const refractionRenderTarget = new WebGLRenderTarget(1024, 1024);
@@ -49,8 +52,49 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const waterSurface = new WaterSurface(groundSize.x, groundSize.y);
   scene.add(waterSurface);
 
-  const reflectionPlane = new Plane(new Vector3(0, 1, 0), 0);
-  const refractionPlane = new Plane(new Vector3(0, -1, 0), 0);
+  const clippingStorage = new WeakMap<Mesh, [Material, Material, Material]>();
+
+  scene.traverse((obj) => {
+    if (obj instanceof Mesh && obj.material instanceof Material) {
+      const mrfl = obj.material.clone();
+      const mrfr = obj.material.clone();
+
+      mrfl.clippingPlanes = [new Plane(new Vector3(0, 1, 0), 0)];
+      mrfl.needsUpdate = true;
+
+      mrfr.clippingPlanes = [new Plane(new Vector3(0, -1, 0), 0)];
+      mrfr.needsUpdate = true;
+
+      clippingStorage.set(obj, [obj.material, mrfl, mrfr]);
+    }
+  });
+
+  const setReflection = (obj: Object3D) => {
+    if (obj instanceof Mesh) {
+      const m = clippingStorage.get(obj);
+      if (m !== undefined) {
+        obj.material = m[1];
+      }
+    }
+  };
+
+  const setRefraction = (obj: Object3D) => {
+    if (obj instanceof Mesh) {
+      const m = clippingStorage.get(obj);
+      if (m !== undefined) {
+        obj.material = m[2];
+      }
+    }
+  };
+
+  const setDefault = (obj: Object3D) => {
+    if (obj instanceof Mesh) {
+      const m = clippingStorage.get(obj);
+      if (m !== undefined) {
+        obj.material = m[0];
+      }
+    }
+  };
 
   const render = () => {
     if (resizeRenderer(renderer, camera)) {
@@ -62,17 +106,16 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
 
     waterSurface.visible = false;
 
-    renderer.clippingPlanes.push(reflectionPlane);
+    scene.traverse(setReflection);
     renderer.setRenderTarget(reflectionRenderTarget);
     renderer.render(scene, camera);
-    renderer.clippingPlanes.length = 0;
 
-    renderer.clippingPlanes.push(refractionPlane);
+    scene.traverse(setRefraction);
     renderer.setRenderTarget(refractionRenderTarget);
     renderer.render(scene, camera);
-    renderer.clippingPlanes.length = 0;
 
     waterSurface.visible = true;
+    scene.traverse(setDefault);
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
 
