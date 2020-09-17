@@ -11,9 +11,11 @@ import {
   AmbientLight,
   RepeatWrapping,
   WebGLRenderTarget,
-  Plane,
   Material,
   Object3D,
+  Matrix4,
+  Euler,
+  IUniform,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import {
@@ -21,6 +23,7 @@ import {
   fetchCubeTexture,
   fetchTexture,
   resizeRenderer,
+  patchMaterial,
 } from '../../../util';
 import { buildPerlinSurfaceGeometry, Preview } from './util';
 import groundTextureSrc from '../textures/grass_texture.jpg';
@@ -52,49 +55,25 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const waterSurface = new WaterSurface(groundSize.x, groundSize.y);
   scene.add(waterSurface);
 
-  const clippingStorage = new WeakMap<Mesh, [Material, Material, Material]>();
+  const defaultClipping = new Matrix4()
+    .makeRotationFromEuler(new Euler(Math.PI / 2, 0, 0))
+    .multiply(new Matrix4().makeTranslation(0, 10000, 0));
 
-  scene.traverse((obj) => {
-    if (obj instanceof Mesh && obj.material instanceof Material) {
-      const mrfl = obj.material.clone();
-      const mrfr = obj.material.clone();
+  const reflectionClipping = new Matrix4()
+    .makeRotationFromEuler(new Euler(Math.PI / 2, 0, 0))
+    .multiply(new Matrix4().makeTranslation(0, 0, 0));
 
-      mrfl.clippingPlanes = [new Plane(new Vector3(0, 1, 0), 0)];
-      mrfl.needsUpdate = true;
+  const refractionClipping = new Matrix4()
+    .makeRotationFromEuler(new Euler(-Math.PI / 2, 0, 0))
+    .multiply(new Matrix4().makeTranslation(0, 0, 0));
 
-      mrfr.clippingPlanes = [new Plane(new Vector3(0, -1, 0), 0)];
-      mrfr.needsUpdate = true;
-
-      clippingStorage.set(obj, [obj.material, mrfl, mrfr]);
-    }
-  });
-
-  const setReflection = (obj: Object3D) => {
-    if (obj instanceof Mesh) {
-      const m = clippingStorage.get(obj);
-      if (m !== undefined) {
-        obj.material = m[1];
-      }
-    }
+  const clippingUniforms = {
+    u_clippingBasis: {
+      value: defaultClipping,
+    },
   };
 
-  const setRefraction = (obj: Object3D) => {
-    if (obj instanceof Mesh) {
-      const m = clippingStorage.get(obj);
-      if (m !== undefined) {
-        obj.material = m[2];
-      }
-    }
-  };
-
-  const setDefault = (obj: Object3D) => {
-    if (obj instanceof Mesh) {
-      const m = clippingStorage.get(obj);
-      if (m !== undefined) {
-        obj.material = m[0];
-      }
-    }
-  };
+  scene.traverse((obj) => patchClippingMaterial(obj, clippingUniforms));
 
   const render = () => {
     if (resizeRenderer(renderer, camera)) {
@@ -106,16 +85,16 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
 
     waterSurface.visible = false;
 
-    scene.traverse(setReflection);
+    clippingUniforms.u_clippingBasis.value = reflectionClipping;
     renderer.setRenderTarget(reflectionRenderTarget);
     renderer.render(scene, camera);
 
-    scene.traverse(setRefraction);
+    clippingUniforms.u_clippingBasis.value = refractionClipping;
     renderer.setRenderTarget(refractionRenderTarget);
     renderer.render(scene, camera);
 
+    clippingUniforms.u_clippingBasis.value = defaultClipping;
     waterSurface.visible = true;
-    scene.traverse(setDefault);
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
 
@@ -125,6 +104,38 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
 
   return { render };
 }
+
+const patchClippingMaterial = (
+  obj: Object3D,
+  uniforms: Record<string, IUniform>
+) => {
+  if (obj instanceof Mesh && obj.material instanceof Material) {
+    patchMaterial(obj.material, {
+      uniforms,
+      vertex: {
+        '#include <common>': {
+          after: [
+            'uniform mat4 u_clippingBasis;',
+            'varying vec4 v_clippingPosition;',
+          ],
+        },
+        '#include <fog_vertex>': {
+          after: [
+            'v_clippingPosition = u_clippingBasis * modelMatrix * vec4(transformed, 1.0);',
+          ],
+        },
+      },
+      fragment: {
+        '#include <common>': {
+          after: ['varying vec4 v_clippingPosition;'],
+        },
+        '#include <clipping_planes_fragment>': {
+          before: ['if (v_clippingPosition.z < 0.0) { discard; }'],
+        },
+      },
+    });
+  }
+};
 
 async function createScene(width: number, height: number) {
   const scene = new Scene();

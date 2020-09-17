@@ -20,7 +20,7 @@ export async function buildPerlinSurfaceGeometry(
   const data = get_perlin_data(
     segments.x,
     segments.y,
-    2.0,
+    4.0,
     2.0,
     Math.round(Math.random() * 100)
   );
@@ -83,7 +83,7 @@ export class Preview extends Scene {
     this.camera.updateProjectionMatrix();
 
     const aspect = width / height;
-    const size = 200 * window.devicePixelRatio;
+    const size = width * 0.1;
     const gap = 40 * window.devicePixelRatio;
 
     this.mesh.scale.set(size * aspect, size, 1);

@@ -11,10 +11,8 @@ import {
   PlaneHelper,
   Object3D,
   MeshStandardMaterial,
-  Shader,
   DirectionalLight,
   AmbientLight,
-  WebGLRenderer,
   AnimationMixer,
   AnimationAction,
   Clock,
@@ -23,7 +21,12 @@ import {
 import Fox from '../models/Fox/Fox.gltf';
 
 import { CameraController } from '../../../CameraController';
-import { createRenderer, resizeRenderer, fetchGLTF } from '../../../util';
+import {
+  createRenderer,
+  resizeRenderer,
+  fetchGLTF,
+  patchMaterial,
+} from '../../../util';
 
 import { SplitColorShaderMaterial } from './SplitColorShaderMaterial';
 import { createCustomGUI } from './createCustomGUI';
@@ -116,67 +119,33 @@ export async function useSplitColorShaderMaterial(): Promise<Demo> {
   return { render };
 }
 
-export function patchStandardMaterialToSplit(
+export const patchStandardMaterialToSplit = (
   standardMaterial: MeshStandardMaterial,
   splitMaterial: SplitColorShaderMaterial
-) {
-  const oldOnBeforeCompile = standardMaterial.onBeforeCompile;
-
-  standardMaterial.onBeforeCompile = (
-    shader: Shader,
-    renderer: WebGLRenderer
-  ) => {
-    oldOnBeforeCompile.call(standardMaterial, shader, renderer);
-
-    Object.assign(shader.uniforms, splitMaterial.uniforms);
-
-    const INCLUDE_COMMON = '#include <common>';
-
-    const vertexCommon = [
-      INCLUDE_COMMON,
-      'uniform mat4 u_basis;',
-      'varying vec4 v_position;',
-    ].join('\n');
-
-    const vertexVPosition = [
-      '#include <fog_vertex>',
-      'v_position = u_basis * modelMatrix * vec4(transformed, 1.0);',
-    ].join('\n');
-
-    shader.vertexShader = shader.vertexShader.replace(
-      INCLUDE_COMMON,
-      vertexCommon
-    );
-
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <fog_vertex>',
-      vertexVPosition
-    );
-
-    const fragmentCommon = [
-      INCLUDE_COMMON,
-      'uniform vec3 u_color1;',
-      'uniform vec3 u_color2;',
-      'varying vec4 v_position;',
-    ].join('\n');
-
-    const GL_FRAG_COLOR =
-      'gl_FragColor = vec4( outgoingLight, diffuseColor.a );';
-
-    const fragmentColor = [
-      'vec3 splitColor = v_position.z < 0.0 ? u_color1 : u_color2;',
-      'outgoingLight = mix(outgoingLight, splitColor, 0.5);',
-      GL_FRAG_COLOR,
-    ].join('\n');
-
-    shader.fragmentShader = shader.fragmentShader.replace(
-      INCLUDE_COMMON,
-      fragmentCommon
-    );
-
-    shader.fragmentShader = shader.fragmentShader.replace(
-      GL_FRAG_COLOR,
-      fragmentColor
-    );
-  };
-}
+) =>
+  patchMaterial(standardMaterial, {
+    uniforms: splitMaterial.uniforms,
+    vertex: {
+      '#include <common>': {
+        after: ['uniform mat4 u_basis;', 'varying vec4 v_position;'],
+      },
+      '#include <fog_vertex>': {
+        after: ['v_position = u_basis * modelMatrix * vec4(transformed, 1.0);'],
+      },
+    },
+    fragment: {
+      '#include <common>': {
+        after: [
+          'uniform vec3 u_color1;',
+          'uniform vec3 u_color2;',
+          'varying vec4 v_position;',
+        ],
+      },
+      'gl_FragColor = vec4( outgoingLight, diffuseColor.a );': {
+        before: [
+          'vec3 splitColor = v_position.z < 0.0 ? u_color1 : u_color2;',
+          'outgoingLight = mix(outgoingLight, splitColor, 0.5);',
+        ],
+      },
+    },
+  });
