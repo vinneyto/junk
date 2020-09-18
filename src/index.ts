@@ -1,6 +1,7 @@
 import { routes } from './routes';
 import { Demo } from './demo/Demo';
 import { injectStyles } from './styles';
+import Stats from 'stats.js';
 
 injectStyles();
 
@@ -27,8 +28,16 @@ async function choseDemo() {
 }
 
 function start(demo: Demo) {
+  const stats = new Stats();
+  stats.showPanel(0);
+  document.body.appendChild(stats.dom);
+
   const render = () => {
+    stats.begin();
+
     demo.render();
+
+    stats.end();
 
     requestAnimationFrame(render);
   };
