@@ -7,7 +7,6 @@ import {
   Vector2,
   DirectionalLight,
   MeshLambertMaterial,
-  DoubleSide,
   AmbientLight,
   RepeatWrapping,
   WebGLRenderTarget,
@@ -38,12 +37,14 @@ import { WaterSurface } from './WaterSurface';
 export async function createWaterSurfaceDemo(): Promise<Demo> {
   const renderer = createRenderer();
   const camera = new PerspectiveCamera(75, 1, 0.01, 100);
-  const cameraController = new CameraController(15, 0.01);
+  const cameraController = new CameraController(20, 0.01);
   cameraController.setRotation(Math.PI / 4, 0);
   renderer.localClippingEnabled = true;
 
   const reflectionRenderTarget = new WebGLRenderTarget(1024, 1024);
   const refractionRenderTarget = new WebGLRenderTarget(1024, 1024);
+
+  const reflectionCamera = new PerspectiveCamera();
 
   const reflectionPreview = new Preview(reflectionRenderTarget.texture);
   const refractionPreview = new Preview(refractionRenderTarget.texture);
@@ -52,7 +53,11 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
 
   const scene = await createScene(groundSize.x, groundSize.y);
 
-  const waterSurface = new WaterSurface(groundSize.x, groundSize.y);
+  const waterSurface = new WaterSurface(
+    groundSize,
+    reflectionRenderTarget.texture,
+    refractionRenderTarget.texture
+  );
   scene.add(waterSurface);
 
   const defaultClipping = new Matrix4()
@@ -85,9 +90,13 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
 
     waterSurface.visible = false;
 
+    reflectionCamera.copy(camera);
+    reflectionCamera.position.y *= -1;
+    reflectionCamera.quaternion.w *= -1;
+    reflectionCamera.quaternion.y *= -1;
     clippingUniforms.u_clippingBasis.value = reflectionClipping;
     renderer.setRenderTarget(reflectionRenderTarget);
-    renderer.render(scene, camera);
+    renderer.render(scene, reflectionCamera);
 
     clippingUniforms.u_clippingBasis.value = refractionClipping;
     renderer.setRenderTarget(refractionRenderTarget);
@@ -161,13 +170,12 @@ async function createScene(width: number, height: number) {
     new Vector2(64, 64)
   );
   const material = new MeshLambertMaterial({
-    side: DoubleSide,
     map: groundTexture,
   });
   const ground = new Mesh(geometry, material);
   scene.add(ground);
 
-  ground.position.y = -7;
+  ground.position.y = -6;
 
   const light = new DirectionalLight();
   light.intensity = 0.7;

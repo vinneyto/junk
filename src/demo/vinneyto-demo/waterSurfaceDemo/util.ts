@@ -20,7 +20,7 @@ export async function buildPerlinSurfaceGeometry(
   const data = get_perlin_data(
     segments.x,
     segments.y,
-    4.0,
+    3.0,
     2.0,
     Math.round(Math.random() * 100)
   );
@@ -39,8 +39,8 @@ export async function buildPerlinSurfaceGeometry(
   for (let col = 0; col < width; col++) {
     for (let row = 0; row < height; row++) {
       const id = col + row * height;
-      point.x = -size.x / 2.0 + (col / width) * size.x;
-      point.z = -size.z / 2.0 + (row / height) * size.z;
+      point.x = -size.x / 2.0 + (col / (width - 1)) * size.x;
+      point.z = -size.z / 2.0 + (row / (height - 1)) * size.z;
       point.y =
         ((data[id * 4] +
           data[id * 4 + 1] +
@@ -48,6 +48,9 @@ export async function buildPerlinSurfaceGeometry(
           data[id * 4 + 3]) /
           3.0) *
         size.y;
+      const xr = 1 - ((point.x / size.x) * 2.0) ** 8;
+      const yr = 1 - ((point.z / size.z) * 2.0) ** 8;
+      point.y *= xr * yr;
       point.toArray(position, id * 3);
     }
   }
