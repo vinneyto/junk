@@ -1,4 +1,5 @@
 varying vec4 v_clipSpace;
+varying vec4 v_mPos;
 varying vec2 v_uv;
 
 uniform sampler2D reflectionTexture;
@@ -31,5 +32,8 @@ void main() {
   vec4 reflectionColor = texture2D(reflectionTexture, reflectionTexCoords);
   vec4 refractionColor = texture2D(refractionTexture, refractionTexCoords);
 
-  gl_FragColor = mix(reflectionColor, refractionColor, 0.5);
+  vec3 toCam = normalize(cameraPosition);
+  float fresnel = dot(toCam, vec3(0.0, 1.0, 0.0));
+
+  gl_FragColor = mix(reflectionColor, refractionColor, fresnel);
 }
