@@ -13,7 +13,9 @@ export class WaterSurface extends Mesh {
   constructor(
     size: Vector2,
     reflectionTexture: Texture,
-    refractionTexture: Texture
+    refractionTexture: Texture,
+    dudvTexture: Texture,
+    dudvScale: number
   ) {
     const geometry = new PlaneBufferGeometry(size.x, size.y);
     geometry.rotateX(-Math.PI / 2);
@@ -27,9 +29,23 @@ export class WaterSurface extends Mesh {
         refractionTexture: {
           value: refractionTexture,
         },
+        dudvTexture: {
+          value: dudvTexture,
+        },
+        dudvScale: {
+          value: dudvScale,
+        },
+        displacement: {
+          value: 0,
+        },
       },
     });
 
     super(geometry, material);
+  }
+
+  setDisplacement(value: number) {
+    const material = this.material as ShaderMaterial;
+    material.uniforms.displacement.value = value;
   }
 }

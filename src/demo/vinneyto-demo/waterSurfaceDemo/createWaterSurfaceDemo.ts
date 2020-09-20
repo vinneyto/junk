@@ -15,6 +15,7 @@ import {
   Matrix4,
   Euler,
   IUniform,
+  Clock,
 } from 'three';
 import { CameraController } from '../../../CameraController';
 import {
@@ -32,12 +33,13 @@ import skyboxNYSrc from '../textures/skybox/ny.jpg';
 import skyboxPYSrc from '../textures/skybox/py.jpg';
 import skyboxNZSrc from '../textures/skybox/nz.jpg';
 import skyboxPZSrc from '../textures/skybox/pz.jpg';
+import waterDUDVSrc from '../textures/dudvmap.png';
 import { WaterSurface } from './WaterSurface';
 
 export async function createWaterSurfaceDemo(): Promise<Demo> {
   const renderer = createRenderer();
   const camera = new PerspectiveCamera(75, 1, 0.01, 100);
-  const cameraController = new CameraController(20, 0.01);
+  const cameraController = new CameraController(15, 0.01);
   cameraController.setRotation(Math.PI / 4, 0);
   renderer.localClippingEnabled = true;
 
@@ -52,11 +54,17 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
   const groundSize = new Vector2(20, 20);
 
   const scene = await createScene(groundSize.x, groundSize.y);
+  const waterDUDVTexture = await fetchTexture(waterDUDVSrc);
+
+  waterDUDVTexture.wrapS = RepeatWrapping;
+  waterDUDVTexture.wrapT = RepeatWrapping;
 
   const waterSurface = new WaterSurface(
-    groundSize,
+    groundSize.clone().multiplyScalar(6),
     reflectionRenderTarget.texture,
-    refractionRenderTarget.texture
+    refractionRenderTarget.texture,
+    waterDUDVTexture,
+    50
   );
   scene.add(waterSurface);
 
@@ -80,6 +88,9 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
 
   scene.traverse((obj) => patchClippingMaterial(obj, clippingUniforms));
 
+  const clock = new Clock();
+  let displacement = 0;
+
   const render = () => {
     if (resizeRenderer(renderer, camera)) {
       reflectionPreview.resize(renderer, 0);
@@ -89,6 +100,10 @@ export async function createWaterSurfaceDemo(): Promise<Demo> {
     cameraController.update(camera);
 
     waterSurface.visible = false;
+
+    displacement += clock.getDelta() * 0.03;
+
+    waterSurface.setDisplacement(displacement);
 
     reflectionCamera.copy(camera);
     reflectionCamera.position.y *= -1;
