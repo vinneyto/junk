@@ -3,10 +3,10 @@ use na::{Matrix4, Vector2, Vector3, U3};
 
 use anyhow::Result;
 
-use super::material::Material;
-use crate::renderer::webgl::context::{Context, DrawMode, Feature, TextureKind};
+use super::material::{bind_several_maps, Material, MaterialParams};
+use crate::renderer::webgl::context::{Context, DepthFunc, DrawMode, TextureKind};
 use crate::renderer::webgl::define::Define;
-use crate::renderer::webgl::renderer::{Camera, Renderer};
+use crate::renderer::webgl::renderer::{Camera, Images, Samplers, Textures};
 use crate::renderer::webgl::shader::Shader;
 use crate::scene::node::Node;
 
@@ -14,6 +14,7 @@ use crate::scene::node::Node;
 pub struct PbrMaterial {
   color: Vector3<f32>,
   color_map: Option<Index>,
+  debug_cube_map: Option<Index>,
   uv_repeating: Vector2<f32>,
   cull_face: bool,
   depth_test: bool,
@@ -28,6 +29,7 @@ impl PbrMaterial {
       depth_test: true,
       draw_mode: DrawMode::Triangles,
       color_map: None,
+      debug_cube_map: None,
       uv_repeating: Vector2::new(1.0, 1.0),
     }
   }
@@ -57,6 +59,11 @@ impl PbrMaterial {
     self
   }
 
+  pub fn set_debug_cube_map(mut self, debug_cube_map: Option<Index>) -> Self {
+    self.debug_cube_map = debug_cube_map;
+    self
+  }
+
   pub fn set_uv_repeating(mut self, uv_repeating: Vector2<f32>) -> Self {
     self.uv_repeating = uv_repeating;
     self
@@ -75,6 +82,10 @@ impl Material for PbrMaterial {
       tag.push_str(":color_map");
     }
 
+    if self.debug_cube_map.is_some() {
+      tag.push_str(":debug_cube_map");
+    }
+
     tag
   }
 
@@ -88,12 +99,23 @@ impl Material for PbrMaterial {
       defines.push(Define::def("USE_COLOR_MAP"));
     }
 
+    if self.debug_cube_map.is_some() {
+      defines.push(Define::def("USE_DEBUG_CUBE_MAP"));
+    }
+
     ctx.create_shader(vert_src, frag_src, &defines)
   }
 
-  fn setup_shader(&self, renderer: &Renderer, shader: &Shader, node: &Node, camera: &Camera) {
-    let ctx = &renderer.ctx;
-
+  fn setup_shader(
+    &self,
+    ctx: &Context,
+    images: &Images,
+    textures: &Textures,
+    samplers: &Samplers,
+    shader: &Shader,
+    node: &Node,
+    camera: &Camera,
+  ) {
     shader.set_vector3("color", &self.color);
     shader.set_vector2("uvRepeating", &self.uv_repeating);
     shader.set_matrix4("projectionMatrix", &camera.projection);
@@ -110,35 +132,25 @@ impl Material for PbrMaterial {
         .into(),
     );
 
-    if let Some(color_map) = self.color_map {
-      bind_texture(renderer, shader, color_map, "colorMap", 0);
+    bind_several_maps(
+      ctx,
+      images,
+      textures,
+      samplers,
+      shader,
+      &[
+        (self.color_map, TextureKind::Texture2d, "colorMap"),
+        (self.debug_cube_map, TextureKind::CubeMap, "debugCubeMap"),
+      ],
+    );
+  }
+
+  fn params(&self) -> MaterialParams {
+    MaterialParams {
+      cull_face: self.cull_face,
+      depth_test: self.depth_test,
+      depth_func: DepthFunc::Less,
+      draw_mode: DrawMode::Triangles,
     }
-
-    ctx.set(Feature::CullFace, self.cull_face);
-    ctx.set(Feature::DepthTest, self.depth_test);
   }
-
-  fn draw_mode(&self) -> DrawMode {
-    self.draw_mode
-  }
-}
-
-fn bind_texture(
-  renderer: &Renderer,
-  shader: &Shader,
-  texture_handle: Index,
-  uniform_name: &str,
-  unit: u32,
-) {
-  let texture = renderer.textures.get(texture_handle).unwrap();
-  let image = renderer.images.get(texture.source).unwrap();
-  let sampler = renderer.samplers.get(texture.sampler).unwrap();
-  let ctx = &renderer.ctx;
-
-  ctx.active_texture(unit);
-  ctx.bind_texture(TextureKind::Texture2d, Some(&image));
-
-  sampler.set_params(ctx);
-
-  shader.set_integer(uniform_name, unit as i32);
 }

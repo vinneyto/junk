@@ -3,10 +3,10 @@ use log::info;
 use na::Matrix4;
 use std::collections::HashMap;
 use std::default::Default;
-use web_sys::{WebGlBuffer, WebGlTexture};
+use web_sys::{WebGlBuffer, WebGlFramebuffer, WebGlTexture};
 
 use super::context::{
-  BufferItem, BufferTarget, BufferUsage, Context, TexParam, TexParamName, TextureKind,
+  BufferItem, BufferTarget, BufferUsage, Context, Feature, TexParam, TexParamName, TextureKind,
 };
 use super::material::Material;
 use super::shader::Shader;
@@ -63,27 +63,20 @@ impl Default for Sampler {
 }
 
 impl Sampler {
-  pub fn set_params(&self, ctx: &Context) {
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureMinFilter,
-      self.min_filter,
-    );
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureMagFilter,
-      self.mag_filter,
-    );
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureWrapS,
-      self.wrap_s,
-    );
-    ctx.texture_parameter(
-      TextureKind::Texture2d,
-      TexParamName::TextureWrapT,
-      self.wrap_t,
-    );
+  pub fn framebuffer() -> Self {
+    Sampler {
+      wrap_s: TexParam::ClampToEdge,
+      wrap_t: TexParam::ClampToEdge,
+      min_filter: TexParam::Linear,
+      mag_filter: TexParam::Linear,
+    }
+  }
+
+  pub fn set_params(&self, kind: TextureKind, ctx: &Context) {
+    ctx.texture_parameter(kind, TexParamName::TextureMinFilter, self.min_filter);
+    ctx.texture_parameter(kind, TexParamName::TextureMagFilter, self.mag_filter);
+    ctx.texture_parameter(kind, TexParamName::TextureWrapS, self.wrap_s);
+    ctx.texture_parameter(kind, TexParamName::TextureWrapT, self.wrap_t);
   }
 }
 
@@ -91,6 +84,13 @@ impl Sampler {
 pub struct Texture {
   pub source: Index,
   pub sampler: Index,
+}
+
+#[derive(Debug, Clone)]
+pub struct RenderTarget {
+  pub fb: Index,
+  pub color_texture: Index,
+  pub depth_texture: Option<Index>,
 }
 
 #[derive(Debug, Clone)]
@@ -116,6 +116,8 @@ impl Camera {
 
 pub type Buffers = Arena<WebGlBuffer>;
 pub type Images = Arena<WebGlTexture>;
+pub type Framebuffers = Arena<WebGlFramebuffer>;
+pub type Targets = Arena<RenderTarget>;
 pub type Accessors = Arena<Accessor>;
 pub type Geometries = Arena<Geometry>;
 pub type Materials = Arena<Box<dyn Material>>;
@@ -129,6 +131,8 @@ pub struct Renderer {
   pub ctx: Context,
   pub buffers: Buffers,
   pub images: Images,
+  pub framebuffers: Framebuffers,
+  pub targets: Targets,
   pub accessors: Accessors,
   pub geometries: Geometries,
   pub materials: Materials,
@@ -143,11 +147,15 @@ pub struct Renderer {
 impl Renderer {
   pub fn new(ctx: Context) -> Self {
     ctx.get_extension("OES_element_index_uint").unwrap();
+    ctx.get_extension("WEBGL_depth_texture").unwrap();
+    ctx.get_extension("OES_texture_float").unwrap();
 
     Renderer {
       ctx,
       buffers: Buffers::default(),
       images: Images::default(),
+      framebuffers: Framebuffers::default(),
+      targets: Targets::default(),
       accessors: Accessors::default(),
       geometries: Geometries::default(),
       materials: Materials::default(),
@@ -183,7 +191,7 @@ impl Renderer {
       .insert(self.ctx.create_buffer(target, usage, data).unwrap())
   }
 
-  pub fn insert_material(&mut self, material: Box<dyn Material>) -> Index {
+  pub fn bake_material(&mut self, material: Box<dyn Material>) -> Index {
     self.checkup_shader(&material);
 
     self.materials.insert(material)
@@ -215,6 +223,14 @@ impl Renderer {
 
   pub fn insert_texture(&mut self, texture: Texture) -> Index {
     self.textures.insert(texture)
+  }
+
+  pub fn insert_framebuffer(&mut self, fb: WebGlFramebuffer) -> Index {
+    self.framebuffers.insert(fb)
+  }
+
+  pub fn insert_render_target(&mut self, target: RenderTarget) -> Index {
+    self.targets.insert(target)
   }
 
   pub fn render_scene(&self, root_handle: Index, camera_handle: Index) {
@@ -249,11 +265,24 @@ impl Renderer {
 
     shader.bind();
 
-    material.setup_shader(&self, shader, node, camera);
+    material.setup_shader(
+      &self.ctx,
+      &self.images,
+      &self.textures,
+      &self.samplers,
+      shader,
+      node,
+      camera,
+    );
+
+    let params = material.params();
+
+    self.ctx.set(Feature::CullFace, params.cull_face);
+    self.ctx.set(Feature::DepthTest, params.depth_test);
+    self.ctx.depth_func(params.depth_func);
 
     let mut attr_amount = 0;
     let mut count = 0;
-    let mode = material.draw_mode();
 
     for name in shader.get_attribute_locations().keys() {
       if let Some(accessor_handle) = geometry.attributes.get(name) {
@@ -281,9 +310,9 @@ impl Renderer {
         .bind_buffer(BufferTarget::ElementArrayBuffer, Some(indices));
       self
         .ctx
-        .draw_elements(mode, count, accessor.options.component_type, 0);
+        .draw_elements(params.draw_mode, count, accessor.options.component_type, 0);
     } else {
-      self.ctx.draw_arrays(mode, 0, count);
+      self.ctx.draw_arrays(params.draw_mode, 0, count);
     }
   }
 }

@@ -88,4 +88,12 @@ export class CameraController {
     this.polarAngle = Math.min(bound, Math.max(-bound, polarAngle % round));
     this.azimuthalAngle = azimuthalAngle % round;
   }
+
+  getPolarAngle() {
+    return this.polarAngle;
+  }
+
+  getAzimuthalAngle() {
+    return this.azimuthalAngle;
+  }
 }

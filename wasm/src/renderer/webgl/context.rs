@@ -8,7 +8,9 @@ use num_traits::Num;
 use std::cell::RefCell;
 use std::default::Default;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{HtmlImageElement, WebGlBuffer, WebGlRenderingContext, WebGlTexture};
+use web_sys::{
+  HtmlImageElement, WebGlBuffer, WebGlFramebuffer, WebGlRenderingContext, WebGlTexture,
+};
 
 #[derive(Debug)]
 pub struct Context {
@@ -139,6 +141,33 @@ impl Context {
       .map_err(|e| anyhow!("{:?}", e))
   }
 
+  pub fn empty_texture_data(
+    &self,
+    target: TextureKind,
+    level: i32,
+    internal_format: TextureFormat,
+    width: i32,
+    height: i32,
+    border: i32,
+    format: TextureFormat,
+    kind: TypedArrayKind,
+  ) -> Result<()> {
+    self
+      .gl
+      .tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_array_buffer_view(
+        target.as_u32(),
+        level,
+        internal_format.as_u32() as i32,
+        width,
+        height,
+        border,
+        format.as_u32(),
+        kind.as_u32(),
+        None,
+      )
+      .map_err(|e| anyhow!("{:?}", e))
+  }
+
   pub fn texture_image_data(
     &self,
     target: TextureKind,
@@ -163,6 +192,38 @@ impl Context {
 
   pub fn generate_mipmap(&self, target: TextureKind) {
     self.gl.generate_mipmap(target.as_u32())
+  }
+
+  pub fn create_framebuffer(&self) -> Option<WebGlFramebuffer> {
+    self.gl.create_framebuffer()
+  }
+
+  pub fn bind_framebuffer(&self, fb: Option<&WebGlFramebuffer>) {
+    self
+      .gl
+      .bind_framebuffer(WebGlRenderingContext::FRAMEBUFFER, fb);
+  }
+
+  pub fn framebuffer_texture_2d(
+    &self,
+    attachment: FramebufferAttachment,
+    texture: Option<&WebGlTexture>,
+  ) {
+    self.gl.framebuffer_texture_2d(
+      WebGlRenderingContext::FRAMEBUFFER,
+      attachment.as_u32(),
+      TextureKind::Texture2d.as_u32(),
+      texture,
+      0,
+    );
+  }
+
+  pub fn check_framebuffer_complete(&self) -> bool {
+    let status = self
+      .gl
+      .check_framebuffer_status(WebGlRenderingContext::FRAMEBUFFER);
+
+    status == WebGlRenderingContext::FRAMEBUFFER_COMPLETE
   }
 
   pub fn switch_attributes(&self, amount: u32) {
@@ -195,6 +256,10 @@ impl Context {
     } else {
       self.disable(feature);
     }
+  }
+
+  pub fn depth_func(&self, func: DepthFunc) {
+    self.gl.depth_func(func.as_u32());
   }
 
   pub fn draw_arrays(&self, mode: DrawMode, first: i32, count: i32) {
@@ -282,14 +347,43 @@ impl Feature {
   }
 }
 
+pub enum DepthFunc {
+  Less,
+  Lequal,
+}
+
+impl DepthFunc {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::Less => WebGlRenderingContext::LESS,
+      Self::Lequal => WebGlRenderingContext::LEQUAL,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum TextureKind {
   Texture2d,
+  CubeMap,
+  CubeMapNX,
+  CubeMapPX,
+  CubeMapNY,
+  CubeMapPY,
+  CubeMapNZ,
+  CubeMapPZ,
 }
 
 impl TextureKind {
   pub fn as_u32(&self) -> u32 {
     match self {
       Self::Texture2d => WebGlRenderingContext::TEXTURE_2D,
+      Self::CubeMap => WebGlRenderingContext::TEXTURE_CUBE_MAP,
+      Self::CubeMapNX => WebGlRenderingContext::TEXTURE_CUBE_MAP_NEGATIVE_X,
+      Self::CubeMapPX => WebGlRenderingContext::TEXTURE_CUBE_MAP_POSITIVE_X,
+      Self::CubeMapNY => WebGlRenderingContext::TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      Self::CubeMapPY => WebGlRenderingContext::TEXTURE_CUBE_MAP_POSITIVE_Y,
+      Self::CubeMapNZ => WebGlRenderingContext::TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      Self::CubeMapPZ => WebGlRenderingContext::TEXTURE_CUBE_MAP_POSITIVE_Z,
     }
   }
 }
@@ -343,6 +437,7 @@ impl TexParam {
 pub enum TextureFormat {
   RGBA,
   RGB,
+  Depth,
 }
 
 impl TextureFormat {
@@ -350,6 +445,22 @@ impl TextureFormat {
     match self {
       Self::RGBA => WebGlRenderingContext::RGBA,
       Self::RGB => WebGlRenderingContext::RGB,
+      Self::Depth => WebGlRenderingContext::DEPTH_COMPONENT,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FramebufferAttachment {
+  ColorAttachment0,
+  DepthAttachment,
+}
+
+impl FramebufferAttachment {
+  pub fn as_u32(&self) -> u32 {
+    match self {
+      Self::ColorAttachment0 => WebGlRenderingContext::COLOR_ATTACHMENT0,
+      Self::DepthAttachment => WebGlRenderingContext::DEPTH_ATTACHMENT,
     }
   }
 }

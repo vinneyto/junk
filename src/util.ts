@@ -5,6 +5,13 @@ import {
   Scene,
   Camera,
   Vector2,
+  CubeTextureLoader,
+  TextureLoader,
+  Texture,
+  CubeTexture,
+  Material,
+  IUniform,
+  Shader,
 } from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
@@ -65,7 +72,9 @@ export function resizeRenderer(
 ) {
   if (resizeRendererToDisplaySize(renderer)) {
     resizePerspectiveCamera(renderer, camera);
+    return true;
   }
+  return false;
 }
 
 export async function fetchGLTF(url: string) {
@@ -78,4 +87,98 @@ export async function fetchGLTF(url: string) {
       (e) => reject(e)
     );
   });
+}
+
+export async function fetchTexture(url: string): Promise<Texture> {
+  return new Promise((resolve, reject) => {
+    new TextureLoader().load(url, resolve, undefined, reject);
+  });
+}
+
+export async function fetchCubeTexture(urls: string[]): Promise<CubeTexture> {
+  return new Promise((resolve, reject) => {
+    new CubeTextureLoader().load(urls, resolve, undefined, reject);
+  });
+}
+
+export interface IChunks {
+  [chunk: string]: { before?: string[]; after?: string[]; replace?: string[] };
+}
+
+export function patchShader(src: string, chunks: IChunks): string {
+  let newSrc = src;
+
+  const join = (strings: string[], before?: string, after?: string) =>
+    [before, ...strings, after].filter((s) => s !== undefined).join('\n');
+
+  const anchors = Object.keys(chunks);
+
+  for (const anchor of anchors) {
+    const chunk = chunks[anchor];
+
+    if (chunk.before !== undefined) {
+      newSrc = newSrc.replace(anchor, join(chunk.before, undefined, anchor));
+    }
+
+    if (chunk.after !== undefined) {
+      newSrc = newSrc.replace(anchor, join(chunk.after, anchor));
+    }
+
+    if (chunk.replace !== undefined) {
+      newSrc = newSrc.replace(anchor, join(chunk.replace));
+    }
+  }
+
+  return newSrc;
+}
+
+export function patchMaterial(
+  material: Material,
+  {
+    fragment,
+    vertex,
+    uniforms,
+    debugBefore,
+    debugAfter,
+  }: {
+    fragment?: IChunks;
+    vertex?: IChunks;
+    uniforms?: Record<string, IUniform>;
+    debugBefore?: boolean;
+    debugAfter?: boolean;
+  }
+) {
+  const oldOnBeforeCompile = material.onBeforeCompile;
+
+  material.onBeforeCompile = (shader: Shader, renderer: WebGLRenderer) => {
+    oldOnBeforeCompile.call(material, shader, renderer);
+
+    if (uniforms !== undefined) {
+      Object.assign(shader.uniforms, uniforms);
+    }
+
+    if (vertex !== undefined) {
+      if (debugBefore) {
+        console.warn('--- Vertex shader before ---\n', shader.vertexShader);
+      }
+
+      shader.vertexShader = patchShader(shader.vertexShader, vertex);
+
+      if (debugAfter) {
+        console.warn('--- Vertex shader after ---\n', shader.vertexShader);
+      }
+    }
+
+    if (fragment !== undefined) {
+      if (debugBefore) {
+        console.warn('--- Fragment shader before ---\n', shader.fragmentShader);
+      }
+
+      shader.fragmentShader = patchShader(shader.fragmentShader, fragment);
+
+      if (debugAfter) {
+        console.warn('--- Fragment shader after ---\n', shader.fragmentShader);
+      }
+    }
+  };
 }

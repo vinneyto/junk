@@ -1,6 +1,12 @@
 import { Demo } from '../Demo';
 import whaleGltfSrc from './models/Duck.glb';
 import grassTextureSrc from './textures/grass_texture.jpg';
+import skyboxNXSrc from './textures/skybox/nx.jpg';
+import skyboxPXSrc from './textures/skybox/px.jpg';
+import skyboxNYSrc from './textures/skybox/ny.jpg';
+import skyboxPYSrc from './textures/skybox/py.jpg';
+import skyboxNZSrc from './textures/skybox/nz.jpg';
+import skyboxPZSrc from './textures/skybox/pz.jpg';
 import { Vector2 } from 'three';
 
 export async function createWasmGltfDemo(): Promise<Demo> {
@@ -9,9 +15,22 @@ export async function createWasmGltfDemo(): Promise<Demo> {
   const gltfData = await (await fetch(whaleGltfSrc)).arrayBuffer();
   const grassImage = await fetchImage(grassTextureSrc);
 
+  const skyboxNXImage = await fetchImage(skyboxNXSrc);
+  const skyboxPXImage = await fetchImage(skyboxPXSrc);
+  const skyboxNYImage = await fetchImage(skyboxNYSrc);
+  const skyboxPYImage = await fetchImage(skyboxPYSrc);
+  const skyboxNZImage = await fetchImage(skyboxNZSrc);
+  const skyboxPZImage = await fetchImage(skyboxPZSrc);
+
   const demo = new GLTFRendererDemo(
     new Uint8Array(gltfData),
     grassImage,
+    skyboxNXImage,
+    skyboxPXImage,
+    skyboxNYImage,
+    skyboxPYImage,
+    skyboxNZImage,
+    skyboxPZImage,
     Math.round(Math.random() * 100)
   );
 

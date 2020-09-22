@@ -1,20 +1,21 @@
 use generational_arena::Index;
 use gltf::Gltf;
 use log::info;
-use na::{Point2, Point3, UnitQuaternion, Vector2, Vector3};
+use na::{Point2, Point3, UnitQuaternion, Vector2, Vector3, Vector4};
 use ncollide3d::procedural::{unit_quad, TriMesh};
-use noise::{NoiseFn, Perlin, Seedable};
 use std::f32::consts::PI;
 use std::result::Result as StdResult;
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlImageElement;
 
-use crate::renderer::webgl::context::{Context, TexParam};
-use crate::renderer::webgl::material::PbrMaterial;
+use crate::renderer::webgl::context::{Context, TexParam, TextureFormat, TextureKind};
+use crate::renderer::webgl::material::{PbrMaterial, SkyboxMaterial};
+use crate::renderer::webgl::pass::Pass;
 use crate::renderer::webgl::renderer::{Camera, Renderer, Sampler};
 use crate::renderer::webgl::turntable::Turntable;
 use crate::scene::node::{compose_matrix, Node};
 
+use super::perlin::get_perlin_data;
 use super::webgl_canvas::WebGlCanvas;
 
 #[wasm_bindgen]
@@ -23,6 +24,7 @@ pub struct GLTFRendererDemo {
   camera_handle: Index,
   canvas: WebGlCanvas,
   turntable: Turntable,
+  passes: Vec<Pass>,
 }
 
 #[wasm_bindgen]
@@ -31,6 +33,12 @@ impl GLTFRendererDemo {
   pub fn new(
     gltf_data: &[u8],
     ground_image: &HtmlImageElement,
+    skybox_nx_image: &HtmlImageElement,
+    skybox_px_image: &HtmlImageElement,
+    skybox_ny_image: &HtmlImageElement,
+    skybox_py_image: &HtmlImageElement,
+    skybox_nz_image: &HtmlImageElement,
+    skybox_pz_image: &HtmlImageElement,
     seed: u32,
   ) -> StdResult<GLTFRendererDemo, JsValue> {
     let canvas = WebGlCanvas::new()?;
@@ -61,14 +69,45 @@ impl GLTFRendererDemo {
     // info!("whale_handles {:#?}", whale_handles);
     // info!("renderer {:#?}", renderer);
 
+    let skybox_texture = renderer.bake_cube_map_texture(
+      TextureFormat::RGB,
+      Sampler::default(),
+      &[
+        (TextureKind::CubeMapNX, skybox_nx_image),
+        (TextureKind::CubeMapPX, skybox_px_image),
+        (TextureKind::CubeMapNY, skybox_ny_image),
+        (TextureKind::CubeMapPY, skybox_py_image),
+        (TextureKind::CubeMapNZ, skybox_nz_image),
+        (TextureKind::CubeMapPZ, skybox_pz_image),
+      ],
+    );
+
+    let skybox_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
+    let skybox_material_handle =
+      renderer.bake_material(SkyboxMaterial::new(skybox_texture).boxed());
+
+    let skybox_mesh_handle = renderer.compose_mesh(
+      skybox_geometry_handle,
+      skybox_material_handle,
+      Some(String::from("skybox")),
+    );
+
+    let mut skybox_node = Node::new(Some(renderer.scene.get_root_handle()));
+
+    skybox_node.mesh = Some(skybox_mesh_handle);
+
+    renderer.insert_node(skybox_node);
+
     //
-    let cuboid_material_handle = renderer.insert_material(
+    let cuboid_material_handle = renderer.bake_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.0, 1.0))
+        .set_debug_cube_map(Some(skybox_texture))
+        // .set_color_map(Some(render_target_texture))
         .boxed(),
     );
 
-    let cuboid_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(1.0, 1.0, 1.0));
+    let cuboid_geometry_handle = renderer.bake_cuboid_geometry(Vector3::new(2.0, 2.0, 2.0));
 
     let cuboid_mesh_handle = renderer.compose_mesh(
       cuboid_geometry_handle,
@@ -91,9 +130,9 @@ impl GLTFRendererDemo {
     sampler.wrap_s = TexParam::Repeat;
     sampler.wrap_t = TexParam::Repeat;
 
-    let ground_texture_handle = renderer.bake_2d_rgb_texture(sampler, ground_image);
+    let ground_texture_handle = renderer.bake_2d_texture(TextureFormat::RGB, sampler, ground_image);
 
-    let ground_material_handle = renderer.insert_material(
+    let ground_material_handle = renderer.bake_material(
       PbrMaterial::new()
         .set_color(Vector3::new(0.0, 0.8, 0.2))
         .set_cull_face(false)
@@ -120,11 +159,20 @@ impl GLTFRendererDemo {
 
     renderer.insert_node(ground_node);
 
+    let passes = vec![Pass::new()
+      .set_clean_color(true)
+      .set_clean_depth(true)
+      .set_background_color(Vector4::new(1.0, 1.0, 1.0, 1.0))
+      .set_handler(move |renderer| {
+        renderer.render_scene(renderer.scene.get_root_handle(), camera_handle);
+      })];
+
     Ok(GLTFRendererDemo {
       camera_handle,
       canvas,
       renderer,
       turntable,
+      passes,
     })
   }
 
@@ -162,41 +210,10 @@ impl GLTFRendererDemo {
       .turntable
       .update_camera(&mut self.renderer, self.camera_handle);
 
-    self
-      .renderer
-      .render_scene(self.renderer.scene.get_root_handle(), self.camera_handle);
-  }
-}
-
-fn get_perlin_data(width: usize, height: usize, a: f64, b: f64, seed: u32) -> Vec<f32> {
-  let perlin = Perlin::new().set_seed(seed);
-
-  let mut data = vec![0.0; width * height * 4];
-
-  let x_factor = 1.0 / (width - 1) as f64;
-  let y_factor = 1.0 / (height - 1) as f64;
-
-  for row in 0..height {
-    for col in 0..width {
-      let x = x_factor * col as f64;
-      let y = y_factor * row as f64;
-      let mut sum = 0.0;
-      let mut freq = a;
-      let mut scale = b;
-
-      for oct in 0..4 {
-        let val = perlin.get([x * freq, y * freq]) / scale;
-        sum += val;
-        let result = (sum + 1.0) / 2.0;
-
-        data[((row * width + col) * 4) + oct] = result as f32;
-        freq *= 2.0;
-        scale *= b;
-      }
+    for pass in &self.passes {
+      pass.render(&mut self.renderer);
     }
   }
-
-  data
 }
 
 pub fn get_ground_surface_tri_mesh(size: &Vector3<f32>, seed: u32) -> TriMesh<f32> {
