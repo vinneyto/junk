@@ -10,6 +10,7 @@ import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo
 import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
 import { createPerlinNoiseDemo as vinneytoPerlinNoiseDemo } from './demo/vinneyto-demo/perlinNoiseDemo';
 import { createWaterSurfaceDemo as createVinneytoWaterSurfaceDemo } from './demo/vinneyto-demo/waterSurfaceDemo/createWaterSurfaceDemo';
+import { rayTracingInOneWeekend } from './demo/vinneyto-demo/rayTracingInOneWeekend/rayTracingInOneWeekend';
 
 interface RouteInfo {
   demo: () => Promise<Demo>;
@@ -93,4 +94,10 @@ routes.set('vinneyto-water-surface-demo', {
   title: 'Water surface',
   authors: 'vinneyto',
   tags: ['wasm', 'rust', 'webgl', 'threejs', 'typescript'],
+});
+routes.set('vinneyto-raytracing-in-one-weekend', {
+  demo: rayTracingInOneWeekend,
+  title: 'Ray Tracing in One Weekend',
+  authors: 'vinneyto',
+  tags: ['typescript'],
 });
