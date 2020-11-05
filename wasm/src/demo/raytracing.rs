@@ -42,7 +42,19 @@ pub fn set_color(data: &mut [u8], color: &Vector3<f32>, i: usize) {
 }
 
 pub fn ray_color(ray: &Ray<f32>) -> Vector3<f32> {
+  if hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, ray) {
+    return Vector3::new(1.0, 0.0, 0.0);
+  }
   let unit_direction = Unit::new_normalize(ray.dir);
   let t = 0.5 * unit_direction.y + 1.0;
   (1.0 - t) * Vector3::new(1.0, 1.0, 1.0) + t * Vector3::new(0.5, 0.7, 1.0)
+}
+
+pub fn hit_sphere(center: &Point3<f32>, radius: f32, r: &Ray<f32>) -> bool {
+  let oc = r.origin - center;
+  let a = r.dir.dot(&r.dir);
+  let b = 2.0 * oc.dot(&r.dir);
+  let c = oc.dot(&oc) - radius * radius;
+  let discriminant = b * b - 4.0 * a * c;
+  discriminant > 0.0
 }

@@ -1,37 +1,54 @@
 import { Demo } from '../../Demo';
+import {
+  Scene,
+  Camera,
+  PlaneBufferGeometry,
+  RawShaderMaterial,
+  Mesh,
+  Vector2,
+} from 'three';
+import { createRenderer, resizeRendererToDisplaySize } from '../../../util';
+import vertSrc from './shaders/weekend_vert.glsl';
+import fragSrc from './shaders/weekend_frag.glsl';
 
 export async function rayTracingInOneWeekend(): Promise<Demo> {
-  const canvas = document.createElement('canvas');
+  const renderer = createRenderer();
+  const camera = new Camera();
+  const scene = new Scene();
 
-  const { draw_raytracing_scene } = await import('../../../../wasm/pkg');
+  const geometry = new PlaneBufferGeometry(2, 2);
+  const material = new RawShaderMaterial({
+    vertexShader: vertSrc,
+    fragmentShader: fragSrc,
+    uniforms: {
+      resolution: { value: new Vector2() },
+    },
+  });
+  const screen = new Mesh(geometry, material);
+  scene.add(screen);
 
-  canvas.style.position = 'fixed';
-  canvas.style.left = '0';
-  canvas.style.top = '0';
-  canvas.style.width = '100%';
-  canvas.style.height = '100%';
+  let dirty = true;
 
-  document.body.appendChild(canvas);
+  const render = () => {
+    if (resizeRendererToDisplaySize(renderer)) {
+      dirty = true;
 
-  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      material.uniforms.resolution.value.set(
+        renderer.domElement.width,
+        renderer.domElement.height
+      );
+    }
 
-  const ctx = canvas.getContext('2d')!;
+    if (dirty) {
+      const t0 = window.performance.now();
 
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+      renderer.render(scene, camera);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      console.log(`rendering time = ${window.performance.now() - t0}ms`);
 
-  const data = draw_raytracing_scene(canvas.width, canvas.height);
-
-  for (let i = 0; i < imageData.data.length; i++) {
-    imageData.data[i] = data[i];
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-
-  const render = () => {};
+      dirty = false;
+    }
+  };
 
   return { render };
 }
