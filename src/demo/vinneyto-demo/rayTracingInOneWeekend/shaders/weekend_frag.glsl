@@ -1,6 +1,7 @@
 precision highp float;
 
 uniform vec2 resolution;
+uniform sampler2D worldTexture;
 
 struct Ray {
   vec3 origin;
@@ -19,6 +20,15 @@ struct HitRecord {
   bool frontFace;
 };
 
+#define ROW0_U ((0.5 + 0.0) / 4.)
+#define ROW1_U ((0.5 + 1.0) / 4.)
+
+Sphere readSphere(int idx) {
+  float v = (float(idx) + 0.5) / float(WORLD_COUNT);
+  vec4 row0 = texture2D(worldTexture, vec2(ROW0_U, v));
+  return Sphere(row0.xyz, row0.w);
+}
+
 vec3 at(Ray ray, float t) {
   return ray.origin + t * ray.dir;
 }
@@ -28,7 +38,7 @@ void setFaceNormal(inout HitRecord rec, Ray r, vec3 outwardNormal) {
   rec.normal = rec.frontFace ? outwardNormal : -outwardNormal;
 }
 
-bool hitSphere(Sphere sphere, Ray ray, inout HitRecord rec) {
+bool hitSphere(Sphere sphere, Ray ray, float tMin, float tMax, inout HitRecord rec) {
   vec3 oc = ray.origin - sphere.center;
   float a = dot(ray.dir, ray.dir);
   float half_b = dot(oc, ray.dir);
@@ -38,10 +48,17 @@ bool hitSphere(Sphere sphere, Ray ray, inout HitRecord rec) {
     return false;
   }
 
-  float t = (-half_b - sqrt(discriminant)) / a;
+  float sqrtd = sqrt(discriminant);
 
-  rec.t = t;
-  rec.point = at(ray, t);
+  float root = (-half_b - sqrtd) / a;
+  if (root < tMin || tMax < root) {
+    root = (-half_b + sqrtd) / a;
+    if (root < tMin || tMax < root)
+      return false;
+  }
+
+  rec.t = root;
+  rec.point = at(ray, rec.t);
 
   vec3 outwardNormal = (rec.point - sphere.center) / sphere.radius;
 
@@ -51,12 +68,15 @@ bool hitSphere(Sphere sphere, Ray ray, inout HitRecord rec) {
 }
 
 vec3 rayColor(Ray ray) {
-  Sphere sphere = Sphere(vec3(0.0, 0.0, -1.0), 0.5);
   HitRecord rec = HitRecord(vec3(0), vec3(0), 0.0, false);
 
-  if (hitSphere(sphere, ray, rec)) {
-    vec3 n = rec.normal;
-    return 0.5 * vec3(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+  for (int idx = 0; idx < WORLD_COUNT; idx++) {
+    Sphere sphere = readSphere(idx);
+
+    if (hitSphere(sphere, ray, 0.0, 1000.0, rec)) {
+      vec3 n = rec.normal;
+      return 0.5 * vec3(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+    }
   }
 
   vec3 unit = normalize(ray.dir);

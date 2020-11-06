@@ -99,5 +99,5 @@ routes.set('vinneyto-raytracing-in-one-weekend', {
   demo: rayTracingInOneWeekend,
   title: 'Ray Tracing in One Weekend',
   authors: 'vinneyto',
-  tags: ['typescript'],
+  tags: ['typescript', 'webgl', 'threejs'],
 });
