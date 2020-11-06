@@ -7,23 +7,49 @@ struct Ray {
   vec3 dir;
 };
 
+struct Sphere {
+  vec3 center;
+  float radius;
+};
+
+struct HitRecord {
+  vec3 point;
+  vec3 normal;
+  float t;
+};
+
 vec3 at(Ray ray, float t) {
   return ray.origin + t * ray.dir;
 }
 
-bool hitSphere(vec3 center, float radius, Ray r) {
-  vec3 oc = r.origin - center;
-  float a = dot(r.dir, r.dir);
-  float b = 2.0 * dot(oc, r.dir);
-  float c = dot(oc, oc) - radius * radius;
-  float discriminant = b * b - 4.0 * a * c;
-  return discriminant > 0.0;
+bool hitSphere(Sphere sphere, Ray ray, inout HitRecord rec) {
+  vec3 oc = ray.origin - sphere.center;
+  float a = dot(ray.dir, ray.dir);
+  float half_b = dot(oc, ray.dir);
+  float c = dot(oc, oc) - sphere.radius * sphere.radius;
+  float discriminant = half_b * half_b - a * c;
+  if (discriminant < 0.0) {
+    return false;
+  }
+
+  float t = (-half_b - sqrt(discriminant)) / a;
+
+  rec.t = t;
+  rec.point = at(ray, t);
+  rec.normal = (rec.point - sphere.center) / sphere.radius;
+
+  return true;
 }
 
 vec3 rayColor(Ray ray) {
-  if (hitSphere(vec3(0.0, 0.0, -1.0), 0.5, ray)) {
-    return vec3(1.0, 0.0, 0.0);
+  Sphere sphere = Sphere(vec3(0.0, 0.0, -1.0), 0.5);
+  HitRecord rec = HitRecord(vec3(0), vec3(0), 0.0);
+
+  if (hitSphere(sphere, ray, rec)) {
+    vec3 n = rec.normal;
+    return 0.5 * vec3(n.x + 1.0, n.y + 1.0, n.z + 1.0);
   }
+
   vec3 unit = normalize(ray.dir);
   float t = 0.5 * unit.y + 1.0;
   return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
