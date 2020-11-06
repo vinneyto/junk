@@ -16,10 +16,16 @@ struct HitRecord {
   vec3 point;
   vec3 normal;
   float t;
+  bool frontFace;
 };
 
 vec3 at(Ray ray, float t) {
   return ray.origin + t * ray.dir;
+}
+
+void setFaceNormal(inout HitRecord rec, Ray r, vec3 outwardNormal) {
+  rec.frontFace = dot(r.dir, outwardNormal) < 0.0;
+  rec.normal = rec.frontFace ? outwardNormal : -outwardNormal;
 }
 
 bool hitSphere(Sphere sphere, Ray ray, inout HitRecord rec) {
@@ -36,14 +42,17 @@ bool hitSphere(Sphere sphere, Ray ray, inout HitRecord rec) {
 
   rec.t = t;
   rec.point = at(ray, t);
-  rec.normal = (rec.point - sphere.center) / sphere.radius;
+
+  vec3 outwardNormal = (rec.point - sphere.center) / sphere.radius;
+
+  setFaceNormal(rec, ray, outwardNormal);
 
   return true;
 }
 
 vec3 rayColor(Ray ray) {
   Sphere sphere = Sphere(vec3(0.0, 0.0, -1.0), 0.5);
-  HitRecord rec = HitRecord(vec3(0), vec3(0), 0.0);
+  HitRecord rec = HitRecord(vec3(0), vec3(0), 0.0, false);
 
   if (hitSphere(sphere, ray, rec)) {
     vec3 n = rec.normal;
