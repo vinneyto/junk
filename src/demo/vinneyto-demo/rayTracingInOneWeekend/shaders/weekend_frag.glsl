@@ -2,6 +2,8 @@ precision highp float;
 
 uniform vec2 resolution;
 uniform sampler2D worldTexture;
+uniform sampler2D noiseTexture;
+uniform float shiftSphere;
 
 struct Ray {
   vec3 origin;
@@ -26,7 +28,11 @@ struct HitRecord {
 Sphere readSphere(int idx) {
   float v = (float(idx) + 0.5) / float(WORLD_COUNT);
   vec4 row0 = texture2D(worldTexture, vec2(ROW0_U, v));
-  return Sphere(row0.xyz, row0.w);
+  Sphere s = Sphere(row0.xyz, row0.w);
+  if (idx == 0) {
+    s.center.x += shiftSphere;
+  }
+  return s;
 }
 
 vec3 at(Ray ray, float t) {
@@ -69,19 +75,40 @@ bool hitSphere(Sphere sphere, Ray ray, float tMin, float tMax, inout HitRecord r
 
 vec3 rayColor(Ray ray) {
   HitRecord rec = HitRecord(vec3(0), vec3(0), 0.0, false);
+  Ray currentRay = ray;
 
-  for (int idx = 0; idx < WORLD_COUNT; idx++) {
-    Sphere sphere = readSphere(idx);
+  float decay = 1.0;
 
-    if (hitSphere(sphere, ray, 0.0, 1000.0, rec)) {
-      vec3 n = rec.normal;
-      return 0.5 * vec3(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+  for (int col = 0; col < RAY_DEPTH; col++) {
+    bool hasCollision = false;
+
+    for (int idx = 0; idx < WORLD_COUNT; idx++) {
+      Sphere sphere = readSphere(idx);
+
+      if (hitSphere(sphere, currentRay, 0.001, 1000.0, rec)) {
+        hasCollision = true;
+
+        vec3 n = rec.normal;
+        float theta = dot(vec3(0.0, 0.0, 1.0), vec3(0.0, n.y, n.z));
+        float phi = dot(vec3(1.0, 0.0, 0.0), vec3(n.x, 0.0, n.z));
+        vec2 noiseUV = vec2(theta, phi) * 100000.0;
+        vec3 target = rec.point + rec.normal + texture2D(noiseTexture, noiseUV).xyz;
+        currentRay = Ray(rec.point, target - rec.point);
+        break;
+      }
     }
+
+    if (hasCollision) {
+      decay *= 0.5;
+      continue;
+    }
+
+    vec3 unit = normalize(currentRay.dir);
+    float t = 0.5 * (unit.y + 1.0);
+    return ((1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0)) * decay;
   }
 
-  vec3 unit = normalize(ray.dir);
-  float t = 0.5 * unit.y + 1.0;
-  return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+  return vec3(0.0, 0.0, 0.0);
 }
 
 void main() {
@@ -96,9 +123,19 @@ void main() {
   vec3 vertical = vec3(0.0, viewport.y, 0.0);
   vec3 lowerLeftCorner = origin - horizontal * 0.5 - vertical * 0.5 - vec3(0.0, 0.0, focalLength);
 
-  Ray ray = Ray(origin, lowerLeftCorner + uv.x * horizontal + uv.y * vertical - origin);
+  vec3 color = vec3(0.0, 0.0, 0.0);
 
-  vec3 color = rayColor(ray);
+  for (int s = 0; s < SAMPLES_PER_PIXEL; s++) {
+    vec2 noiseUV = uv + vec2(s) / float(SAMPLES_PER_PIXEL);
+    vec2 sUV = uv + texture2D(noiseTexture, noiseUV).xy / resolution / 2.0;
+    Ray ray = Ray(origin, lowerLeftCorner + sUV.x * horizontal + sUV.y * vertical - origin);
+
+    color += rayColor(ray);
+  }
+
+  float scale = 1.0 / float(SAMPLES_PER_PIXEL);
+
+  color = sqrt(color * scale);
 
   gl_FragColor = vec4(color, 1.0);
 }

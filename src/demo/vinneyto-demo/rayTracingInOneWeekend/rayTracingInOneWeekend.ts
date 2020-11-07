@@ -8,11 +8,13 @@ import {
   Vector2,
   Sphere,
   Vector3,
+  Clock,
 } from 'three';
 import { createRenderer, resizeRendererToDisplaySize } from '../../../util';
 import vertSrc from './shaders/weekend_vert.glsl';
 import fragSrc from './shaders/weekend_frag.glsl';
 import { World } from './World';
+import { createNoiseTexture } from './helpers';
 
 export async function rayTracingInOneWeekend(): Promise<Demo> {
   const renderer = createRenderer();
@@ -28,6 +30,8 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
   world.spheres.push(new Sphere(new Vector3(0, 0, -1), 0.3));
   world.spheres.push(new Sphere(new Vector3(0, -100.3, -1), 100));
 
+  const noiseTexture = createNoiseTexture(512);
+
   const geometry = new PlaneBufferGeometry(2, 2);
   const material = new RawShaderMaterial({
     vertexShader: vertSrc,
@@ -35,15 +39,21 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
     uniforms: {
       resolution: { value: new Vector2() },
       worldTexture: { value: world.createTexture() },
+      noiseTexture: { value: noiseTexture },
+      shiftSphere: { value: 0 },
     },
     defines: {
       WORLD_COUNT: world.getCount(),
+      RAY_DEPTH: 10,
+      SAMPLES_PER_PIXEL: 10,
     },
   });
   const screen = new Mesh(geometry, material);
   scene.add(screen);
 
   let dirty = true;
+
+  const clock = new Clock();
 
   const render = () => {
     if (resizeRendererToDisplaySize(renderer)) {
@@ -55,14 +65,12 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
       );
     }
 
-    if (dirty) {
-      const t0 = window.performance.now();
+    material.uniforms.shiftSphere.value = Math.sin(clock.getElapsedTime()) / 2;
 
+    if (dirty) {
       renderer.render(scene, camera);
 
-      console.log(`rendering time = ${window.performance.now() - t0}ms`);
-
-      dirty = false;
+      // dirty = false;
     }
   };
 
