@@ -87,19 +87,21 @@ vec3 rayColor(Ray ray) {
 
       if (hitSphere(sphere, currentRay, 0.001, 1000.0, rec)) {
         hasCollision = true;
+      }
 
+      if (hasCollision) {
         vec3 n = rec.normal;
         float theta = dot(vec3(0.0, 0.0, 1.0), vec3(0.0, n.y, n.z));
         float phi = dot(vec3(1.0, 0.0, 0.0), vec3(n.x, 0.0, n.z));
-        vec2 noiseUV = vec2(theta, phi) * 100000.0;
+        vec2 noiseUV = vec2(theta, phi) * 100000.0 + float(col) + float(idx);
         vec3 target = rec.point + rec.normal + texture2D(noiseTexture, noiseUV).xyz;
         currentRay = Ray(rec.point, target - rec.point);
+        decay *= 0.5;
         break;
       }
     }
 
     if (hasCollision) {
-      decay *= 0.5;
       continue;
     }
 

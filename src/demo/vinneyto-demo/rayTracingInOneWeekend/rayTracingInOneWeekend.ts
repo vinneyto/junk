@@ -8,7 +8,6 @@ import {
   Vector2,
   Sphere,
   Vector3,
-  Clock,
 } from 'three';
 import { createRenderer, resizeRendererToDisplaySize } from '../../../util';
 import vertSrc from './shaders/weekend_vert.glsl';
@@ -44,16 +43,14 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
     },
     defines: {
       WORLD_COUNT: world.getCount(),
-      RAY_DEPTH: 10,
-      SAMPLES_PER_PIXEL: 10,
+      RAY_DEPTH: 50,
+      SAMPLES_PER_PIXEL: 100,
     },
   });
   const screen = new Mesh(geometry, material);
   scene.add(screen);
 
   let dirty = true;
-
-  const clock = new Clock();
 
   const render = () => {
     if (resizeRendererToDisplaySize(renderer)) {
@@ -65,12 +62,10 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
       );
     }
 
-    material.uniforms.shiftSphere.value = Math.sin(clock.getElapsedTime()) / 2;
-
     if (dirty) {
       renderer.render(scene, camera);
 
-      // dirty = false;
+      dirty = false;
     }
   };
 
