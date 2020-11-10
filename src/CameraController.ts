@@ -1,6 +1,8 @@
 import { Camera, Vector3, Vector2 } from 'three';
 
 export class CameraController {
+  public onRotate?: () => void;
+
   private azimuthalAngle = 0;
   private polarAngle = 0;
 
@@ -87,6 +89,10 @@ export class CameraController {
 
     this.polarAngle = Math.min(bound, Math.max(-bound, polarAngle % round));
     this.azimuthalAngle = azimuthalAngle % round;
+
+    if (this.onRotate !== undefined) {
+      this.onRotate();
+    }
   }
 
   getPolarAngle() {
