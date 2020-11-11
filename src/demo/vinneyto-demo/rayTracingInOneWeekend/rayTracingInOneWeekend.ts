@@ -154,15 +154,16 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
 
       if (view.scene === rtxScene) {
         if (dirty) {
-          material.uniforms.resolution.value.set(width, height);
+          material.uniforms.resolution.value.set(
+            renderer.domElement.width * view.width,
+            renderer.domElement.height * view.height
+          );
 
           const matrix = new Matrix4()
             .multiply(camera.projectionMatrix)
             .multiply(camera.matrixWorldInverse);
 
           material.uniforms.inverseMVP.value.getInverse(matrix);
-
-          console.log(material.uniforms.inverseMVP.value);
 
           renderer.setRenderTarget(rtxRenderTarget);
           renderer.render(view.scene, view.camera);
