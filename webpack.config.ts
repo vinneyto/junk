@@ -10,14 +10,14 @@ const debug = process.env.NODE_ENV !== 'production';
 
 const plugins = [
   new HtmlWebpackPlugin({
-    title: 'three-shader',
+    title: 'xr',
     favicon: './assets/favicon.ico',
     meta: {
-      viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no',
+      viewport: 'width=device-width, initial-scale=1, user-scalable=no',
+      'mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-capable': 'yes',
     },
   }),
-  new CleanWebpackPlugin(),
-  new FriendlyErrorsWebpackPlugin(),
   new MiniCssExtractPlugin({
     filename: debug ? '[name].css' : '[name].[chunkhash].css',
   }),
@@ -25,6 +25,8 @@ const plugins = [
     crateDirectory: path.join(__dirname, 'wasm'),
     forceMode: 'production',
   }),
+  new CleanWebpackPlugin(),
+  new FriendlyErrorsWebpackPlugin(),
 ];
 
 if (!debug) {
@@ -50,7 +52,17 @@ export default {
   },
   module: {
     rules: [
-      { test: /\.ts/, loader: 'ts-loader' },
+      {
+        test: /\.ts/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+        options: {
+          transpileOnly: true,
+          compilerOptions: {
+            isolatedModules: true,
+          },
+        },
+      },
       {
         test: /\.css/,
         use: [
@@ -58,16 +70,17 @@ export default {
           'css-loader',
         ],
       },
-      { test: /\.glsl/, loader: 'raw-loader' },
+      { test: /\.glsl|wgsl/, loader: 'raw-loader' },
       { test: /\.gltf/, loader: 'gltf-webpack-loader' },
       { test: /\.bin|png|svg|jpg|gif|glb/, loader: 'file-loader' },
     ],
   },
+  stats: 'errors-only',
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
     port: 9000,
     open: true,
     noInfo: true,
+    historyApiFallback: true,
   },
   plugins,
   optimization: {

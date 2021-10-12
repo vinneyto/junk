@@ -1,7 +1,26 @@
 {
-  "extends": "./tsconfig.base.json",
-  "files": ["webpack.config.ts"],
-  "ts-node": {
-    "transpileOnly": true
-  }
+  "$schema": "http://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSources": true,
+    "jsx": "react",
+    "lib": ["DOM", "ESNext"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ESNext"
+  },
+  "include": [
+    "definitions.d.ts",
+    "webpack.config.ts",
+    "src/**/*",
+    "node_modules/@webgpu/types/**/*",
+    "node_modules/@google/model-viewer/src/types/webxr.ts"
+  ]
 }
