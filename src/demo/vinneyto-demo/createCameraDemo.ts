@@ -69,7 +69,7 @@ export async function createCameraDemo(): Promise<Demo> {
 
   cameraMesh.position.y = 1;
 
-  const views: any = [
+  const views = [
     {
       left: 0,
       bottom: 0,

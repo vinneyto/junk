@@ -34,10 +34,6 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
 
   // rtx
 
-  if (!renderer.extensions.get('OES_texture_float')) {
-    throw new Error('unable to use float textures');
-  }
-
   const world = new World();
 
   world.spheres.push(new Sphere(new Vector3(0, 0.2, 0), 0.5));
@@ -96,7 +92,7 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
     classicScene.add(mesh);
   });
 
-  const views: any = [
+  const views = [
     {
       left: 0,
       bottom: 0,
@@ -161,9 +157,10 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
 
           const matrix = new Matrix4()
             .multiply(camera.projectionMatrix)
-            .multiply(camera.matrixWorldInverse);
+            .multiply(camera.matrixWorldInverse)
+            .invert();
 
-          material.uniforms.inverseMVP.value.getInverse(matrix);
+          material.uniforms.inverseMVP.value.copy(matrix);
 
           renderer.setRenderTarget(rtxRenderTarget);
           renderer.render(view.scene, view.camera);

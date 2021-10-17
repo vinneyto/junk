@@ -1,13 +1,12 @@
 import { Demo } from './Demo';
 
-type WasmDemoCtor = new () => { update: () => {} };
+type WasmDemoCtor = new () => { update: () => void };
 
 export function createWasmDemoFactory(name: string): () => Promise<Demo> {
   return async (): Promise<Demo> => {
-    const wasm: Record<
-      string,
-      WasmDemoCtor | object | undefined
-    > = await import('../../wasm/pkg');
+    const wasm: Record<string, WasmDemoCtor | object | undefined> = await (
+      await import('../../wasm/pkg')
+    ).default;
 
     const DemoCtor = wasm[name];
 

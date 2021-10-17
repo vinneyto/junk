@@ -106,7 +106,7 @@ export async function useScanner(): Promise<Demo> {
   return { render };
 }
 
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createBox = () => {
   const geometry = new BoxBufferGeometry(0.1, 0.1, 0.1);
   const material = new MeshPhysicalMaterial({

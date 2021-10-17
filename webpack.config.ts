@@ -2,7 +2,6 @@ import path from 'path';
 import CompressionPlugin from 'compression-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
-import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
 
@@ -26,7 +25,6 @@ const plugins = [
     forceMode: 'production',
   }),
   new CleanWebpackPlugin(),
-  new FriendlyErrorsWebpackPlugin(),
 ];
 
 if (!debug) {
@@ -56,19 +54,10 @@ export default {
         test: /\.ts/,
         loader: 'ts-loader',
         exclude: /node_modules/,
-        options: {
-          transpileOnly: true,
-          compilerOptions: {
-            isolatedModules: true,
-          },
-        },
       },
       {
         test: /\.css/,
-        use: [
-          { loader: MiniCssExtractPlugin.loader, options: { hmr: debug } },
-          'css-loader',
-        ],
+        use: [{ loader: MiniCssExtractPlugin.loader }, 'css-loader'],
       },
       { test: /\.glsl|wgsl/, loader: 'raw-loader' },
       { test: /\.gltf/, loader: 'gltf-webpack-loader' },
@@ -79,7 +68,6 @@ export default {
   devServer: {
     port: 9000,
     open: true,
-    noInfo: true,
     historyApiFallback: true,
   },
   plugins,
@@ -88,5 +76,8 @@ export default {
       chunks: 'all',
     },
     runtimeChunk: true,
+  },
+  experiments: {
+    asyncWebAssembly: true,
   },
 };

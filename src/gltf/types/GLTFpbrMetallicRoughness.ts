@@ -7,5 +7,5 @@ export interface GLTFpbrMetallicRoughness {
   roughnessFactor?: number;
   metallicRoughnessTexture?: GLTFTextureInfo;
   extensions?: object;
-  extras?: any;
+  extras?: unknown;
 }

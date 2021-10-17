@@ -6,7 +6,7 @@ export const cross = (v1: Vector3, v2: Vector3) =>
 export const basis = (xAxis: Vector3, yAxis: Vector3, zAxis: Vector3) =>
   new Matrix4().makeBasis(xAxis, yAxis, zAxis);
 
-export const inverse = (m: Matrix4) => new Matrix4().getInverse(m);
+export const inverse = (m: Matrix4) => m.clone().invert();
 
 export const getUnsignedDot = (v1: Vector3, v2: Vector3) => {
   const v1n = v1.clone().normalize();

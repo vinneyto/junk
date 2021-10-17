@@ -5,5 +5,5 @@ export interface GLTFPrimitive {
   mode?: number;
   targets?: number;
   extensions?: object;
-  extras?: any;
+  extras?: unknown;
 }

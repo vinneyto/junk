@@ -10,7 +10,7 @@ import {
 } from './types';
 
 export class Context {
-  private attribAmount: number = 0;
+  private attribAmount = 0;
 
   constructor(private readonly gl: WebGLRenderingContext) {}
 

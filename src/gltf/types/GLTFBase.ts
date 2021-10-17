@@ -1,5 +1,5 @@
 export interface GLTFBase {
   extensions?: object;
-  extras?: any;
+  extras?: unknown;
   name?: string;
 }

@@ -75,6 +75,9 @@ const addConstantControls = (gui: GUI, config: GUIConfig) => {
 const addColorControls = (gui: GUI, config: GUIConfig) => {
   let {
     colorConfig: { negativeColor, positiveColor },
+  } = config;
+
+  const {
     customMaterial: { uniforms },
   } = config;
 

@@ -14,7 +14,9 @@ export async function buildPerlinSurfaceGeometry(
   size: Vector3,
   segments: Vector2
 ) {
-  const { get_perlin_data } = await import('../../../../wasm/pkg');
+  const { get_perlin_data } = await (
+    await import('../../../../wasm/pkg')
+  ).default;
   const { x: width, y: height } = segments;
 
   const data = get_perlin_data(

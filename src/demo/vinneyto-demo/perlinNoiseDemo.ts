@@ -17,7 +17,7 @@ import {
 import { CameraController } from '../../CameraController';
 
 export async function createPerlinNoiseDemo(): Promise<Demo> {
-  const { get_perlin_data } = await import('../../../wasm/pkg');
+  const { get_perlin_data } = await (await import('../../../wasm/pkg')).default;
 
   const renderer = createRenderer();
   renderer.setClearColor(new Color('black'));

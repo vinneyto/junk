@@ -10,7 +10,9 @@ import skyboxPZSrc from './textures/skybox/pz.jpg';
 import { Vector2 } from 'three';
 
 export async function createWasmGltfDemo(): Promise<Demo> {
-  const { GLTFRendererDemo } = await import('../../../wasm/pkg');
+  const { GLTFRendererDemo } = await (
+    await import('../../../wasm/pkg')
+  ).default;
 
   const gltfData = await (await fetch(whaleGltfSrc)).arrayBuffer();
   const grassImage = await fetchImage(grassTextureSrc);

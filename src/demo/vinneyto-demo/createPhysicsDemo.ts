@@ -18,7 +18,7 @@ import {
 import { CameraController } from '../../CameraController';
 
 export async function createPhysicsDemo(): Promise<Demo> {
-  const { PhysicsDemo } = await import('../../../wasm/pkg');
+  const { PhysicsDemo } = await (await import('../../../wasm/pkg')).default;
 
   const demo = new PhysicsDemo();
   const renderer = createRenderer();
