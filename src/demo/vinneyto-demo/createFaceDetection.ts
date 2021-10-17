@@ -3,12 +3,18 @@ import { Tensor3D } from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import { fetchImage } from '../../util';
 
+import tttModelPath from './tf-models/ttt_model.tfm';
+
 import photoPeopleSrc from './images/photo_people.jpeg';
 
 export async function createFaceDetection() {
   const image = await fetchImage(photoPeopleSrc);
 
   const imageTensor = await tf.browser.fromPixelsAsync(image);
+
+  const model = await tf.loadLayersModel(tttModelPath);
+
+  console.log(model);
 
   const reversed = tf.tidy(
     () =>

@@ -4,6 +4,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "inlineSources": true,
     "jsx": "react",
     "lib": ["DOM", "ESNext"],
@@ -20,6 +21,7 @@
   "include": [
     "webpack.config.ts",
     "src/**/*",
+    "tools/**/*",
     "node_modules/@webgpu/types/**/*",
     "node_modules/@google/model-viewer/src/types/webxr.ts"
   ]

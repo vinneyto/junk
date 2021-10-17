@@ -67,6 +67,10 @@ export default {
         use: ['source-map-loader'],
       },
       {
+        test: /\.tfm$/,
+        loader: 'tf-model-loader',
+      },
+      {
         test: /\.css/,
         use: [{ loader: MiniCssExtractPlugin.loader }, 'css-loader'],
       },
@@ -90,5 +94,10 @@ export default {
   },
   experiments: {
     asyncWebAssembly: true,
+  },
+  resolveLoader: {
+    alias: {
+      'tf-model-loader': path.resolve(__dirname, 'tools/tf-model-loader.ts'),
+    },
   },
 };

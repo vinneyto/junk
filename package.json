@@ -10,7 +10,7 @@
     "start": "webpack-dev-server",
     "check-types": "yarn tsc --noemit",
     "lint": "yarn eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "cut-skybox": "ts-node ./cut-skybox.ts",
+    "cut-skybox": "ts-node ./tools/cut-skybox.ts",
     "postinstall": "husky install"
   },
   "dependencies": {

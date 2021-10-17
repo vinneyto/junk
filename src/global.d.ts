@@ -32,3 +32,8 @@ declare module '*.png' {
   const content: string;
   export default content;
 }
+
+declare module '*.tfm' {
+  const content: string;
+  export default content;
+}
