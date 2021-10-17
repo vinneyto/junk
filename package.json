@@ -9,7 +9,8 @@
     "deploy": "cross-env NODE_ENV=production webpack && firebase deploy",
     "start": "webpack-dev-server",
     "lint": "yarn eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "cut-skybox": "ts-node ./cut-skybox.ts"
+    "cut-skybox": "ts-node ./cut-skybox.ts",
+    "postinstall": "husky install"
   },
   "dependencies": {
     "@types/compression-webpack-plugin": "9.0.0",
@@ -53,11 +54,6 @@
     "webpack": "5.58.2",
     "webpack-cli": "4.9.0",
     "webpack-dev-server": "4.3.1"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn lint && git update-index --again && pretty-quick --staged"
-    }
   },
   "prettier": {
     "singleQuote": true,
