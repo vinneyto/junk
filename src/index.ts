@@ -1,7 +1,7 @@
 import { routes } from './routes';
-import { Demo } from './demo/Demo';
 import { injectStyles } from './styles';
 import Stats from 'stats.js';
+import { Demo } from './demo/Demo';
 
 injectStyles();
 
@@ -23,7 +23,9 @@ async function choseDemo() {
 
     const demo = await info.demo();
 
-    start(demo);
+    if (demo !== undefined) {
+      start(demo);
+    }
   }
 }
 

@@ -9,7 +9,7 @@ const debug = process.env.NODE_ENV !== 'production';
 
 const plugins = [
   new HtmlWebpackPlugin({
-    title: 'xr',
+    title: 'three-shader',
     favicon: './assets/favicon.ico',
     meta: {
       viewport: 'width=device-width, initial-scale=1, user-scalable=no',
@@ -37,6 +37,7 @@ if (!debug) {
 
 export default {
   mode: debug ? 'development' : 'production',
+  devtool: 'eval',
   context: path.resolve('./src'),
   entry: {
     main: './index.ts',
@@ -54,6 +55,14 @@ export default {
         test: /\.ts/,
         loader: 'ts-loader',
         exclude: /node_modules/,
+        options: {
+          transpileOnly: true,
+        },
+      },
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        use: ['source-map-loader'],
       },
       {
         test: /\.css/,
@@ -61,7 +70,7 @@ export default {
       },
       { test: /\.glsl|wgsl/, loader: 'raw-loader' },
       { test: /\.gltf/, loader: 'gltf-webpack-loader' },
-      { test: /\.bin|png|svg|jpg|gif|glb/, loader: 'file-loader' },
+      { test: /\.bin|png|svg|jpg|jpeg|gif|glb/, loader: 'file-loader' },
     ],
   },
   stats: 'errors-only',

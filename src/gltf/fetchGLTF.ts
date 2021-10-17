@@ -1,3 +1,4 @@
+import { dirName, fetchBuffer, fetchImage } from '../util';
 import { GLTFRoot, GLTF } from './types';
 
 export async function fetchGLTF(url: string): Promise<GLTF> {
@@ -17,21 +18,4 @@ export async function fetchGLTF(url: string): Promise<GLTF> {
   );
 
   return { root, buffers, images };
-}
-
-function dirName(url: string) {
-  return url.split('/').slice(0, -1).join('/');
-}
-
-async function fetchBuffer(url: string) {
-  return fetch(url).then((result) => result.arrayBuffer());
-}
-
-function fetchImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = url;
-  });
 }

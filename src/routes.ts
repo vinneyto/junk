@@ -11,9 +11,10 @@ import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-de
 import { createPerlinNoiseDemo as vinneytoPerlinNoiseDemo } from './demo/vinneyto-demo/perlinNoiseDemo';
 import { createWaterSurfaceDemo as createVinneytoWaterSurfaceDemo } from './demo/vinneyto-demo/waterSurfaceDemo/createWaterSurfaceDemo';
 import { rayTracingInOneWeekend } from './demo/vinneyto-demo/rayTracingInOneWeekend/rayTracingInOneWeekend';
+import { createFaceDetection } from './demo/vinneyto-demo/createFaceDetection';
 
 interface RouteInfo {
-  demo: () => Promise<Demo>;
+  demo: () => Promise<Demo | void>;
   title: string;
   authors: string;
   tags?: string[];
@@ -100,4 +101,10 @@ routes.set('vinneyto-raytracing-in-one-weekend', {
   title: 'Ray Tracing in One Weekend',
   authors: 'vinneyto',
   tags: ['typescript', 'webgl', 'threejs'],
+});
+routes.set('vinneyto-face-detection', {
+  demo: createFaceDetection,
+  title: 'Face detection',
+  authors: 'vinneyto',
+  tags: ['typescript', 'Tensorflow.js'],
 });

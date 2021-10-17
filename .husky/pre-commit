@@ -1,1 +1,1 @@
-yarn lint && git update-index --again && yarn pretty-quick --staged
+yarn check-types && yarn lint && git update-index --again && yarn pretty-quick --staged

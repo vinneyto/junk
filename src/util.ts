@@ -182,3 +182,20 @@ export function patchMaterial(
     }
   };
 }
+
+export function dirName(url: string) {
+  return url.split('/').slice(0, -1).join('/');
+}
+
+export async function fetchBuffer(url: string) {
+  return fetch(url).then((result) => result.arrayBuffer());
+}
+
+export function fetchImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = url;
+  });
+}

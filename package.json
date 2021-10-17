@@ -8,11 +8,14 @@
     "build": "cross-env NODE_ENV=production webpack",
     "deploy": "cross-env NODE_ENV=production webpack && firebase deploy",
     "start": "webpack-dev-server",
+    "check-types": "yarn tsc --noemit",
     "lint": "yarn eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "cut-skybox": "ts-node ./cut-skybox.ts",
     "postinstall": "husky install"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "3.9.0",
+    "@tensorflow/tfjs-backend-webgl": "3.9.0",
     "@types/compression-webpack-plugin": "9.0.0",
     "@types/dat.gui": "0.7.7",
     "@types/friendly-errors-webpack-plugin": "0.1.4",
@@ -46,6 +49,7 @@
     "primitive-geometry": "2.2.0",
     "raw-loader": "4.0.2",
     "sharp": "0.29.1",
+    "source-map-loader": "^3.0.0",
     "stats.js": "0.17.0",
     "three": "0.133.1",
     "ts-loader": "9.2.6",
