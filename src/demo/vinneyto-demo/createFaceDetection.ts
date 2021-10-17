@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import { Tensor3D } from '@tensorflow/tfjs';
+import { Tensor, Tensor3D } from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import { fetchImage } from '../../util';
 
@@ -13,8 +13,15 @@ export async function createFaceDetection() {
   const imageTensor = await tf.browser.fromPixelsAsync(image);
 
   const model = await tf.loadLayersModel(tttModelPath);
+  const emptyBoard = tf.zeros([9]);
+  const betterBlockMe = tf.tensor([-1, 0, 0, 1, 1, -1, 0, 0, -1]);
+  const goForTheKill = tf.tensor([1, 0, 1, 0, -1, -1, -1, 0, 1]);
 
-  console.log(model);
+  const matches = tf.stack([emptyBoard, betterBlockMe, goForTheKill]);
+
+  const result = model.predict(matches) as Tensor;
+
+  result.reshape([3, 3, 3]).print();
 
   const reversed = tf.tidy(
     () =>
