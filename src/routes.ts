@@ -11,7 +11,7 @@ import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-de
 import { createPerlinNoiseDemo as vinneytoPerlinNoiseDemo } from './demo/vinneyto-demo/perlinNoiseDemo';
 import { createWaterSurfaceDemo as createVinneytoWaterSurfaceDemo } from './demo/vinneyto-demo/waterSurfaceDemo/createWaterSurfaceDemo';
 import { rayTracingInOneWeekend } from './demo/vinneyto-demo/rayTracingInOneWeekend/rayTracingInOneWeekend';
-import { createFaceDetection } from './demo/vinneyto-demo/createFaceDetection';
+import { createImageClassifyDemo } from './demo/vinneyto-demo/createImageClassifyDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo | void>;
@@ -102,9 +102,9 @@ routes.set('vinneyto-raytracing-in-one-weekend', {
   authors: 'vinneyto',
   tags: ['typescript', 'webgl', 'threejs'],
 });
-routes.set('vinneyto-face-detection', {
-  demo: createFaceDetection,
-  title: 'Face detection',
+routes.set('vinneyto-image-classify', {
+  demo: createImageClassifyDemo,
+  title: 'Image classification',
   authors: 'vinneyto',
-  tags: ['typescript', 'Tensorflow.js'],
+  tags: ['typescript', 'tensorflow'],
 });
