@@ -16,6 +16,11 @@ const plugins = [
       viewport: 'width=device-width, initial-scale=1, user-scalable=no',
       'mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-capable': 'yes',
+      'origin-trial': {
+        'http-equiv': 'origin-trial',
+        content:
+          'AmlDllrMqRvuQldoVPWF4Pj7QgF+ARtOEsQwJ1JOMApsdmrD2Ca2yoToRyhCcRrNgCTuXo+efG6JX3zQdht+EAcAAABmeyJvcmlnaW4iOiJodHRwczovL3d3dy50aGFuZWRkLWdwdS5jb206NDQzIiwiZmVhdHVyZSI6IldlYkdQVSIsImV4cGlyeSI6MTY0MzE1NTE5OSwiaXNTdWJkb21haW4iOnRydWV9',
+      },
     },
   }),
   new MiniCssExtractPlugin({

@@ -12,6 +12,7 @@ import { createPerlinNoiseDemo as vinneytoPerlinNoiseDemo } from './demo/vinneyt
 import { createWaterSurfaceDemo as createVinneytoWaterSurfaceDemo } from './demo/vinneyto-demo/waterSurfaceDemo/createWaterSurfaceDemo';
 import { rayTracingInOneWeekend } from './demo/vinneyto-demo/rayTracingInOneWeekend/rayTracingInOneWeekend';
 import { createImageClassifyDemo } from './demo/vinneyto-demo/createImageClassifyDemo';
+import { createWebGPUCubeDemo } from './demo/vinneyto-demo/webgpuCubeDemo/createWebGPUCubeDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo | void>;
@@ -107,4 +108,10 @@ routes.set('vinneyto-image-classify', {
   title: 'Image classification',
   authors: 'vinneyto',
   tags: ['typescript', 'tensorflow'],
+});
+routes.set('vinneyto-webgpu-cube', {
+  demo: createWebGPUCubeDemo,
+  title: 'WebGPU cube',
+  authors: 'vinneyto',
+  tags: ['typescript', 'webgpu'],
 });
