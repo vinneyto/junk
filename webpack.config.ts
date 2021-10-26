@@ -4,7 +4,6 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
-import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -30,7 +29,6 @@ const plugins = [
     crateDirectory: path.join(__dirname, 'wasm'),
     forceMode: 'production',
   }),
-  new FriendlyErrorsWebpackPlugin(),
   new CleanWebpackPlugin(),
 ];
 
