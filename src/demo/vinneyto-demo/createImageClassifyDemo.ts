@@ -69,7 +69,7 @@ function classifyImage(model: tf.GraphModel, image: HTMLImageElement) {
   });
 }
 
-function createContainer() {
+export function createContainer() {
   const container = document.createElement('div');
   container.style.width = '100%';
   container.style.height = '100%';

@@ -13,6 +13,7 @@ import { createWaterSurfaceDemo as createVinneytoWaterSurfaceDemo } from './demo
 import { rayTracingInOneWeekend } from './demo/vinneyto-demo/rayTracingInOneWeekend/rayTracingInOneWeekend';
 import { createImageClassifyDemo } from './demo/vinneyto-demo/createImageClassifyDemo';
 import { createWebGPUCubeDemo } from './demo/vinneyto-demo/webgpuCubeDemo/createWebGPUCubeDemo';
+import { petDetectionDemo } from './demo/vinneyto-demo/petDetectionDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo | void>;
@@ -114,4 +115,10 @@ routes.set('vinneyto-webgpu-cube', {
   title: 'WebGPU cube',
   authors: 'vinneyto',
   tags: ['typescript', 'webgpu'],
+});
+routes.set('pet-detection-demo', {
+  demo: petDetectionDemo,
+  title: 'Pet face detection',
+  authors: 'vinneyto',
+  tags: ['typescript', 'tensorflow'],
 });

@@ -3,7 +3,7 @@ import { Tensor, Tensor3D } from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import { fetchImage } from '../../util';
 
-import tttModelPath from './tf-models/ttt_model.tfm';
+import tttModelPath from './tf-models/ttt/ttt_model.tfm';
 
 import photoPeopleSrc from './images/photo_people.jpeg';
 
