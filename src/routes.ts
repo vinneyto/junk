@@ -14,6 +14,7 @@ import { rayTracingInOneWeekend } from './demo/vinneyto-demo/rayTracingInOneWeek
 import { createImageClassifyDemo } from './demo/vinneyto-demo/createImageClassifyDemo';
 import { createWebGPUCubeDemo } from './demo/vinneyto-demo/webgpuCubeDemo/createWebGPUCubeDemo';
 import { petDetectionDemo } from './demo/vinneyto-demo/petDetectionDemo';
+import { objectsDetectionDemo } from './demo/vinneyto-demo/objectsDetectionDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo | void>;
@@ -119,6 +120,12 @@ routes.set('vinneyto-webgpu-cube', {
 routes.set('pet-detection-demo', {
   demo: petDetectionDemo,
   title: 'Pet face detection',
+  authors: 'vinneyto',
+  tags: ['typescript', 'tensorflow'],
+});
+routes.set('objects-detection-demo', {
+  demo: objectsDetectionDemo,
+  title: 'Objects detection demo',
   authors: 'vinneyto',
   tags: ['typescript', 'tensorflow'],
 });
