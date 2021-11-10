@@ -3,16 +3,16 @@ import { Vector2 } from 'three';
 import { createContainer } from './createImageClassifyDemo';
 import { MOBILENET_CLASSES } from './tf-models/mobilenetClasses';
 
-export async function objectsDetectionDemo() {
+export async function objectsDetectionImageDemo() {
   await tf.ready();
+
+  const container = createContainer();
+  container.innerHTML = 'model loading...';
 
   const model = await tf.loadGraphModel(
     'https://tfhub.dev/tensorflow/tfjs-model/ssd_mobilenet_v2/1/default/1',
     { fromTFHub: true }
   );
-
-  const container = createContainer();
-  container.innerHTML = 'model loading...';
 
   container.innerHTML = `
     <div id="result" style="padding: 16px; color: blue"></div>
@@ -53,6 +53,9 @@ export async function objectsDetectionDemo() {
 
               await new Promise((resolve) => setTimeout(resolve, 500));
 
+              canvas.width = image.offsetWidth;
+              canvas.height = image.offsetHeight;
+
               await detectObjects(model, image, ctx);
 
               resultDisplay.innerHTML = 'done';
@@ -65,14 +68,12 @@ export async function objectsDetectionDemo() {
     });
 }
 
-async function detectObjects(
+export async function detectObjects(
   model: tf.GraphModel,
-  image: HTMLImageElement,
+  image: HTMLImageElement | HTMLVideoElement,
   ctx: CanvasRenderingContext2D
 ) {
   const canvas = ctx.canvas;
-  canvas.width = image.offsetWidth;
-  canvas.height = image.offsetHeight;
 
   const imageTensor = tf.browser.fromPixels(image);
   const singleBatch = tf.expandDims(imageTensor, 0);
@@ -121,6 +122,7 @@ async function detectObjects(
     justValues,
   ]);
 
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   chosen.forEach((detection) => {
     const detectedIndex = maxIndices[detection];
     const detectedClass = MOBILENET_CLASSES[detectedIndex];
@@ -128,6 +130,7 @@ async function detectObjects(
     const box = boxes[detection];
     ctx.strokeStyle = 'rgb(0, 255, 0)';
     ctx.lineWidth = 1;
+    ctx.globalCompositeOperation = 'destination-over';
     const size = new Vector2(canvas.width, canvas.height);
     const p0 = new Vector2(box[1], box[0]).multiply(size);
     const p1 = new Vector2(box[3], box[2]).multiply(size).sub(p0);
