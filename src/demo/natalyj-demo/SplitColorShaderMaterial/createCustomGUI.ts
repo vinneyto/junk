@@ -1,47 +1,49 @@
-import { GUI } from 'dat.gui';
+import { Pane, TpChangeEvent } from 'tweakpane';
 
 import { GUIConfig, AvailableObjects } from './types';
 import { Color } from 'three';
 import { colorToVector3 } from '../3jsWrappers';
 
 export const createCustomGUI = (config: GUIConfig) => {
-  const gui = new GUI();
+  const pane = new Pane();
 
   // do not move objects on scene when moving sliders
-  gui.domElement.addEventListener('mousedown', (e) => e.stopPropagation());
-  gui.domElement.addEventListener('touchstart', (e) => e.stopPropagation());
+  pane.element.addEventListener('mousedown', (e) => e.stopPropagation());
+  pane.element.addEventListener('touchstart', (e) => e.stopPropagation());
 
   const {
     planeObjects: { planeHelper },
   } = config;
-  gui.add(planeHelper, 'visible').name('normal plane visible');
+  pane.addInput(planeHelper, 'visible', { label: 'normal plane visible' });
 
-  addObjectToDisplayControls(gui, config);
-  addNormalControls(gui, config);
-  addConstantControls(gui, config);
-  addColorControls(gui, config);
+  addObjectToDisplayControls(pane, config);
+  addNormalControls(pane, config);
+  addConstantControls(pane, config);
+  addColorControls(pane, config);
 };
 
-const addObjectToDisplayControls = (gui: GUI, config: GUIConfig) => {
+const addObjectToDisplayControls = (pane: Pane, config: GUIConfig) => {
   const { objectsToDisplay } = config;
 
-  const onObjectChange = (objectToDisplay: AvailableObjects) => {
+  const onObjectChange = (event: TpChangeEvent<AvailableObjects>) => {
     const { possibleObjects } = objectsToDisplay;
     for (const [key, object] of possibleObjects) {
-      object.visible = key === objectToDisplay;
+      object.visible = key === event.value;
     }
   };
 
-  gui
-    .add(objectsToDisplay, 'currentObject', {
-      Fox: AvailableObjects.Fox,
-      Box: AvailableObjects.Box,
+  pane
+    .addInput(objectsToDisplay, 'currentObject', {
+      label: 'model',
+      options: {
+        Fox: AvailableObjects.Fox,
+        Box: AvailableObjects.Box,
+      },
     })
-    .onChange(onObjectChange)
-    .name('model');
+    .on('change', onObjectChange);
 };
 
-const addNormalControls = (gui: GUI, config: GUIConfig) => {
+const addNormalControls = (pane: Pane, config: GUIConfig) => {
   const { customMaterial, colorConfig } = config;
 
   const onNormalChange = () => {
@@ -49,12 +51,18 @@ const addNormalControls = (gui: GUI, config: GUIConfig) => {
   };
 
   const { planeNormal } = colorConfig;
-  gui.add(planeNormal, 'x', -1, 1).onChange(onNormalChange).name('normal.x');
-  gui.add(planeNormal, 'y', -1, 1).onChange(onNormalChange).name('normal.y');
-  gui.add(planeNormal, 'z', -1, 1).onChange(onNormalChange).name('normal.z');
+  pane
+    .addInput(planeNormal, 'x', { label: 'normal.x', min: -1, max: 1 })
+    .on('change', onNormalChange);
+  pane
+    .addInput(planeNormal, 'y', { label: 'normal.y', min: -1, max: 1 })
+    .on('change', onNormalChange);
+  pane
+    .addInput(planeNormal, 'z', { label: 'normal.z', min: -1, max: 1 })
+    .on('change', onNormalChange);
 };
 
-const addConstantControls = (gui: GUI, config: GUIConfig) => {
+const addConstantControls = (pane: Pane, config: GUIConfig) => {
   const {
     colorConfig,
     customMaterial,
@@ -66,13 +74,16 @@ const addConstantControls = (gui: GUI, config: GUIConfig) => {
     customMaterial.uniforms.u_basis.value = customMaterial.calculateBasis();
   };
 
-  gui
-    .add(plane, 'constant', -100, 100)
-    .onChange(onConstantChange)
-    .name('dist from origin');
+  pane
+    .addInput(plane, 'constant', {
+      label: 'dist from origin',
+      min: -100,
+      max: 100,
+    })
+    .on('change', onConstantChange);
 };
 
-const addColorControls = (gui: GUI, config: GUIConfig) => {
+const addColorControls = (pane: Pane, config: GUIConfig) => {
   let {
     colorConfig: { negativeColor, positiveColor },
   } = config;
@@ -81,15 +92,15 @@ const addColorControls = (gui: GUI, config: GUIConfig) => {
     customMaterial: { uniforms },
   } = config;
 
-  const onNegativeColorChange = (hex: number) => {
-    const color = new Color().setHex(hex);
+  const onNegativeColorChange = (event: TpChangeEvent<number>) => {
+    const color = new Color().setHex(event.value);
 
     negativeColor = color;
     uniforms.u_color1.value = colorToVector3(color);
   };
 
-  const onPositiveColorChange = (hex: number) => {
-    const color = new Color().setHex(hex);
+  const onPositiveColorChange = (event: TpChangeEvent<number>) => {
+    const color = new Color().setHex(event.value);
 
     positiveColor = color;
     uniforms.u_color2.value = colorToVector3(color);
@@ -100,12 +111,10 @@ const addColorControls = (gui: GUI, config: GUIConfig) => {
     positiveColor: positiveColor.getHex(),
   };
 
-  gui
-    .addColor(hexColors, 'negativeColor')
-    .onChange(onNegativeColorChange)
-    .name('neg color');
-  gui
-    .addColor(hexColors, 'positiveColor')
-    .onChange(onPositiveColorChange)
-    .name('pos color');
+  pane
+    .addInput(hexColors, 'negativeColor', { label: 'neg color', view: 'color' })
+    .on('change', onNegativeColorChange);
+  pane
+    .addInput(hexColors, 'positiveColor', { label: 'pos color', view: 'color' })
+    .on('change', onPositiveColorChange);
 };

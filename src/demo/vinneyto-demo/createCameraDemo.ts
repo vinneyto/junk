@@ -17,7 +17,7 @@ import {
 } from 'three';
 import { CameraController } from '../../CameraController';
 import { createRenderer, resizeRendererToDisplaySize } from '../../util';
-import { GUI, GUIController } from 'dat.gui';
+import { Pane, TpChangeEvent } from 'tweakpane';
 
 export async function createCameraDemo(): Promise<Demo> {
   const renderer = createRenderer();
@@ -90,34 +90,60 @@ export async function createCameraDemo(): Promise<Demo> {
     },
   ];
 
-  const gui = new GUI();
+  const pane = new Pane();
 
   // do not move objects on scene when moving sliders
-  gui.domElement.addEventListener('mousedown', (e) => e.stopPropagation());
-  gui.domElement.addEventListener('touchstart', (e) => e.stopPropagation());
+  pane.element.addEventListener('mousedown', (e) => e.stopPropagation());
+  pane.element.addEventListener('touchstart', (e) => e.stopPropagation());
 
-  const readOnly = (ctrl: GUIController) => {
-    ctrl.domElement.style.pointerEvents = 'none';
-    ctrl.domElement.style.opacity = '0.5';
-  };
-
-  gui
-    .add({ cameraType }, 'cameraType', ['perspective', 'orthographic'])
-    .onChange((cameraType) => {
+  pane
+    .addInput({ cameraType }, 'cameraType', {
+      options: {
+        perspective: 'perspective',
+        orthographic: 'orthographic',
+      },
+    })
+    .on('change', (event: TpChangeEvent<string>) => {
       const demo = new URLSearchParams(window.location.search).get('demo');
-      window.location.href = `/?demo=${demo}&camera=${cameraType}`;
+      window.location.href = `/?demo=${demo}&camera=${event.value}`;
     });
-  gui.add(mainCamera, 'near', 1, 5).onChange(() => cameraHelper.update());
-  gui.add(mainCamera, 'far', 2, 10).onChange(() => cameraHelper.update());
+  pane
+    .addInput(mainCamera, 'near', { min: 1, max: 5 })
+    .on('change', () => cameraHelper.update());
+  pane
+    .addInput(mainCamera, 'far', { min: 2, max: 10 })
+    .on('change', () => cameraHelper.update());
 
   if (cameraType === 'perspective') {
-    gui.add(mainCamera, 'fov', 10, 180).onChange(() => cameraHelper.update());
-    readOnly(gui.add(mainCamera, 'aspect', 0.1, 3));
+    pane
+      .addInput(mainCamera as PerspectiveCamera, 'fov', {
+        min: 10,
+        max: 180,
+      })
+      .on('change', () => cameraHelper.update());
   } else {
-    gui.add(mainCamera, 'top', 1, 5).onChange(() => cameraHelper.update());
-    gui.add(mainCamera, 'bottom', -5, -1).onChange(() => cameraHelper.update());
-    readOnly(gui.add(mainCamera, 'left', -5, 1));
-    readOnly(gui.add(mainCamera, 'right', 1, 5));
+    pane
+      .addInput(mainCamera as OrthographicCamera, 'top', { min: 1, max: 5 })
+      .on('change', () => cameraHelper.update());
+
+    pane
+      .addInput(mainCamera as OrthographicCamera, 'bottom', {
+        min: -5,
+        max: -1,
+      })
+      .on('change', () => cameraHelper.update());
+
+    pane.addInput(mainCamera as OrthographicCamera, 'left', {
+      disabled: true,
+      min: -5,
+      max: 1,
+    });
+
+    pane.addInput(mainCamera as OrthographicCamera, 'right', {
+      disabled: true,
+      min: 5,
+      max: 1,
+    });
   }
 
   const render = () => {
@@ -148,7 +174,7 @@ export async function createCameraDemo(): Promise<Demo> {
         view.camera.right = cw;
       }
 
-      gui.updateDisplay();
+      pane.refresh();
 
       view.camera.updateProjectionMatrix();
 

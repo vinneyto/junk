@@ -1,4 +1,4 @@
-import { GUI } from 'dat.gui';
+import { Pane, TpChangeEvent } from 'tweakpane';
 import { OrthographicCamera, Plane, CameraHelper } from 'three';
 
 export const createCustomGUI = (
@@ -6,27 +6,36 @@ export const createCustomGUI = (
   cameraHelper: CameraHelper,
   plane: Plane
 ) => {
-  const gui = new GUI();
+  const pane = new Pane();
 
   // do not move objects on scene when moving sliders
-  gui.domElement.addEventListener('mousedown', (e) => e.stopPropagation());
-  gui.domElement.addEventListener('touchstart', (e) => e.stopPropagation());
+  pane.element.addEventListener('mousedown', (e) => e.stopPropagation());
+  pane.element.addEventListener('touchstart', (e) => e.stopPropagation());
 
-  gui.add(cameraHelper, 'visible').name('camera helper');
+  pane.addInput(cameraHelper, 'visible', { label: 'camera helper' });
 
-  const onNearChange = (near: number) => {
+  const onNearChange = (event: TpChangeEvent<number>) => {
     camera.updateProjectionMatrix();
     cameraHelper.update();
-    plane.constant = near;
+    plane.constant = event.value;
   };
-  gui.add(camera, 'near', -0.1, 0.1).onChange(onNearChange);
+
+  pane
+    .addInput(camera, 'near', { min: -0.1, max: 0.1 })
+    .on('change', onNearChange);
 
   const { normal: planeNormal } = plane;
   const onNormalChange = () => {
     camera.lookAt(planeNormal.clone().negate());
     cameraHelper.update();
   };
-  gui.add(planeNormal, 'x', -1, 1).onChange(onNormalChange).name('normal x');
-  gui.add(planeNormal, 'y', -1, 1).onChange(onNormalChange).name('normal y');
-  gui.add(planeNormal, 'z', -1, 1).onChange(onNormalChange).name('normal z');
+  pane
+    .addInput(planeNormal, 'x', { label: 'normal x', min: -1, max: 1 })
+    .on('change', onNormalChange);
+  pane
+    .addInput(planeNormal, 'y', { label: 'normal y', min: -1, max: 1 })
+    .on('change', onNormalChange);
+  pane
+    .addInput(planeNormal, 'z', { label: 'normal z', min: -1, max: 1 })
+    .on('change', onNormalChange);
 };
