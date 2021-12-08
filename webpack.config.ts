@@ -86,6 +86,8 @@ export default {
   devServer: {
     port: 9000,
     open: true,
+    hot: false,
+    liveReload: false,
     historyApiFallback: true,
   },
   plugins,
