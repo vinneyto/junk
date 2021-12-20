@@ -149,7 +149,11 @@ async function unzipData() {
 async function main() {
   const [x, y] = await folderToTensor();
 
-  const img0 = await tf.node.encodePng(x.slice(0, 1).squeeze([0]).mul(255));
+  const image0Tensor = tf.tidy(() =>
+    x.slice(0, 1).squeeze([0]).mul(255)
+  ) as tf.Tensor3D;
+
+  const img0 = await tf.node.encodePng(image0Tensor);
   fs.writeFileSync(path.join(__dirname, 'img0.png'), img0);
 
   const model = createModel();
@@ -161,12 +165,23 @@ async function main() {
     validationSplit: 0.1,
     epochs: 20,
     shuffle: true,
-    callbacks: {
-      onEpochEnd: (epoch, log) => {
-        console.log(epoch, log);
-      },
-    },
+    callbacks: [
+      tf.callbacks.earlyStopping({ monitor: 'val_acc' }),
+      new tf.CustomCallback({
+        onEpochEnd(epoch, logs) {
+          console.log(epoch, logs);
+        },
+      }),
+    ],
   });
+
+  model.save(`file://${path.join(__dirname, 'sorting_hat')}`);
+
+  tf.dispose([x, y, image0Tensor]);
+
+  model.dispose();
+
+  console.log('Tensors in memory', tf.memory().numTensors);
 }
 
 main();
