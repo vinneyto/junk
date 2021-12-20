@@ -17,7 +17,7 @@ const LABELS = [
   'tiger',
 ];
 
-async function folderToTensord() {
+async function folderToTensor() {
   await unzipData();
 
   const files = await getFiles();
@@ -147,7 +147,7 @@ async function unzipData() {
 }
 
 async function main() {
-  const [x, y] = await folderToTensord();
+  const [x, y] = await folderToTensor();
 
   const img0 = await tf.node.encodePng(x.slice(0, 1).squeeze([0]).mul(255));
   fs.writeFileSync(path.join(__dirname, 'img0.png'), img0);

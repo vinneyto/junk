@@ -135,7 +135,7 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-3.12.0.tgz#b90190d1d6950488f3fd5245783384500c832787"
   integrity sha512-GlU9LxDnPg3I3p+MMOYzKgr2NZK2vVmT4/EotwMVIAyhR2WbVFTRP0AXkIrWSoNIJ9v/ryvFEvNNPyNfkXM/xQ==
 
-"@tensorflow/tfjs-node-gpu@^3.12.0":
+"@tensorflow/tfjs-node-gpu@3.12.0":
   version "3.12.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-node-gpu/-/tfjs-node-gpu-3.12.0.tgz#55e39abf607b5f5b08a31e93fd4330a16e059248"
   integrity sha512-7VycpwvtHaBIQpaVjNoem0/7XgXn6jWfwPHD1SsS7VaeirebRIJZ3MZAY6RpFAiOA0sSLWXPT8xr4k015pmZOg==
