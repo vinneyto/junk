@@ -1,0 +1,42 @@
+body {
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  margin: 32px auto;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 0fr 1fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    'clear label .'
+    'canvas result .';
+}
+
+.canvas {
+  grid-area: canvas;
+  border: 1px solid green;
+}
+.result {
+  grid-area: result;
+  display: flex;
+  justify-content: center;
+}
+.clear {
+  grid-area: clear;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px;
+}
+.label {
+  grid-area: label;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

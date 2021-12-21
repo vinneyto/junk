@@ -18,6 +18,7 @@ import { objectsDetectionImageDemo } from './demo/vinneyto-demo/objectsDetection
 import { objectsDetectionVideoDemo } from './demo/vinneyto-demo/objectsDetectionVideoDemo';
 import { nonlinearTraining101 } from './demo/vinneyto-demo/nonlinearTraining101';
 import { titanicTraining } from './demo/vinneyto-demo/titanicTraining';
+import { sortingHatDemo } from './demo/vinneyto-demo/sortingHatDemo/sortingHatDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo | void>;
@@ -147,6 +148,12 @@ routes.set('linear-approx-model-demo', {
 routes.set('titanic-training-demo', {
   demo: titanicTraining,
   title: 'Titanic training',
+  authors: 'vinneyto',
+  tags: ['typescript', 'tensorflow'],
+});
+routes.set('sorting-hat-demo', {
+  demo: sortingHatDemo,
+  title: 'Sorting hat',
   authors: 'vinneyto',
   tags: ['typescript', 'tensorflow'],
 });
