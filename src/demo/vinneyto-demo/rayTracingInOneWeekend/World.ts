@@ -19,7 +19,9 @@ export class World {
       data[idx + 3] = sphere.radius;
     }
 
-    return new DataTexture(data, width, height, RGBAFormat, FloatType);
+    const texture = new DataTexture(data, width, height, RGBAFormat, FloatType);
+    texture.needsUpdate = true;
+    return texture;
   }
 
   getCount() {

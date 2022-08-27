@@ -128,7 +128,7 @@ impl Material for PbrMaterial {
         .try_inverse()
         .unwrap_or_else(|| Matrix4::identity())
         .transpose()
-        .fixed_slice::<U3, U3>(0, 0)
+        .fixed_slice::<3, 3>(0, 0)
         .into(),
     );
 

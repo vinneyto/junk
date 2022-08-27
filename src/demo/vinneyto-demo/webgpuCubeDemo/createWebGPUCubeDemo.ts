@@ -62,6 +62,7 @@ export async function createWebGPUCubeDemo() {
     );
 
     const commandEncoder = ctx.device.createCommandEncoder();
+    // @ts-ignore
     const passEncoder = commandEncoder.beginRenderPass({
       colorAttachments: [
         {
@@ -92,6 +93,8 @@ export async function createWebGPUCubeDemo() {
     passEncoder.setBindGroup(0, uniformBindGroup1);
     passEncoder.drawIndexed(cells.length);
 
+    // TODO fixit!
+    // @ts-ignore
     passEncoder.endPass();
 
     ctx.device.queue.submit([commandEncoder.finish()]);

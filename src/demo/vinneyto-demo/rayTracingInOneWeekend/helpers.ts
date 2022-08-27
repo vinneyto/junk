@@ -16,7 +16,7 @@ export function createNoiseTexture(size: number) {
       .toArray(data, i);
   }
 
-  return new DataTexture(
+  const texture = new DataTexture(
     data,
     size,
     size,
@@ -26,6 +26,8 @@ export function createNoiseTexture(size: number) {
     RepeatWrapping,
     RepeatWrapping
   );
+  texture.needsUpdate = true;
+  return texture;
 }
 
 export function rangeRandom(min: number, max: number) {

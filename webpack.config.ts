@@ -4,6 +4,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
+// import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -30,6 +31,7 @@ const plugins = [
     forceMode: 'production',
   }),
   new CleanWebpackPlugin(),
+  // new BundleAnalyzerPlugin(),
 ];
 
 if (!debug) {
@@ -52,6 +54,9 @@ export default {
     path: path.resolve('./dist'),
   },
   resolve: {
+    alias: {
+      three: path.resolve('./node_modules/three'),
+    },
     extensions: ['.ts', '.js'],
   },
   module: {

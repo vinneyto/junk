@@ -4,7 +4,6 @@ import { useSingleColorShaderMaterial as natalyjSingleColorShaderMaterial } from
 import { useSplitColorShaderMaterial as natalyjSplitColorShaderMaterial } from './demo/natalyj-demo/SplitColorShaderMaterial/useSplitColorShaderMaterial';
 import { createWasmDemoFactory } from './demo/createWasmDemoFactory';
 import { useScanner as natalyjScanner } from './demo/natalyj-demo/Scanner/useScanner';
-import { createPhysicsDemo } from './demo/vinneyto-demo/createPhysicsDemo';
 import { drawTriangle as natalyjDrawTriangle } from './demo/natalyj-demo/Triangle/drawTriangle';
 import { createWasmGltfDemo as vinneytoWasmGltfDemo } from './demo/vinneyto-demo/createWasmGltfDemo';
 import { createCameraDemo as vinneytoCreateCameraDemo } from './demo/vinneyto-demo/createCameraDemo';
@@ -66,12 +65,6 @@ routes.set('natalyj-scanner', {
   title: 'Scanner',
   authors: 'natalyj, vinneyto',
   tags: ['threejs', 'typescript'],
-});
-routes.set('vinneyto-physics', {
-  demo: createPhysicsDemo,
-  title: 'Physics',
-  authors: 'vinneyto',
-  tags: ['wasm', 'rust', 'threejs', 'typescript'],
 });
 routes.set('natalyj-triangle', {
   demo: natalyjDrawTriangle,

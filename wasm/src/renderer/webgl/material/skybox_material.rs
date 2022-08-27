@@ -48,9 +48,9 @@ impl Material for SkyboxMaterial {
   ) {
     let mut view_without_translation = camera.view;
 
-    view_without_translation.data[12] = 0.0;
-    view_without_translation.data[13] = 0.0;
-    view_without_translation.data[14] = 0.0;
+    view_without_translation[12] = 0.0;
+    view_without_translation[13] = 0.0;
+    view_without_translation[14] = 0.0;
 
     let view_direction_projection_inverse = (camera.projection * view_without_translation)
       .try_inverse()

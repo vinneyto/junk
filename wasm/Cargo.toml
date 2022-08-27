@@ -16,27 +16,23 @@ console_error_panic_hook = "0.1.6"
 log = "0.4.8"
 js-sys = "0.3.38"
 wasm-bindgen = "0.2.61"
-nalgebra = "0.27"
-ncollide3d = "0.23"
+nalgebra = "0.30"
+ncollide3d = "0.33"
 generational-arena = "0.2"
-noise = "0.6.0"
-
-[dependencies.nphysics3d]
-version = "0.15"
-default-features = false
-features = [ "dim3", "use-wasm-bindgen" ]
+noise = "0.7.0"
+getrandom = { version = "0.2", features = ["js"] }
 
 [dependencies.num-traits]
 version = "0.2"
 default-features = false
 
 [dependencies.gltf]
-version = "0.15"
+version = "1.0"
 features = ["extras", "names"]
 
 [dependencies.uuid]
-version = "0.8.1"
-features = ["v4", "wasm-bindgen"]
+version = "1.1.2"
+features = ["v4"]
 
 [dependencies.web-sys]
 version = "0.3.39"

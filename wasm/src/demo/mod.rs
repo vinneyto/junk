@@ -1,6 +1,5 @@
 pub mod gltf_renderer;
 pub mod perlin;
-pub mod physics;
 pub mod raytracing;
 pub mod skinning;
 pub mod triangle;

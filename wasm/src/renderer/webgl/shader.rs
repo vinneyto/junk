@@ -132,7 +132,7 @@ impl Shader {
 
     self
       .gl
-      .uniform_matrix4fv_with_f32_array(Some(location), false, &m.data);
+      .uniform_matrix4fv_with_f32_array(Some(location), false, &m.data.as_slice());
 
     Some(())
   }
@@ -142,7 +142,7 @@ impl Shader {
 
     self
       .gl
-      .uniform_matrix3fv_with_f32_array(Some(location), false, &m.data);
+      .uniform_matrix3fv_with_f32_array(Some(location), false, &m.data.as_slice());
 
     Some(())
   }

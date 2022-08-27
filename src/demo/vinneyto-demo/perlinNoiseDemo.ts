@@ -36,6 +36,7 @@ export async function createPerlinNoiseDemo(): Promise<Demo> {
   const perlinMap = new DataTexture(new Uint8Array(data), 128, 128, RGBAFormat);
   perlinMap.magFilter = LinearFilter;
   perlinMap.minFilter = LinearFilter;
+  perlinMap.needsUpdate = true;
 
   const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new StaticPerlinShaderMaterial(perlinMap);
