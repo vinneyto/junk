@@ -1,9 +1,0 @@
-{
-  "extends": "wotan:recommended",
-  "rules": {
-    "prefer-const": "error",
-    "ban-dom-globals": "error",
-    "no-unreachable-code": "error",
-    "typecheck": "error"
-  }
-}
