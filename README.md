@@ -1,17 +1,21 @@
-# three-shader
+# Junk
+
+Bunch of code samples and some rendering experiments
+
+## How to run
 
 Install Rust and wasm-pack
 https://rustwasm.github.io/docs/wasm-pack/quickstart.html
 
     $ yarn && yarn start
 
-# How to add your demo
+## How to add your demo
 
 - Create src file with demo in folder `./src/demo` (use format **nickname-demo**)
 - Your file should export a function, which implements Demo interface
 - Add route with your function in `./src/routes.ts`
 
-# Links
+## Links
 
 [Slides](https://docs.google.com/presentation/d/1ZKascHVy7O_RwH-c1I8cAjF5H17dZN1eaPHnK2PS-RM/edit?usp=sharing)
 

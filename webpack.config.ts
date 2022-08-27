@@ -10,7 +10,7 @@ const debug = process.env.NODE_ENV !== 'production';
 
 const plugins = [
   new HtmlWebpackPlugin({
-    title: 'three-shader',
+    title: 'junk',
     favicon: './assets/favicon.ico',
     meta: {
       viewport: 'width=device-width, initial-scale=1, user-scalable=no',

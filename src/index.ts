@@ -83,7 +83,7 @@ function buildStartPage() {
   }
   const footer = document.createElement('a');
   footer.className = 'footer';
-  footer.href = 'https://github.com/vinneyto/three-shader';
+  footer.href = 'https://github.com/vinneyto/junk';
   footer.target = '__blank';
 
   const githubIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0, 0, 439, 439">
