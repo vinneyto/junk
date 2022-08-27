@@ -68,12 +68,14 @@ export async function createWebGPUCubeDemo() {
         {
           view: ctx.renderTargetView,
           resolveTarget: ctx.context.getCurrentTexture().createView(),
+          // @ts-ignore
           loadValue: { r: 0, g: 0, b: 0, a: 1 },
           storeOp: 'store',
         },
       ],
       depthStencilAttachment: {
         view: ctx.depthTextureView,
+        // @ts-ignore
         depthLoadValue: 1.0,
         depthStoreOp: 'store',
         stencilLoadValue: 0,

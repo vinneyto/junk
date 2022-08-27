@@ -18,11 +18,5 @@
     "strict": true,
     "target": "ESNext"
   },
-  "include": [
-    "webpack.config.ts",
-    "src/**/*",
-    "tools/**/*",
-    "node_modules/@webgpu/types/**/*",
-    "node_modules/@google/model-viewer/src/types/webxr.ts"
-  ]
+  "include": ["webpack.config.ts", "src/**/*", "tools/**/*"]
 }
