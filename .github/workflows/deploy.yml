@@ -1,0 +1,30 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout
+      - uses: actions/checkout@v3
+      - uses: mskelton/setup-yarn@v1
+        with:
+          node-version: '16.x'
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: jetli/wasm-pack-action@v0.3.0
+      # build
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
+      # deploy
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
