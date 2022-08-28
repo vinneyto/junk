@@ -57,7 +57,7 @@ function buildStartPage() {
 
     const routeCont = document.createElement('a');
     routeCont.className = 'route-cont';
-    routeCont.href = `/?demo=${routeName}`;
+    routeCont.href = `${window.location.pathname}?demo=${routeName}`;
     demosCont.appendChild(routeCont);
 
     const titleCont = document.createElement('div');
