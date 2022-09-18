@@ -1,9 +1,9 @@
 const  button = document.getElementById('but');
-function naic (){
+function onClick (){
     console.log("вы нажали на кнопку")
 }
 if(button===null){
     alert('кнопка не найдена на стрнице');
 }
-button.addEventListener("click", naic)
+button.addEventListener("click", onClick)
 
