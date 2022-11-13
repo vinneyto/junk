@@ -18,6 +18,7 @@ import { objectsDetectionVideoDemo } from './demo/vinneyto-demo/objectsDetection
 import { nonlinearTraining101 } from './demo/vinneyto-demo/nonlinearTraining101';
 import { titanicTraining } from './demo/vinneyto-demo/titanicTraining';
 import { sortingHatDemo } from './demo/vinneyto-demo/sortingHatDemo/sortingHatDemo';
+import { createCamBodyRiggingDemo } from './demo/vinneyto-demo/camBodyRiggingDemo/createCamBodyRiggingDemo';
 
 interface RouteInfo {
   demo: () => Promise<Demo | void>;
@@ -147,6 +148,12 @@ routes.set('titanic-training-demo', {
 routes.set('sorting-hat-demo', {
   demo: sortingHatDemo,
   title: 'Sorting hat',
+  authors: 'vinneyto',
+  tags: ['typescript', 'tensorflow'],
+});
+routes.set('cam-body-rigging-demo', {
+  demo: createCamBodyRiggingDemo,
+  title: 'Rigging character',
   authors: 'vinneyto',
   tags: ['typescript', 'tensorflow'],
 });

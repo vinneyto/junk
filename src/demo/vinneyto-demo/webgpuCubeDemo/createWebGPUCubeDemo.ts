@@ -142,6 +142,7 @@ function createMvpUniformBuffer(
 }
 
 function createPipeline(ctx: Context, fragSrc: string) {
+  // @ts-ignore
   return ctx.device.createRenderPipeline({
     vertex: {
       module: ctx.device.createShaderModule({
