@@ -2,35 +2,57 @@ import * as poseDetection from '@tensorflow-models/pose-detection';
 import {
   BufferGeometry,
   Float32BufferAttribute,
+  Line,
   Object3D,
   Points,
   ShaderMaterial,
+  Sphere,
   Vector2,
 } from 'three';
 
+const FACE_IDS = [8, 6, 5, 4, 0, 1, 2, 3, 7];
+const RIGHT_HAND_IDS = [11, 13, 15, 17, 19, 15, 21];
+
 export class PoseDebug2D extends Object3D {
-  public readonly eyes = new PoseFragment2D(9);
+  public readonly eyes = new PoseFragment2D(FACE_IDS.length);
+  public readonly leftHand = new PoseFragment2D(RIGHT_HAND_IDS.length);
+  public readonly rightHand = new PoseFragment2D(RIGHT_HAND_IDS.length);
 
   constructor() {
     super();
 
     this.add(this.eyes);
+    this.add(this.leftHand);
+    this.add(this.rightHand);
   }
 
   setResolution(x: number, y: number) {
-    this.eyes.setResolution(x, y);
+    for (const child of this.children) {
+      (child as PoseDebug2D).setResolution(x, y);
+    }
   }
 
   setValues(pose: poseDetection.Pose) {
-    this.eyes.setValues(pose, [8, 6, 5, 4, 0, 1, 2, 3, 7]);
+    this.eyes.setValues(pose, FACE_IDS);
+    this.leftHand.setValues(
+      pose,
+      RIGHT_HAND_IDS.map((id) => id)
+    );
+    this.rightHand.setValues(
+      pose,
+      RIGHT_HAND_IDS.map((id) => id + 1)
+    );
   }
 }
 
-class PoseFragment2D extends Points {
+class PoseFragment2D extends Object3D {
+  private readonly geometry: BufferGeometry;
+  private readonly material: ShaderMaterial;
+
   constructor(pointsCount: number) {
     super();
 
-    this.material = new ShaderMaterial({
+    const material = new ShaderMaterial({
       vertexShader: `
       uniform vec2 resolution;
 
@@ -55,11 +77,25 @@ class PoseFragment2D extends Points {
       },
     });
 
-    this.geometry = new BufferGeometry();
-    this.geometry.setAttribute(
+    const geometry = new BufferGeometry();
+    geometry.setAttribute(
       'position',
       new Float32BufferAttribute(new Float32Array(pointsCount * 2), 2)
     );
+    geometry.boundingSphere = new Sphere();
+
+    this.geometry = geometry;
+    this.material = material;
+
+    const line = new Line();
+    line.geometry = geometry;
+    line.material = material;
+    this.add(line);
+
+    const points = new Points();
+    points.geometry = geometry;
+    points.material = material;
+    this.add(points);
   }
 
   setResolution(x: number, y: number) {
@@ -75,12 +111,11 @@ class PoseFragment2D extends Points {
     const array = position.array as Float32Array;
     let j = 0;
 
-    for (let i = 0; i < pose.keypoints.length; i++) {
-      if (ids.includes(i)) {
-        array[j + 0] = pose.keypoints[i].x;
-        array[j + 1] = pose.keypoints[i].y;
-        j += 2;
-      }
+    for (const id of ids) {
+      const point = pose.keypoints[id];
+      array[j + 0] = point.x;
+      array[j + 1] = point.y;
+      j += 2;
     }
 
     position.needsUpdate = true;
