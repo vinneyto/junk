@@ -12,36 +12,42 @@ import {
 
 const FACE_IDS = [8, 6, 5, 4, 0, 1, 2, 3, 7];
 const RIGHT_HAND_IDS = [11, 13, 15, 17, 19, 15, 21];
+const BODY_IDS = [12, 24, 23, 11, 12];
+const RIGHT_LEG_IDS = [23, 25, 27, 29, 31, 27];
+
+const PART_IDS = [
+  FACE_IDS,
+  RIGHT_HAND_IDS.map((i) => i + 0),
+  RIGHT_HAND_IDS.map((i) => i + 1),
+  BODY_IDS,
+  RIGHT_LEG_IDS.map((i) => i + 0),
+  RIGHT_LEG_IDS.map((i) => i + 1),
+];
 
 export class PoseDebug2D extends Object3D {
-  public readonly eyes = new PoseFragment2D(FACE_IDS.length);
-  public readonly leftHand = new PoseFragment2D(RIGHT_HAND_IDS.length);
-  public readonly rightHand = new PoseFragment2D(RIGHT_HAND_IDS.length);
+  public readonly fragments: PoseFragment2D[] = [];
 
   constructor() {
     super();
 
-    this.add(this.eyes);
-    this.add(this.leftHand);
-    this.add(this.rightHand);
+    for (const ids of PART_IDS) {
+      const fragment = new PoseFragment2D(ids.length);
+
+      this.fragments.push(fragment);
+      this.add(fragment);
+    }
   }
 
   setResolution(x: number, y: number) {
-    for (const child of this.children) {
-      (child as PoseDebug2D).setResolution(x, y);
+    for (const fragment of this.fragments) {
+      fragment.setResolution(x, y);
     }
   }
 
   setValues(pose: poseDetection.Pose) {
-    this.eyes.setValues(pose, FACE_IDS);
-    this.leftHand.setValues(
-      pose,
-      RIGHT_HAND_IDS.map((id) => id)
-    );
-    this.rightHand.setValues(
-      pose,
-      RIGHT_HAND_IDS.map((id) => id + 1)
-    );
+    for (let i = 0; i < this.fragments.length; i++) {
+      this.fragments[i].setValues(pose, PART_IDS[i]);
+    }
   }
 }
 
