@@ -3,7 +3,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   PerspectiveCamera,
-  PlaneBufferGeometry,
+  PlaneGeometry,
   Scene,
 } from 'three';
 import { CameraController } from '../../../../CameraController';
@@ -17,7 +17,7 @@ export class CharacterContainer {
 
   constructor() {
     const floor = new Mesh(
-      new PlaneBufferGeometry(2, 2).rotateX(-Math.PI / 2),
+      new PlaneGeometry(2, 2).rotateX(-Math.PI / 2),
       new MeshBasicMaterial({ color: 'white' })
     );
     floor.position.y = -0.001;

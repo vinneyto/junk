@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 import { Demo } from '../../Demo';
 import {
   Scene,
-  PlaneBufferGeometry,
+  PlaneGeometry,
   RawShaderMaterial,
   Mesh,
   Vector2,
@@ -10,7 +10,7 @@ import {
   Vector3,
   Color,
   PerspectiveCamera,
-  SphereBufferGeometry,
+  SphereGeometry,
   MeshLambertMaterial,
   DirectionalLight,
   Matrix4,
@@ -44,7 +44,7 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
   const noiseTexture = createNoiseTexture(512);
 
   const rtxScene = new Scene();
-  const geometry = new PlaneBufferGeometry(2, 2);
+  const geometry = new PlaneGeometry(2, 2);
   const material = new RawShaderMaterial({
     vertexShader: vertSrc,
     fragmentShader: fragSrc,
@@ -66,7 +66,7 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
 
   const rtxRenderTarget = new WebGLRenderTarget(1, 1);
   const rtxDisplayMesh = new Mesh(
-    new PlaneBufferGeometry(2, 2),
+    new PlaneGeometry(2, 2),
     new MeshBasicMaterial({ map: rtxRenderTarget.texture })
   );
   const rtxDisplayScene = new Scene();
@@ -83,7 +83,7 @@ export async function rayTracingInOneWeekend(): Promise<Demo> {
 
   world.spheres.forEach((s) => {
     const mesh = new Mesh(
-      new SphereBufferGeometry(s.radius, 32, 32),
+      new SphereGeometry(s.radius, 32, 32),
       new MeshLambertMaterial({ color: new Color('white') })
     );
     mesh.castShadow = true;

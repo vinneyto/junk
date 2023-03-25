@@ -1,5 +1,6 @@
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import {
+  BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
   Line,
@@ -113,7 +114,7 @@ class PoseFragment2D extends Object3D {
 
   setValues(pose: poseDetection.Pose, ids: number[]) {
     const geometry = this.geometry as BufferGeometry;
-    const position = geometry.getAttribute('position');
+    const position = geometry.getAttribute('position') as BufferAttribute;
     const array = position.array as Float32Array;
     let j = 0;
 
