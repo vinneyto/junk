@@ -16,7 +16,7 @@ import {
   Object3D,
   PlaneHelper,
   Plane,
-  BoxBufferGeometry,
+  BoxGeometry,
 } from 'three';
 import Duck from '../models/Duck/Duck.gltf';
 import {
@@ -108,25 +108,12 @@ export async function useScanner(): Promise<Demo> {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createBox = () => {
-  const geometry = new BoxBufferGeometry(0.1, 0.1, 0.1);
+  const geometry = new BoxGeometry(0.1, 0.1, 0.1);
   const material = new MeshPhysicalMaterial({
     color: 0xffff00,
     metalness: 0.1,
     roughness: 0.5,
   });
-
-  const normal = new Vector3();
-
-  for (let i = 0; i < geometry.attributes.position.array.length; i += 3) {
-    normal
-      .set(
-        geometry.attributes.position.array[i],
-        geometry.attributes.position.array[i + 1],
-        geometry.attributes.position.array[i + 2]
-      )
-      .normalize()
-      .toArray(geometry.attributes.normal.array, i);
-  }
 
   return new Mesh(geometry, material);
 };

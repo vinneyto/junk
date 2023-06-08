@@ -1,6 +1,7 @@
-import { Color } from 'three';
+import { Color, PerspectiveCamera } from 'three';
 import { createRenderer, resizeRendererToDisplaySize } from '../../../util';
 import { Demo } from '../../Demo';
+import { CharacterContainer } from './CharacterConteiner/CharacterContainer';
 import { createPoseDetector } from './createPoseDetector';
 import { createVideo } from './createVideo';
 import { VideoContainer } from './VideoContainer/VideoContainer';
@@ -15,26 +16,27 @@ export async function createCamBodyRiggingDemo(): Promise<Demo> {
   let poseEstemated = true;
 
   const videoContainer = new VideoContainer(video);
+  const characterContainer = new CharacterContainer();
 
   const views = [
     {
       left: 0,
       bottom: 0,
-      width: 1,
+      width: 0.5,
       height: 1,
       camera: videoContainer.camera,
       scene: videoContainer.scene,
       background: new Color('gray'),
     },
-    // {
-    //   left: 0.5,
-    //   bottom: 0,
-    //   width: 0.5,
-    //   height: 1,
-    //   camera: camera,
-    //   scene: scene,
-    //   background: new Color('black'),
-    // },
+    {
+      left: 0.5,
+      bottom: 0,
+      width: 0.5,
+      height: 1,
+      camera: characterContainer.camera,
+      scene: characterContainer.scene,
+      background: new Color('gray'),
+    },
   ];
 
   const render = () => {
@@ -42,7 +44,6 @@ export async function createCamBodyRiggingDemo(): Promise<Demo> {
       detector.estimatePoses(video, { flipHorizontal: true }).then((p) => {
         poseEstemated = true;
         poses = p;
-        // console.log(poses);
       });
       poseEstemated = false;
     }
@@ -53,6 +54,7 @@ export async function createCamBodyRiggingDemo(): Promise<Demo> {
 
     if (poses.length > 0) {
       videoContainer.poseDebug.setValues(poses[0]);
+      characterContainer.poseDebug.setValues(poses[0]);
     }
 
     for (let i = 0; i < views.length; i++) {
@@ -65,6 +67,11 @@ export async function createCamBodyRiggingDemo(): Promise<Demo> {
       renderer.setViewport(left, bottom, width, height);
       renderer.setScissor(left, bottom, width, height);
       renderer.setClearColor(view.background);
+
+      if (view.camera instanceof PerspectiveCamera) {
+        view.camera.aspect = width / height;
+        characterContainer.cameraController.update(view.camera);
+      }
 
       renderer.render(view.scene, view.camera);
     }

@@ -1,5 +1,5 @@
 import {
-  PlaneBufferGeometry,
+  PlaneGeometry,
   Vector2,
   Vector3,
   Scene,
@@ -8,6 +8,7 @@ import {
   Texture,
   MeshBasicMaterial,
   WebGLRenderer,
+  BufferAttribute,
 } from 'three';
 
 export async function buildPerlinSurfaceGeometry(
@@ -27,16 +28,12 @@ export async function buildPerlinSurfaceGeometry(
     Math.round(Math.random() * 100)
   );
 
-  const geometry = new PlaneBufferGeometry(
-    size.x,
-    size.z,
-    width - 1,
-    height - 1
-  );
+  const geometry = new PlaneGeometry(size.x, size.z, width - 1, height - 1);
   geometry.rotateX(-Math.PI / 2);
 
   const point = new Vector3();
-  const position = geometry.attributes.position.array as Float32Array;
+  const position = (geometry.attributes.position as BufferAttribute)
+    .array as Float32Array;
 
   for (let col = 0; col < width; col++) {
     for (let row = 0; row < height; row++) {
@@ -70,7 +67,7 @@ export class Preview extends Scene {
   constructor(texture: Texture) {
     super();
 
-    const g = new PlaneBufferGeometry(1, 1);
+    const g = new PlaneGeometry(1, 1);
     const m = new MeshBasicMaterial({ map: texture });
     this.mesh = new Mesh(g, m);
     this.add(this.mesh);

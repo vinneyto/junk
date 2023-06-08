@@ -2,16 +2,21 @@ import {
   DataTexture,
   FloatType,
   RepeatWrapping,
-  RGBFormat,
-  Vector3,
+  RGBAFormat,
+  Vector4,
 } from 'three';
 
 export function createNoiseTexture(size: number) {
-  const data = new Float32Array(size * size * 3);
-  const v = new Vector3();
+  const data = new Float32Array(size * size * 4);
+  const v = new Vector4();
 
   for (let i = 0; i < data.length; i += 3) {
-    v.set(rangeRandom(-1, 1), rangeRandom(-1, 1), rangeRandom(-1, 1))
+    v.set(
+      rangeRandom(-1, 1),
+      rangeRandom(-1, 1),
+      rangeRandom(-1, 1),
+      rangeRandom(-1, 1)
+    )
       .normalize()
       .toArray(data, i);
   }
@@ -20,7 +25,7 @@ export function createNoiseTexture(size: number) {
     data,
     size,
     size,
-    RGBFormat,
+    RGBAFormat,
     FloatType,
     undefined,
     RepeatWrapping,

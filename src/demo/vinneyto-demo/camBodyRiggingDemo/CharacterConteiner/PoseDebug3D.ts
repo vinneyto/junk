@@ -25,23 +25,17 @@ const PART_IDS = [
   RIGHT_LEG_IDS.map((i) => i + 1),
 ];
 
-export class PoseDebug2D extends Object3D {
-  public readonly fragments: PoseFragment2D[] = [];
+export class PoseDebug3D extends Object3D {
+  public readonly fragments: PoseFragment3D[] = [];
 
   constructor() {
     super();
 
     for (const ids of PART_IDS) {
-      const fragment = new PoseFragment2D(ids.length);
+      const fragment = new PoseFragment3D(ids.length);
 
       this.fragments.push(fragment);
       this.add(fragment);
-    }
-  }
-
-  setResolution(x: number, y: number) {
-    for (const fragment of this.fragments) {
-      fragment.setResolution(x, y);
     }
   }
 
@@ -52,23 +46,16 @@ export class PoseDebug2D extends Object3D {
   }
 }
 
-class PoseFragment2D extends Object3D {
+class PoseFragment3D extends Object3D {
   private readonly geometry: BufferGeometry;
-  private readonly material: ShaderMaterial;
 
   constructor(pointsCount: number) {
     super();
 
     const material = new ShaderMaterial({
       vertexShader: `
-      uniform vec2 resolution;
-
       void main() {
-        vec2 pos = position.xy / resolution;
-
-        pos.y = 1.0 - pos.y;
-
-        gl_Position = vec4(pos.xy * 2.0 - 1.0, 0.0, 1.0);
+        gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
         gl_PointSize = 10.0;
       }
     `,
@@ -87,12 +74,11 @@ class PoseFragment2D extends Object3D {
     const geometry = new BufferGeometry();
     geometry.setAttribute(
       'position',
-      new Float32BufferAttribute(new Float32Array(pointsCount * 2), 2)
+      new Float32BufferAttribute(new Float32Array(pointsCount * 3), 3)
     );
     geometry.boundingSphere = new Sphere();
 
     this.geometry = geometry;
-    this.material = material;
 
     const line = new Line();
     line.geometry = geometry;
@@ -105,13 +91,6 @@ class PoseFragment2D extends Object3D {
     this.add(points);
   }
 
-  setResolution(x: number, y: number) {
-    const material = this.material as ShaderMaterial;
-    const resolution = material.uniforms.resolution.value as Vector2;
-
-    resolution.set(x, y);
-  }
-
   setValues(pose: poseDetection.Pose, ids: number[]) {
     const geometry = this.geometry as BufferGeometry;
     const position = geometry.getAttribute('position') as BufferAttribute;
@@ -119,10 +98,14 @@ class PoseFragment2D extends Object3D {
     let j = 0;
 
     for (const id of ids) {
-      const point = pose.keypoints[id];
-      array[j + 0] = point.x;
-      array[j + 1] = point.y;
-      j += 2;
+      if (pose.keypoints3D) {
+        const point = pose.keypoints3D[id];
+        array[j + 0] = -point.x;
+        array[j + 1] = -point.y;
+        array[j + 2] = -(point.z || 0);
+      }
+
+      j += 3;
     }
 
     position.needsUpdate = true;
